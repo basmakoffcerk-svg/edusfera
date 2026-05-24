@@ -117,11 +117,11 @@ class Register extends BaseRegister
         $normalized = preg_replace('/[^\d+]/', '', $phone) ?? $phone;
 
         if (str_starts_with($normalized, '375')) {
-            return '+' . $normalized;
+            return '+'.$normalized;
         }
 
         if (str_starts_with($normalized, '80')) {
-            return '+375' . substr($normalized, 2);
+            return '+375'.substr($normalized, 2);
         }
 
         return $normalized;

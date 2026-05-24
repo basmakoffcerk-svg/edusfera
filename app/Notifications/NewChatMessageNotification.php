@@ -19,8 +19,7 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
     public function __construct(
         private readonly Conversation $conversation,
         private readonly Message $message,
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -49,9 +48,9 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Новое сообщение в Edusfera')
-            ->greeting('Здравствуйте, ' . $notifiable->name . '!')
+            ->greeting('Здравствуйте, '.$notifiable->name.'!')
             ->line('Вам пришло новое сообщение в чате.')
             ->line(mb_strimwidth($this->message->message, 0, 200, '...'))
             ->action('Открыть чат', url("/admin/messages?conversation={$this->conversation->id}"));

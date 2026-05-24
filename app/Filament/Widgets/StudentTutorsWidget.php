@@ -13,14 +13,15 @@ class StudentTutorsWidget extends Widget
 {
     protected static string $view = 'filament.widgets.student-tutors-widget';
 
-    protected int | string | array $columnSpan = 'half';
-    
+    protected int|string|array $columnSpan = 'half';
+
     protected static ?int $sort = 3;
 
     public static function canView(): bool
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+
         return $user && in_array($user->role, ['student', 'parent'], true);
     }
 
@@ -36,7 +37,7 @@ class StudentTutorsWidget extends Widget
             ->where('role', 'tutor')
             ->whereHas('tutorLessons', function ($query) use ($studentConditionColumn, $user) {
                 $query->where($studentConditionColumn, $user->id)
-                      ->whereIn('status', [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED]);
+                    ->whereIn('status', [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED]);
             })
             ->with(['tutorProfile'])
             ->limit(5)

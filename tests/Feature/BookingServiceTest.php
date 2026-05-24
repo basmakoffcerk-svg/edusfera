@@ -80,6 +80,7 @@ class BookingServiceTest extends TestCase
             'package_total' => '100.00',
             'package_discount' => '0.00',
         ]);
+        $this->assertNotNull($lesson->fresh()->meeting_link);
 
         Notification::assertSentTo($student, LessonBookedStudentNotification::class);
         Notification::assertSentTo($tutor, LessonBookedTutorNotification::class);
@@ -364,6 +365,43 @@ class BookingServiceTest extends TestCase
         $slots = app(BookingService::class)->getAvailableSlots($profile, $date);
 
         $this->assertNotContains($date->format('Y-m-d H:i'), array_column($slots, 'value'));
+        $this->assertContains($date->setTime(1, 0)->format('Y-m-d H:i'), array_column($slots, 'value'));
+    }
+
+    public function test_available_slots_include_overnight_windows_from_previous_day(): void
+    {
+        $tutor = User::factory()->create([
+            'role' => 'tutor',
+            'phone' => '+375296111222',
+        ]);
+
+        $profile = TutorProfile::query()->create([
+            'user_id' => $tutor->id,
+            'subjects' => ['Физика'],
+            'price_per_hour' => 85,
+            'experience_years' => 5,
+            'legal_status' => 'ip',
+            'bio' => 'Онлайн подготовка.',
+            'is_verified' => true,
+            'rating_avg' => 4.8,
+        ]);
+
+        $date = CarbonImmutable::now(config('booking.display_timezone'))
+            ->addDays(4)
+            ->startOfDay();
+        $previousDay = $date->subDay();
+
+        TutorAvailability::query()->create([
+            'user_id' => $tutor->id,
+            'day_of_week' => $previousDay->dayOfWeek,
+            'start_time' => '22:00:00',
+            'end_time' => '02:00:00',
+            'is_active' => true,
+        ]);
+
+        $slots = app(BookingService::class)->getAvailableSlots($profile, $date);
+
+        $this->assertContains($date->setTime(0, 0)->format('Y-m-d H:i'), array_column($slots, 'value'));
         $this->assertContains($date->setTime(1, 0)->format('Y-m-d H:i'), array_column($slots, 'value'));
     }
 }

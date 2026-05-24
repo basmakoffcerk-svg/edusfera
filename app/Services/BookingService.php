@@ -12,15 +12,12 @@ use App\Models\User;
 use App\Notifications\LessonBookedStudentNotification;
 use App\Notifications\LessonBookedTutorNotification;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
-    public function __construct(private readonly PackageService $packageService)
-    {
-    }
+    public function __construct(private readonly PackageService $packageService) {}
 
     public function createBooking(
         TutorProfile $tutorProfile,
@@ -294,10 +291,11 @@ class BookingService
         $duration = (int) config('booking.slot_duration_minutes', 60);
         $dayStartLocal = $dateLocal->startOfDay();
         $dayEndLocal = $dayStartLocal->endOfDay();
+        $previousDay = $dayStartLocal->subDay();
 
         $availability = TutorAvailability::query()
             ->where('user_id', $tutorProfile->user_id)
-            ->where('day_of_week', $dayStartLocal->dayOfWeek)
+            ->whereIn('day_of_week', [$dayStartLocal->dayOfWeek, $previousDay->dayOfWeek])
             ->where('is_active', true)
             ->orderBy('start_time')
             ->get();
@@ -324,18 +322,12 @@ class BookingService
         $slots = [];
 
         foreach ($availability as $window) {
-            $cursor = CarbonImmutable::createFromFormat(
-                'Y-m-d H:i:s',
-                $dayStartLocal->format('Y-m-d') . ' ' . $window->start_time,
-                $timezone,
-            );
-            $windowEnd = CarbonImmutable::createFromFormat(
-                'Y-m-d H:i:s',
-                $dayStartLocal->format('Y-m-d') . ' ' . $window->end_time,
-                $timezone,
-            );
+            $anchorDate = (int) $window->day_of_week === $dayStartLocal->dayOfWeek
+                ? $dayStartLocal
+                : $previousDay;
+            [$cursor, $windowEnd] = $this->windowBounds($anchorDate, (string) $window->start_time, (string) $window->end_time);
 
-            if ($cursor === false || $windowEnd === false) {
+            if (! $cursor || ! $windowEnd) {
                 continue;
             }
 
@@ -348,7 +340,11 @@ class BookingService
                     return $lesson->start_time->lt($slotEndUtc) && $lesson->end_time->gt($slotStartUtc);
                 });
 
-                if (! $isBusy && $cursor->greaterThan($minimumAllowed)) {
+                if (
+                    ! $isBusy
+                    && $cursor->greaterThan($minimumAllowed)
+                    && $cursor->betweenIncluded($dayStartLocal, $dayEndLocal)
+                ) {
                     $slots[] = [
                         'value' => $cursor->format('Y-m-d H:i'),
                         'label' => $cursor->format('H:i'),
@@ -420,13 +416,21 @@ class BookingService
 
         $availability = TutorAvailability::query()
             ->where('user_id', $tutorProfile->user_id)
-            ->where('day_of_week', $startLocal->dayOfWeek)
+            ->whereIn('day_of_week', [$startLocal->dayOfWeek, $startLocal->subDay()->dayOfWeek])
             ->where('is_active', true)
             ->get();
 
         $isWithinAvailability = $availability->contains(function (TutorAvailability $window) use ($endLocal, $startLocal): bool {
-            return $window->start_time <= $startLocal->format('H:i:s')
-                && $window->end_time >= $endLocal->format('H:i:s');
+            $anchorDate = (int) $window->day_of_week === $startLocal->dayOfWeek
+                ? $startLocal->startOfDay()
+                : $startLocal->subDay()->startOfDay();
+            [$windowStart, $windowEnd] = $this->windowBounds($anchorDate, (string) $window->start_time, (string) $window->end_time);
+
+            if (! $windowStart || ! $windowEnd) {
+                return false;
+            }
+
+            return $startLocal->greaterThanOrEqualTo($windowStart) && $endLocal->lessThanOrEqualTo($windowEnd);
         });
 
         if (! $isWithinAvailability) {
@@ -436,4 +440,23 @@ class BookingService
         }
     }
 
+    /**
+     * @return array{0: CarbonImmutable|false, 1: CarbonImmutable|false}
+     */
+    private function windowBounds(CarbonImmutable $dayStart, string $startTime, string $endTime): array
+    {
+        $timezone = $this->displayTimezone();
+        $windowStart = CarbonImmutable::createFromFormat('Y-m-d H:i:s', $dayStart->format('Y-m-d').' '.$startTime, $timezone);
+        $windowEnd = CarbonImmutable::createFromFormat('Y-m-d H:i:s', $dayStart->format('Y-m-d').' '.$endTime, $timezone);
+
+        if ($windowStart === false || $windowEnd === false) {
+            return [false, false];
+        }
+
+        if ($windowEnd->lessThanOrEqualTo($windowStart)) {
+            $windowEnd = $windowEnd->addDay();
+        }
+
+        return [$windowStart, $windowEnd];
+    }
 }

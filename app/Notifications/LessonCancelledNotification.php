@@ -15,9 +15,7 @@ class LessonCancelledNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(private readonly Lesson $lesson)
-    {
-    }
+    public function __construct(private readonly Lesson $lesson) {}
 
     public function via(object $notifiable): array
     {
@@ -28,7 +26,7 @@ class LessonCancelledNotification extends Notification implements ShouldQueue
     {
         return FilamentNotification::make()
             ->title('Урок отменен')
-            ->body('Статус урока #' . $this->lesson->id . ' изменился на "Отменен".')
+            ->body('Статус урока #'.$this->lesson->id.' изменился на "Отменен".')
             ->icon('heroicon-o-x-circle')
             ->iconColor('danger')
             ->getDatabaseMessage() + [
@@ -39,10 +37,10 @@ class LessonCancelledNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Урок отменен')
-            ->greeting('Здравствуйте, ' . $notifiable->name . '!')
-            ->line('Урок #' . $this->lesson->id . ' был отменен.')
+            ->greeting('Здравствуйте, '.$notifiable->name.'!')
+            ->line('Урок #'.$this->lesson->id.' был отменен.')
             ->action('Открыть кабинет', url('/admin/lessons'));
     }
 }

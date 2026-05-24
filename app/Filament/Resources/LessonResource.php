@@ -9,10 +9,10 @@ use App\Models\Lesson;
 use App\Models\LessonReview;
 use App\Notifications\LessonCancelledNotification;
 use App\Notifications\LessonConfirmedNotification;
-use App\Support\BynMoneyFormatter;
 use App\Services\ChatService;
 use App\Services\Payment\PaymentService;
 use App\Services\PostLessonReportService;
+use App\Support\BynMoneyFormatter;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -24,7 +24,6 @@ use Filament\Tables;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\HtmlString;
 
 class LessonResource extends Resource
 {
@@ -194,7 +193,7 @@ class LessonResource extends Resource
                 Tables\Columns\TextColumn::make('student.name')
                     ->label('Ученик')
                     ->searchable()
-                    ->description(fn (Lesson $record): string => $record->parent?->name ? 'Родитель: ' . $record->parent->name : 'Самостоятельная запись')
+                    ->description(fn (Lesson $record): string => $record->parent?->name ? 'Родитель: '.$record->parent->name : 'Самостоятельная запись')
                     ->toggleable(isToggledHiddenByDefault: auth()->user()?->role !== 'tutor'),
                 Tables\Columns\TextColumn::make('start_time')
                     ->label('Начало')

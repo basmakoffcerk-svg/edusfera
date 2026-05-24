@@ -13,7 +13,7 @@ class MockPaymentGateway implements PaymentGatewayInterface
     {
         $payload = [
             'success' => true,
-            'gateway_transaction_id' => 'mock_' . Str::uuid(),
+            'gateway_transaction_id' => 'mock_'.Str::uuid(),
             'status' => 'success',
             'callback_url' => $this->getCallbackUrl(),
             'payload' => $data,
