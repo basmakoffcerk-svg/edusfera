@@ -1,8 +1,19 @@
 # Edusfera
 
-Edusfera is a Laravel 12 platform for finding tutors, booking lessons, paying through the platform, and continuing communication in a moderated chat. The project includes a public catalog, checkout flow, tutor and student dashboards on Filament, and a technical admin panel.
+Edusfera is a Laravel 12 platform for finding tutors, booking lessons, paying through the platform, and continuing communication in a moderated chat.
 
-## Stack
+## Features
+
+- public landing pages
+- tutor catalog with filters and tutor profile pages
+- slot booking with a 15-minute payment hold
+- checkout flow with lesson packages
+- mock payment gateway for local development
+- moderated chat with contact masking before payment
+- tutor and student dashboards (Filament)
+- tutor finance tracking and lesson settlement
+
+## Tech Stack
 
 - PHP 8.3
 - Laravel 12
@@ -12,17 +23,7 @@ Edusfera is a Laravel 12 platform for finding tutors, booking lessons, paying th
 - Mailhog
 - Vite
 
-## Main Flows
-
-- public landing pages
-- tutor catalog with filters and profile pages
-- slot booking with 15-minute payment hold
-- checkout with lesson packages
-- mock payment gateway for local development
-- chat with contact masking before payment
-- tutor finance tracking and lesson settlement
-
-## Local Run
+## Getting Started
 
 1. Install dependencies:
 
@@ -64,9 +65,7 @@ After startup:
 - admin login: `http://127.0.0.1:8000/admin/login`
 - site admin login: `http://127.0.0.1:8000/site-admin/login`
 
-## Tests
-
-Run:
+## Running Tests
 
 ```bash
 php artisan test
@@ -74,27 +73,22 @@ php artisan test
 
 The test suite uses SQLite in memory via `phpunit.xml`, while local runtime uses PostgreSQL from `.env`.
 
-## Public Pages
+## Main Routes
 
 - `/` - landing page
-- `/tutors` - public tutor catalog
+- `/tutors` - tutor catalog
 - `/for-tutors` - landing page for tutors
-- `/contacts` - support and contact page
-
-## Legal Pages
-
+- `/contacts` - support and contacts
 - `/offer` - public offer
-- `/refund-policy` - refund rules
+- `/refund-policy` - refund policy
 - `/privacy-policy` - privacy policy
 
-## Support
+## Documentation
 
-- public support entrypoint: `/contacts`
-- default support email: `MAIL_FROM_ADDRESS`
+- Product roadmap: `docs/PRODUCT_ROADMAP_90_DAYS.md`
+- Russian roadmap: `docs/PRODUCT_ROADMAP_90_DAYS_RU.md`
+- UI rules: `docs/UI_RULES.md`
 
-## Project Notes
+## License
 
-- Payment processing is mocked in local development.
-- Technical admin credentials are configured through `.env`.
-- UI rules for all new screens are documented in [`docs/UI_RULES.md`](docs/UI_RULES.md).
-# edusfera
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
