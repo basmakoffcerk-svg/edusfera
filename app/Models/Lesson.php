@@ -72,6 +72,17 @@ class Lesson extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::created(function (self $lesson): void {
+            if (blank($lesson->meeting_link)) {
+                $lesson->updateQuietly([
+                    'meeting_link' => route('virtual.class', $lesson),
+                ]);
+            }
+        });
+    }
+
     public function getPackageLabelAttribute(): string
     {
         return match ($this->package_code) {

@@ -11,6 +11,7 @@ use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\LessonBookingController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\AccountSwitcherController;
+use App\Http\Controllers\VirtualClassroomController;
 
 Route::get('/', function () {
     return view('home');
@@ -66,3 +67,7 @@ Route::post('/lessons/{lesson}/conversation', [ConversationController::class, 's
 Route::post('/payments/webhook', PaymentWebhookController::class)
     ->middleware('throttle:60,1')
     ->name('payments.webhook');
+
+Route::get('/virtual-class/{lesson}', [VirtualClassroomController::class, 'show'])
+    ->middleware('auth')
+    ->name('virtual.class');
