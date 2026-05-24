@@ -97,3 +97,4 @@ The test suite uses SQLite in memory via `phpunit.xml`, while local runtime uses
 - Payment processing is mocked in local development.
 - Technical admin credentials are configured through `.env`.
 - UI rules for all new screens are documented in [`docs/UI_RULES.md`](docs/UI_RULES.md).
+# edusfera
