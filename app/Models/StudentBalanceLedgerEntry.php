@@ -10,9 +10,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class StudentBalanceLedgerEntry extends Model
 {
     public const TYPE_TOPUP = 'topup';
+
     public const TYPE_HOLD = 'hold';
+
     public const TYPE_RELEASE = 'release';
+
     public const TYPE_PAYMENT = 'payment';
+
     public const TYPE_REFUND = 'refund';
 
     protected $fillable = [

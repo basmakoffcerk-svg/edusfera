@@ -8,11 +8,11 @@ use App\Policies\LessonPolicy;
 use App\Services\Payment\DisabledPaymentGateway;
 use App\Services\Payment\MockPaymentGateway;
 use App\Services\Payment\PaymentGatewayInterface;
-use InvalidArgumentException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 use Throwable;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,9 +24,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(PaymentGatewayInterface::class, function () {
             return match (config('payments.gateway', 'mock')) {
-                'mock' => new MockPaymentGateway(),
-                'disabled' => new DisabledPaymentGateway(),
-                default => throw new InvalidArgumentException('Unknown payment gateway [' . config('payments.gateway') . '].'),
+                'mock' => new MockPaymentGateway,
+                'disabled' => new DisabledPaymentGateway,
+                default => throw new InvalidArgumentException('Unknown payment gateway ['.config('payments.gateway').'].'),
             };
         });
     }

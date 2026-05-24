@@ -60,7 +60,7 @@ class StudentGoalService
     }
 
     /**
-     * @param array<int, string> $audiences
+     * @param  array<int, string>  $audiences
      */
     private function resolveExamType(array $audiences): string
     {
@@ -76,7 +76,7 @@ class StudentGoalService
     }
 
     /**
-     * @param array<int, string> $lessonFormats
+     * @param  array<int, string>  $lessonFormats
      */
     private function resolveFormat(array $lessonFormats): string
     {

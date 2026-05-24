@@ -14,9 +14,7 @@ class LessonBookedStudentNotification extends Notification implements ShouldQueu
 {
     use Queueable;
 
-    public function __construct(private readonly Lesson $lesson)
-    {
-    }
+    public function __construct(private readonly Lesson $lesson) {}
 
     public function via(object $notifiable): array
     {
@@ -27,7 +25,7 @@ class LessonBookedStudentNotification extends Notification implements ShouldQueu
     {
         return [
             'title' => 'Вы записались на урок',
-            'body' => 'Заявка на урок #' . $this->lesson->id . ' создана.',
+            'body' => 'Заявка на урок #'.$this->lesson->id.' создана.',
             'lesson_id' => $this->lesson->id,
             'url' => '/admin/lessons',
         ];
@@ -40,12 +38,12 @@ class LessonBookedStudentNotification extends Notification implements ShouldQueu
             ->setTimezone(config('booking.display_timezone'))
             ->format('d.m.Y H:i');
 
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Вы записались на урок')
-            ->greeting('Здравствуйте, ' . $notifiable->name . '!')
+            ->greeting('Здравствуйте, '.$notifiable->name.'!')
             ->line('Ваша заявка на урок создана.')
-            ->line('Репетитор: ' . $this->lesson->tutor->name)
-            ->line('Дата и время: ' . $start . ' (Минск)')
+            ->line('Репетитор: '.$this->lesson->tutor->name)
+            ->line('Дата и время: '.$start.' (Минск)')
             ->action('Открыть кабинет', url('/admin/lessons'))
             ->line('После подтверждения репетитором вы получите отдельное уведомление.');
     }

@@ -23,9 +23,7 @@ class PaymentService
         private readonly PaymentGatewayInterface $gateway,
         private readonly StudentBalanceService $studentBalanceService,
         private readonly StudentGoalService $studentGoalService,
-    )
-    {
-    }
+    ) {}
 
     public function processPayment(
         int $lessonId,
@@ -33,8 +31,7 @@ class PaymentService
         ?string $paymentMethod = 'card',
         bool $rememberPaymentMethod = false,
         bool $useWalletBalance = false,
-    ): Transaction
-    {
+    ): Transaction {
         return DB::transaction(function () use ($lessonId, $paymentMethod, $rememberPaymentMethod, $useWalletBalance, $userId): Transaction {
             $lesson = Lesson::query()
                 ->with(['tutor', 'student', 'parent', 'transaction'])

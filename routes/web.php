@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\AccountSwitcherController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\LessonBookingController;
 use App\Http\Controllers\PaymentWebhookController;
-use App\Http\Controllers\AccountSwitcherController;
 use App\Http\Controllers\VirtualClassroomController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('home');

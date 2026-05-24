@@ -12,15 +12,12 @@ use App\Models\User;
 use App\Notifications\LessonBookedStudentNotification;
 use App\Notifications\LessonBookedTutorNotification;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
-    public function __construct(private readonly PackageService $packageService)
-    {
-    }
+    public function __construct(private readonly PackageService $packageService) {}
 
     public function createBooking(
         TutorProfile $tutorProfile,
@@ -449,8 +446,8 @@ class BookingService
     private function windowBounds(CarbonImmutable $dayStart, string $startTime, string $endTime): array
     {
         $timezone = $this->displayTimezone();
-        $windowStart = CarbonImmutable::createFromFormat('Y-m-d H:i:s', $dayStart->format('Y-m-d') . ' ' . $startTime, $timezone);
-        $windowEnd = CarbonImmutable::createFromFormat('Y-m-d H:i:s', $dayStart->format('Y-m-d') . ' ' . $endTime, $timezone);
+        $windowStart = CarbonImmutable::createFromFormat('Y-m-d H:i:s', $dayStart->format('Y-m-d').' '.$startTime, $timezone);
+        $windowEnd = CarbonImmutable::createFromFormat('Y-m-d H:i:s', $dayStart->format('Y-m-d').' '.$endTime, $timezone);
 
         if ($windowStart === false || $windowEnd === false) {
             return [false, false];
@@ -462,5 +459,4 @@ class BookingService
 
         return [$windowStart, $windowEnd];
     }
-
 }

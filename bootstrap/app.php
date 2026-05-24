@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Foundation\Application;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\ApplyRoleSessionLifetime::class,
         ]);
-        
+
         $middleware->validateCsrfTokens(except: [
             '/account/*',
         ]);

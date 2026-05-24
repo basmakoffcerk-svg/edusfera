@@ -16,8 +16,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 
 class TutorProfileResource extends Resource
 {
@@ -124,7 +124,7 @@ class TutorProfileResource extends Resource
 
     private static function iconHtml(): string
     {
-        return '<img src="' . e(asset('byn-ico.svg')) . '" alt="" aria-hidden="true" style="display:inline-block;width:0.81em;height:1em;vertical-align:-0.12em">';
+        return '<img src="'.e(asset('byn-ico.svg')).'" alt="" aria-hidden="true" style="display:inline-block;width:0.81em;height:1em;vertical-align:-0.12em">';
     }
 
     private static function isAdminContext(): bool
@@ -213,15 +213,15 @@ class TutorProfileResource extends Resource
                         Forms\Components\Textarea::make('education_summary')
                             ->label('Образование и квалификация')
                             ->rows(4)
-                            ->placeholder("ВУЗ, специальность, год выпуска, профильные курсы."),
+                            ->placeholder('ВУЗ, специальность, год выпуска, профильные курсы.'),
                         Forms\Components\Textarea::make('achievements')
                             ->label('Результаты учеников')
                             ->rows(4)
-                            ->placeholder("Средний прирост балла, кейсы поступления, олимпиадные результаты."),
+                            ->placeholder('Средний прирост балла, кейсы поступления, олимпиадные результаты.'),
                         Forms\Components\Textarea::make('teaching_methodology')
                             ->label('Методика занятий')
                             ->rows(4)
-                            ->placeholder("Как строите урок, как даете домашние задания, как отслеживаете прогресс."),
+                            ->placeholder('Как строите урок, как даете домашние задания, как отслеживаете прогресс.'),
                         Forms\Components\CheckboxList::make('lesson_formats')
                             ->label('Форматы занятий')
                             ->options([
@@ -353,7 +353,7 @@ class TutorProfileResource extends Resource
                                 ->content(fn (?TutorProfile $record): string => $record?->user?->phone ?? 'Не указан'),
                             Forms\Components\Placeholder::make('moderation_telegram')
                                 ->label('Telegram')
-                                ->content(fn (?TutorProfile $record): string => $record?->telegram_username ? '@' . ltrim($record->telegram_username, '@') : 'Не указан'),
+                                ->content(fn (?TutorProfile $record): string => $record?->telegram_username ? '@'.ltrim($record->telegram_username, '@') : 'Не указан'),
                             Forms\Components\Placeholder::make('moderation_subjects')
                                 ->label('Предметы')
                                 ->content(fn (?TutorProfile $record): string => implode(', ', $record?->subjects ?? []) ?: 'Не указаны'),
@@ -363,11 +363,11 @@ class TutorProfileResource extends Resource
                             Forms\Components\Placeholder::make('moderation_price')
                                 ->label('Цена')
                                 ->content(fn (?TutorProfile $record): HtmlString|string => $record
-                                    ? new HtmlString(BynMoneyFormatter::format((string) $record->price_per_hour)->toHtml() . '/час')
+                                    ? new HtmlString(BynMoneyFormatter::format((string) $record->price_per_hour)->toHtml().'/час')
                                     : 'Не указана'),
                             Forms\Components\Placeholder::make('moderation_experience')
                                 ->label('Стаж')
-                                ->content(fn (?TutorProfile $record): string => $record ? ((int) $record->experience_years) . ' лет' : 'Не указан'),
+                                ->content(fn (?TutorProfile $record): string => $record ? ((int) $record->experience_years).' лет' : 'Не указан'),
                             Forms\Components\Placeholder::make('moderation_status')
                                 ->label('Юридический статус')
                                 ->content(fn (?TutorProfile $record): string => match ($record?->legal_status) {

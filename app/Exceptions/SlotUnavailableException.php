@@ -6,6 +6,4 @@ namespace App\Exceptions;
 
 use RuntimeException;
 
-class SlotUnavailableException extends RuntimeException
-{
-}
+class SlotUnavailableException extends RuntimeException {}

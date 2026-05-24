@@ -20,8 +20,8 @@ class VirtualClassroomController extends Controller
         );
         abort_unless($lesson->payment_status === Lesson::PAYMENT_PAID, 403);
 
-        $roomName = 'edusfera-lesson-' . $lesson->id;
-        $meetingUrl = 'https://meet.jit.si/' . urlencode($roomName);
+        $roomName = 'edusfera-lesson-'.$lesson->id;
+        $meetingUrl = 'https://meet.jit.si/'.urlencode($roomName);
 
         if (blank($lesson->meeting_link) || ! str_contains((string) $lesson->meeting_link, '/virtual-class/')) {
             $lesson->update([
