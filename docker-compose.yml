@@ -1,0 +1,40 @@
+services:
+    db:
+        image: 'postgres:16'
+        ports:
+            - '${FORWARD_DB_PORT:-5432}:5432'
+        environment:
+            POSTGRES_DB: '${DB_DATABASE}'
+            POSTGRES_USER: '${DB_USERNAME}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD}'
+        volumes:
+            - 'edusfera-db:/var/lib/postgresql/data'
+        networks:
+            - edusfera
+
+    redis:
+        image: 'redis:alpine'
+        ports:
+            - '${FORWARD_REDIS_PORT:-6379}:6379'
+        volumes:
+            - 'edusfera-redis:/data'
+        networks:
+            - edusfera
+
+    mailhog:
+        image: 'mailhog/mailhog:latest'
+        ports:
+            - '${FORWARD_MAILHOG_PORT:-1025}:1025'
+            - '${FORWARD_MAILHOG_DASHBOARD_PORT:-8025}:8025'
+        networks:
+            - edusfera
+
+networks:
+    edusfera:
+        driver: bridge
+
+volumes:
+    edusfera-db:
+        driver: local
+    edusfera-redis:
+        driver: local
