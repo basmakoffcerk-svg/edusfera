@@ -1,0 +1,48 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://edusfera.by/events/lesson.completed.v1.json",
+    "title": "lesson.completed.v1 payload",
+    "description": "Payload integration event lesson.completed v1. Within major version 1 fields are only added, never removed or retyped (requirement 8.5). additionalProperties=true allows forward-compatible extensions.",
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+        "lesson_id",
+        "tutor_id",
+        "student_id",
+        "started_at",
+        "ended_at",
+        "package_code"
+    ],
+    "properties": {
+        "lesson_id": {
+            "description": "Lesson aggregate id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "tutor_id": {
+            "description": "Tutor user id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "student_id": {
+            "description": "Student user id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "started_at": {
+            "description": "Lesson start, ISO-8601 UTC.",
+            "type": "string",
+            "format": "date-time"
+        },
+        "ended_at": {
+            "description": "Lesson end, ISO-8601 UTC.",
+            "type": "string",
+            "format": "date-time"
+        },
+        "package_code": {
+            "description": "Package code (single, pack_4, pack_8).",
+            "type": "string",
+            "minLength": 1
+        }
+    }
+}

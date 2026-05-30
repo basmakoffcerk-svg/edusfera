@@ -8,7 +8,10 @@
     "require": {
         "php": "^8.2",
         "filament/filament": "^3.2",
+        "justinrainbow/json-schema": "^6.0",
         "laravel/framework": "^12.0",
+        "laravel/passport": "^13.7",
+        "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.10.1"
     },
     "require-dev": {

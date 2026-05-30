@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Auth;
 
 class AccountSwitcherController extends Controller
 {
-    public function __construct(private readonly MultiAccountService $multiAccount) {}
+    public function __construct(private readonly MultiAccountService $multiAccount)
+    {
+    }
 
     /**
      * Seamlessly switch to a linked account.

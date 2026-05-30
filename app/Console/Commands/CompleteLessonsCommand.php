@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Domain\Shared\Events\EventEnvelopeFactory;
+use App\Integrations\Outbox\OutboxRepository;
 use App\Models\Lesson;
 use App\Services\Payment\PaymentService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CompleteLessonsCommand extends Command
@@ -15,8 +18,11 @@ class CompleteLessonsCommand extends Command
 
     protected $description = 'Автоматически переводит завершившиеся уроки в статус completed';
 
-    public function __construct(private readonly PaymentService $paymentService)
-    {
+    public function __construct(
+        private readonly PaymentService $paymentService,
+        private readonly OutboxRepository $outboxRepository,
+        private readonly EventEnvelopeFactory $envelopeFactory,
+    ) {
         parent::__construct();
     }
 
@@ -36,8 +42,14 @@ class CompleteLessonsCommand extends Command
         $updated = 0;
 
         foreach ($lessons as $lesson) {
-            $lesson->update(['status' => Lesson::STATUS_COMPLETED]);
-            $this->paymentService->settleCompletedLesson($lesson);
+            DB::transaction(function () use ($lesson): void {
+                $lesson->update(['status' => Lesson::STATUS_COMPLETED]);
+                $this->paymentService->settleCompletedLesson($lesson);
+                $this->outboxRepository->append(
+                    $this->envelopeFactory->lessonCompleted($lesson)
+                );
+            });
+
             $updated++;
         }
 

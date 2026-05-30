@@ -79,17 +79,6 @@ class Lesson extends Model
         ];
     }
 
-    protected static function booted(): void
-    {
-        static::created(function (self $lesson): void {
-            if (blank($lesson->meeting_link)) {
-                $lesson->updateQuietly([
-                    'meeting_link' => route('virtual.class', $lesson),
-                ]);
-            }
-        });
-    }
-
     public function getPackageLabelAttribute(): string
     {
         return match ($this->package_code) {
@@ -126,6 +115,11 @@ class Lesson extends Model
         return $this->hasOne(Transaction::class);
     }
 
+    public function settlement(): HasOne
+    {
+        return $this->hasOne(LessonSettlement::class);
+    }
+
     public function conversation(): HasOne
     {
         return $this->hasOne(Conversation::class);
@@ -149,5 +143,17 @@ class Lesson extends Model
     public function homeworkAssignments(): HasMany
     {
         return $this->hasMany(HomeworkAssignment::class);
+    }
+
+    public function classroomSessions(): HasMany
+    {
+        return $this->hasMany(ClassroomSession::class);
+    }
+
+    public function activeClassroom(): HasOne
+    {
+        return $this->hasOne(ClassroomSession::class)
+            ->whereIn('status', ['waiting', 'active'])
+            ->latestOfMany();
     }
 }

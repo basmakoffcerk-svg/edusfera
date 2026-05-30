@@ -2,15 +2,16 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\AccountSwitcherController;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\LessonBookingController;
 use App\Http\Controllers\PaymentWebhookController;
-use App\Http\Controllers\VirtualClassroomController;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountSwitcherController;
+use App\Http\Controllers\ClassroomController;
 
 Route::get('/', function () {
     return view('home');
@@ -67,6 +68,40 @@ Route::post('/payments/webhook', PaymentWebhookController::class)
     ->middleware('throttle:60,1')
     ->name('payments.webhook');
 
-Route::get('/virtual-class/{lesson}', [VirtualClassroomController::class, 'show'])
-    ->middleware('auth')
-    ->name('virtual.class');
+// ─── Virtual Classroom ───
+Route::middleware('auth')->group(function (): void {
+    Route::get('/classroom/{lesson}', [ClassroomController::class, 'show'])
+        ->name('classroom.show');
+    Route::post('/classroom/{lesson}/end', [ClassroomController::class, 'end'])
+        ->name('classroom.end');
+    Route::get('/classroom/{lesson}/notes', [ClassroomController::class, 'getNotes'])
+        ->name('classroom.notes.get');
+    Route::post('/classroom/{lesson}/notes', [ClassroomController::class, 'storeNote'])
+        ->name('classroom.notes.store');
+        
+    Route::get('/classroom/{lesson}/files', [ClassroomController::class, 'getFiles'])
+        ->name('classroom.files.get');
+    Route::post('/classroom/{lesson}/files', [ClassroomController::class, 'uploadFile'])
+        ->name('classroom.files.upload');
+        
+    Route::get('/classroom/{lesson}/chat', [ClassroomController::class, 'getChat'])
+        ->name('classroom.chat.get');
+    Route::post('/classroom/{lesson}/chat', [ClassroomController::class, 'storeChat'])
+        ->name('classroom.chat.store');
+        
+    Route::get('/classroom/{lesson}/homework', [ClassroomController::class, 'getHomework'])
+        ->name('classroom.homework.get');
+    Route::get('/classroom/{lesson}/files/{file}/download', [ClassroomController::class, 'downloadFile'])
+        ->name('classroom.files.download');
+    Route::post('/classroom/{lesson}/report', [ClassroomController::class, 'submitReport'])
+        ->name('classroom.report');
+    Route::post('/classroom/{lesson}/homework', [ClassroomController::class, 'assignHomework'])
+        ->name('classroom.homework');
+    Route::get('/classroom/{lesson}/student-profile', [ClassroomController::class, 'studentProfile'])
+        ->name('classroom.student-profile');
+});
+
+// ─── Internal API ───
+Route::post('/api/internal/classroom/{roomId}/whiteboard', [ClassroomController::class, 'saveWhiteboardState'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('internal.classroom.whiteboard');

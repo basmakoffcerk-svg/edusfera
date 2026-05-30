@@ -68,10 +68,10 @@ class TutorAvailabilityPage extends Page
                     continue;
                 }
 
-                if (($row['start_time'] ?? '') === ($row['end_time'] ?? '')) {
+                if (($row['start_time'] ?? '') >= ($row['end_time'] ?? '')) {
                     $validator->errors()->add(
                         'availability',
-                        'В активных днях время начала и окончания не должны совпадать.'
+                        'В активных днях время окончания должно быть позже времени начала.'
                     );
                 }
             }
@@ -172,12 +172,8 @@ class TutorAvailabilityPage extends Page
                 $slots = collect();
 
                 if (($row['is_active'] ?? false) === true) {
-                    $cursor = CarbonImmutable::parse($date->format('Y-m-d').' '.$row['start_time'], config('booking.display_timezone'));
-                    $end = CarbonImmutable::parse($date->format('Y-m-d').' '.$row['end_time'], config('booking.display_timezone'));
-
-                    if ($end->lessThanOrEqualTo($cursor)) {
-                        $end = $end->addDay();
-                    }
+                    $cursor = CarbonImmutable::parse($date->format('Y-m-d') . ' ' . $row['start_time'], config('booking.display_timezone'));
+                    $end = CarbonImmutable::parse($date->format('Y-m-d') . ' ' . $row['end_time'], config('booking.display_timezone'));
 
                     while ($cursor->lt($end)) {
                         $slots->push($cursor->format('H:i'));

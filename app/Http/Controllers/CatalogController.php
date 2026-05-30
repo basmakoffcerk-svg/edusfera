@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\TutorAvailability;
 use App\Models\TutorProfile;
+use App\Models\TutorAvailability;
 use App\Services\BookingService;
 use Carbon\CarbonImmutable;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Http\Request;
 
 class CatalogController extends Controller
 {
-    public function __construct(private readonly BookingService $bookingService) {}
+    public function __construct(private readonly BookingService $bookingService)
+    {
+    }
 
     public function index(Request $request)
     {
@@ -77,7 +79,7 @@ class CatalogController extends Controller
         $allSubjects = [
             'Математика', 'Физика', 'Химия', 'Биология',
             'Английский язык', 'Русский язык', 'Белорусский язык',
-            'История', 'Информатика',
+            'История', 'Информатика'
         ];
 
         $ratedBaseQuery = (clone $baseQuery)->where('rating_avg', '>', 0);

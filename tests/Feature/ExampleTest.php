@@ -16,7 +16,7 @@ class ExampleTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('Готовьтесь к ЦЭ и ЦТ по системе.')
-            ->assertSee('Подготовка как система. Не как хаос.');
+            ->assertSee('Сдайте ЦТ и ЦЭ на')
+            ->assertSee('90+ баллов');
     }
 }

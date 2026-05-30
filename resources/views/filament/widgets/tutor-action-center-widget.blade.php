@@ -69,9 +69,15 @@
 
                     <div class="flex flex-wrap gap-2">
                         @if ($meetingJoinAvailable)
-                            <a href="{{ $upcomingLesson->meeting_link }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-10 items-center rounded-xl bg-lime-400 px-4 text-sm font-black text-stone-950 transition hover:bg-lime-300">
-                                Войти в звонок
-                            </a>
+                            @if (Route::has('classroom.show'))
+                                <a href="{{ route('classroom.show', $upcomingLesson) }}" class="inline-flex min-h-10 items-center rounded-xl bg-lime-400 px-4 text-sm font-black text-stone-950 transition hover:bg-lime-300">
+                                    Войти в класс
+                                </a>
+                            @else
+                                <a href="{{ $upcomingLesson->meeting_link }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-10 items-center rounded-xl bg-lime-400 px-4 text-sm font-black text-stone-950 transition hover:bg-lime-300">
+                                    Войти в звонок
+                                </a>
+                            @endif
                         @else
                             <a href="/admin/lessons" class="inline-flex min-h-10 items-center rounded-xl bg-stone-950 px-4 text-sm font-black text-white transition hover:bg-stone-800">
                                 Открыть урок

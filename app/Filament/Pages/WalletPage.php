@@ -11,6 +11,7 @@ use App\Services\Payment\PaymentGatewayInterface;
 use App\Support\BynMoneyFormatter;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Collection;
 
 class WalletPage extends Page
 {
@@ -75,7 +76,7 @@ class WalletPage extends Page
 
     public function getTopUpCtaLabelProperty(): string
     {
-        return 'Оплатить '.number_format((float) $this->topUpAmount, 2, '.', ' ').' BYN';
+        return 'Оплатить ' . number_format((float) $this->topUpAmount, 2, '.', ' ') . ' BYN';
     }
 
     public function topUp(): void

@@ -75,6 +75,18 @@ class EditTutorProfile extends EditRecord
         return static::getResource()::getUrl('index', panel: $panelId);
     }
 
+    protected function getFormActions(): array
+    {
+        // Для админа, если он использует обычную форму (не Wizard), можно оставить кнопки,
+        // но так как у нас Wizard в tutorSchema и обычная форма в adminSchema,
+        // нам нужно скрывать футер только для tutorSchema (роль tutor).
+        if (auth()->user()?->role === 'admin') {
+            return parent::getFormActions();
+        }
+
+        return [];
+    }
+
     protected function getHeaderActions(): array
     {
         if (auth()->user()?->role !== 'admin') {

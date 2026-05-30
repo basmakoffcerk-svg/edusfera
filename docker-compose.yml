@@ -29,6 +29,41 @@ services:
         networks:
             - edusfera
 
+    media:
+        build:
+            context: ./edusfera-media
+            dockerfile: Dockerfile
+        ports:
+            - '${MEDIA_PORT:-8088}:8088'
+        environment:
+            PORT: '8088'
+            JWT_SECRET: '${CLASSROOM_JWT_SECRET}'
+            ALLOWED_ORIGINS: '${MEDIA_ALLOWED_ORIGINS:-https://edusfera.by,http://localhost:8000}'
+            STUN_SERVERS: '${STUN_SERVER:-stun:stun.l.google.com:19302}'
+            LOG_LEVEL: '${MEDIA_LOG_LEVEL:-info}'
+            MAX_ROOM_SIZE: '${CLASSROOM_MAX_ROOM_SIZE:-5}'
+            ROOM_IDLE_TIMEOUT_MINUTES: '120'
+        restart: unless-stopped
+        networks:
+            - edusfera
+
+    coturn:
+        image: 'coturn/coturn:latest'
+        ports:
+            - '3478:3478'
+            - '3478:3478/udp'
+            - '5349:5349'
+            - '5349:5349/udp'
+            - '49152-49200:49152-49200/udp'
+        environment:
+            DETECT_EXTERNAL_IP: 'yes'
+            DETECT_RELAY_IP: 'yes'
+        volumes:
+            - './coturn/turnserver.conf:/etc/turnserver.conf:ro'
+        restart: unless-stopped
+        networks:
+            - edusfera
+
 networks:
     edusfera:
         driver: bridge

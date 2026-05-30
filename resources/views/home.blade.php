@@ -1,486 +1,684 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Edusfera — подготовка к ЦЭ и ЦТ по системе</title>
-    <meta name="description" content="Edusfera помогает выбрать преподавателя, зафиксировать стартовый уровень и двигаться к целевому баллу по понятной траектории.">
+    <title>Edusfera — Подготовка к ЦТ/ЦЭ с топовыми репетиторами</title>
+    <meta name="description" content="Индивидуальная подготовка к ЦТ и ЦЭ. Точечная диагностика знаний, математически выверенный план и лучшие преподаватели страны.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+
     <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        :root {
+            --bg-color: #f6f6f9;
+            --text-main: #0f1115;
+            --text-muted: #6b7280;
+            --ed-violet: #7D39EB;
+            --ed-lime: #C6FF33;
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
         body {
-            margin: 0;
-            min-height: 100vh;
-            overflow-x: hidden;
-            background: #ffffff;
-            color: #050505;
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(125, 57, 235, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(198, 255, 51, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
         }
-        a { color: inherit; text-decoration: none; }
-        .page {
-            min-height: 100vh;
-            overflow: hidden;
-            background:
-                linear-gradient(110deg, rgba(125, 57, 235, .14) 0%, rgba(250, 250, 250, .92) 47%, rgba(198, 255, 51, .22) 100%);
+
+        .font-rimma {
+            font-family: 'Rimma Sans', 'Inter', system-ui, sans-serif;
         }
-        .wrap { width: min(1500px, calc(100% - 48px)); margin: 0 auto; }
-        .brand {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-family: "Rimma Sans", Impact, sans-serif;
-            font-size: clamp(24px, 2vw, 34px);
-            line-height: 1;
-            letter-spacing: .01em;
+
+        /* --- Typography Art --- */
+        .text-outline-huge {
+            font-size: clamp(6rem, 15vw, 15rem);
+            font-weight: 900;
+            line-height: 0.8;
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(0, 0, 0, 0.03);
             text-transform: uppercase;
+            position: absolute;
+            z-index: -1;
+            white-space: nowrap;
+            user-select: none;
+            pointer-events: none;
         }
-        .brand-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 999px;
-            background: #c6ff33;
-            box-shadow: 0 0 18px rgba(198, 255, 51, .9);
+
+        /* --- Glass & Components --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02);
+            border-radius: 2rem;
         }
-        .nav-shell {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-            min-height: 76px;
-            margin-top: 30px;
-            padding: 0 28px;
-            border: 1px solid rgba(5, 5, 5, .11);
-            border-radius: 28px;
-            background: rgba(255, 255, 255, .82);
-            box-shadow: 0 20px 55px rgba(18, 18, 30, .09);
-            backdrop-filter: blur(22px);
+
+        .glass-nav {
+            background: rgba(246, 246, 249, 0.7);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
-        .nav-links { display: flex; align-items: center; justify-content: center; gap: 38px; font-size: 18px; font-weight: 750; }
-        .nav-links a { color: rgba(5, 5, 5, .76); }
-        .nav-links a:hover { color: #050505; }
-        .login {
+
+        .btn-core {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 100px;
-            min-height: 54px;
-            padding: 0 26px;
-            border-radius: 22px;
-            background: #7d39eb;
-            color: white;
-            font-size: 18px;
-            font-weight: 850;
-            box-shadow: 0 18px 38px rgba(125, 57, 235, .24);
-        }
-        .hero {
-            display: grid;
-            grid-template-columns: minmax(0, 1.1fr) minmax(360px, .9fr);
-            align-items: center;
-            gap: 58px;
-            min-height: calc(100vh - 106px);
-            padding: clamp(74px, 9vh, 138px) 0 clamp(72px, 8vh, 110px);
-        }
-        .kicker {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            padding: 10px 18px;
-            border: 1px solid rgba(5, 5, 5, .1);
-            border-radius: 999px;
-            background: rgba(255, 255, 255, .62);
-            color: rgba(5, 5, 5, .68);
-            font-size: 13px;
-            font-weight: 900;
-            letter-spacing: .18em;
+            padding: 1.1rem 2.5rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 1rem;
             text-transform: uppercase;
-        }
-        .kicker::before {
-            content: "";
-            width: 10px;
-            height: 10px;
-            border-radius: 999px;
-            background: #c6ff33;
-        }
-        h1, h2, h3 { margin: 0; }
-        .hero-title {
-            max-width: 930px;
-            font-family: "Rimma Sans", Impact, sans-serif;
-            font-size: clamp(58px, 6.3vw, 126px);
-            line-height: .94;
-            letter-spacing: 0;
-            text-transform: uppercase;
-            word-break: break-word;
-        }
-        .hero-copy {
-            max-width: 760px;
-            margin: 34px 0 44px;
-            color: rgba(35, 35, 48, .68);
-            font-size: clamp(22px, 1.8vw, 32px);
-            line-height: 1.62;
-            font-weight: 520;
-        }
-        .cta-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-        .btn-lime, .btn-purple, .btn-line {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 70px;
-            padding: 0 38px;
-            border-radius: 26px;
-            font-size: 19px;
-            font-weight: 900;
-            border: 0;
-            text-align: center;
-        }
-        .btn-lime { background: #c6ff33; color: #050505; box-shadow: 0 24px 44px rgba(198, 255, 51, .28); }
-        .btn-purple { background: #7d39eb; color: white; box-shadow: 0 20px 38px rgba(125, 57, 235, .24); }
-        .btn-line { border: 1px solid rgba(5, 5, 5, .12); background: rgba(255, 255, 255, .58); color: #050505; }
-        .hero-orbit {
+            letter-spacing: 0.05em;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
-            min-height: 620px;
-            display: grid;
-            place-items: center;
-        }
-        .hero-orbit::before {
-            content: "";
-            position: absolute;
-            width: min(78vw, 520px);
-            aspect-ratio: 1;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, .9);
-            box-shadow: 0 28px 55px rgba(18, 18, 30, .12), inset 0 0 0 1px rgba(5, 5, 5, .06);
-        }
-        .institution {
-            position: relative;
-            display: grid;
-            place-items: center;
-            width: 190px;
-            height: 190px;
-            color: #7d39eb;
-        }
-        .institution svg { width: 150px; height: 150px; stroke-width: 7; }
-        .float-card {
-            position: absolute;
-            display: grid;
-            gap: 4px;
-            width: 220px;
-            padding: 18px;
-            border: 1px solid rgba(5, 5, 5, .08);
-            border-radius: 20px;
-            background: rgba(255, 255, 255, .86);
-            box-shadow: 0 18px 35px rgba(18, 18, 30, .11);
-        }
-        .float-card b { font-size: 16px; }
-        .float-card span { color: #747482; font-size: 14px; line-height: 1.35; }
-        .float-a { top: 92px; right: 0; }
-        .float-b { bottom: 86px; left: 0; }
-        .section {
-            padding: 108px 0;
-            background: #fff;
-        }
-        .section-title {
-            max-width: 1000px;
-            margin: 0 auto 18px;
-            font-family: "Rimma Sans", Impact, sans-serif;
-            font-size: clamp(44px, 4.2vw, 82px);
-            line-height: .96;
-            text-align: center;
-            text-transform: uppercase;
-            word-break: break-word;
-        }
-        .section-lead {
-            max-width: 720px;
-            margin: 0 auto 70px;
-            color: #6a6b78;
-            font-size: 22px;
-            line-height: 1.45;
-            text-align: center;
-        }
-        .system-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 30px;
-        }
-        .panel {
-            min-height: 410px;
-            border: 1px solid #dedfe7;
-            border-radius: 28px;
-            background: #f7f7fa;
-            padding: 34px;
             overflow: hidden;
-            box-shadow: 0 14px 34px rgba(18, 18, 30, .05);
+            z-index: 1;
         }
-        .panel h3 {
-            color: #7d39eb;
-            font-size: 18px;
-            font-weight: 950;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-        }
-        .diagnostic-card {
-            margin: 64px auto 0;
-            width: 100%;
-            max-width: 330px;
-            padding: 22px;
-            border-radius: 18px;
-            background: white;
-            box-shadow: 0 14px 24px rgba(5, 5, 5, .18);
-        }
-        .mini-avatar { width: 48px; height: 48px; border-radius: 999px; background: linear-gradient(135deg, #e8e8ee, #c8cbd7); }
-        .pill { display: inline-flex; padding: 7px 13px; border-radius: 999px; background: #c6ff33; font-size: 13px; font-weight: 900; }
-        .diagnostic-top { display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 18px; }
-        .diagnostic-card strong { display: block; font-size: 18px; margin-bottom: 3px; }
-        .diagnostic-card p { margin: 0; color: #747482; line-height: 1.35; }
-        .track-panel {
-            background: #050505;
+
+        .btn-violet {
+            background: var(--ed-violet);
             color: white;
-            box-shadow: 0 24px 48px rgba(125, 57, 235, .16);
+            box-shadow: 0 10px 30px rgba(125, 57, 235, 0.3);
         }
-        .track-panel h3 { color: #c6ff33; }
-        .track-list { display: grid; gap: 18px; margin-top: 44px; }
-        .track-item {
-            padding: 18px 20px;
-            border: 1px solid rgba(255, 255, 255, .08);
-            border-radius: 15px;
-            background: #11151f;
-            color: rgba(255, 255, 255, .68);
-            font: 18px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
-            word-break: break-word;
+
+        .btn-violet::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+            z-index: -1;
         }
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
-            margin-top: 36px;
+
+        .btn-violet:hover::before {
+            transform: translateX(100%);
         }
-        .day { color: #a6a8b4; text-align: center; font-size: 14px; font-weight: 800; }
-        .slot { aspect-ratio: 1.1; border-radius: 10px; background: #f3f4f7; border: 1px solid #eceef4; }
-        .slot.active { background: #c6ff33; box-shadow: 0 10px 20px rgba(198, 255, 51, .25); }
-        .prices {
-            display: grid;
-            grid-template-columns: 1fr 1.05fr 1fr;
-            align-items: center;
-            gap: 34px;
-            margin-top: 72px;
+        
+        .btn-violet:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(125, 57, 235, 0.4);
         }
-        .price-card {
-            min-height: 430px;
-            padding: 38px;
-            border: 1px solid #dedfe7;
-            border-radius: 28px;
-            background: #f7f7fa;
+
+        /* --- SVG Animations --- */
+        .svg-draw {
+            stroke-dasharray: 2000;
+            stroke-dashoffset: 2000;
+            animation: drawPath 4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
-        .price-card.featured {
-            min-height: 540px;
-            background: #c6ff33;
-            border-color: #c6ff33;
-            box-shadow: 0 34px 60px rgba(198, 255, 51, .26);
+
+        @keyframes drawPath {
+            to { stroke-dashoffset: 0; }
         }
-        .price-card h3 { font-size: 27px; margin-bottom: 12px; }
-        .price-card p { margin: 0 0 34px; color: #747482; font-size: 18px; line-height: 1.35; }
-        .price-card.featured p { color: rgba(5, 5, 5, .76); }
-        .lessons {
-            margin: 0 0 34px;
-            font-family: "Rimma Sans", Impact, sans-serif;
-            font-size: clamp(38px, 4vw, 64px);
-            line-height: 1;
-            text-transform: uppercase;
+
+        .anim-spin-slow {
+            animation: spin 40s linear infinite;
         }
-        .price-card ul { display: grid; gap: 16px; margin: 0 0 34px; padding: 0; list-style: none; font-size: 18px; }
-        .price-card li::before { content: "✓"; margin-right: 12px; color: #6a6b78; font-weight: 900; }
-        .footer {
-            padding: 48px 0 60px;
-            border-top: 1px solid #ececf2;
-            background: white;
-            color: #747482;
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
-        .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-        .footer a { color: inherit; font-weight: 700; }
-        .footer-links { display: flex; gap: 22px; flex-wrap: wrap; }
-        @media (max-width: 1050px) {
-            .hero { grid-template-columns: 1fr; }
-            .hero-orbit { min-height: 430px; }
-            .system-grid, .prices { grid-template-columns: 1fr; }
-            .price-card, .price-card.featured { min-height: auto; }
+
+        .anim-float {
+            animation: float 6s ease-in-out infinite;
         }
-        @media (max-width: 740px) {
-            .wrap { width: min(100% - 28px, 1500px); }
-            .nav-shell { margin-top: 14px; padding: 14px; border-radius: 22px; min-height: auto; flex-wrap: wrap; }
-            .nav-links { order: 3; width: 100%; justify-content: center; gap: 15px; font-size: 14px; margin-top: 10px; }
-            .login { min-width: auto; min-height: 44px; padding: 0 18px; font-size: 15px; border-radius: 16px; }
-            .hero { padding-top: 40px; padding-bottom: 40px; gap: 32px; }
-            .hero-title { font-size: clamp(38px, 11vw, 76px); }
-            .hero-copy { font-size: 17px; margin: 24px 0 32px; }
-            .btn-lime, .btn-purple, .btn-line { width: 100%; min-height: 54px; border-radius: 16px; font-size: 17px; }
-            .float-card { display: none; }
-            .section { padding: 50px 0; }
-            .section-title { font-size: clamp(32px, 9vw, 44px); }
-            .section-lead { font-size: 18px; margin-bottom: 40px; }
-            .panel { min-height: auto; padding: 24px; }
-            .track-item { font-size: 15px; padding: 14px; }
-            .calendar { gap: 6px; margin-top: 24px; }
-            .price-card { padding: 24px; }
-            .price-card h3 { font-size: 24px; }
-            .lessons { font-size: clamp(32px, 9vw, 38px); margin: 0 0 24px; }
-            .price-card p, .price-card ul { font-size: 16px; }
-            .footer { padding: 34px 0; }
-            .footer-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
-            .footer-links { gap: 14px; flex-direction: column; }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+            100% { transform: translateY(0); }
         }
+
+        /* Interactive Tabs */
+        .tab-btn {
+            opacity: 0.4;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            padding-left: 1.5rem;
+        }
+        .tab-btn.active {
+            opacity: 1;
+            border-left-color: var(--ed-violet);
+            transform: translateX(10px);
+        }
+        .tab-btn:hover {
+            opacity: 0.8;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body>
-    <div class="page">
-        <header class="wrap nav-shell">
-            <a class="brand" href="{{ route('home') }}">Edusfera <span class="brand-dot"></span></a>
-            <nav class="nav-links" aria-label="Основная навигация">
-                <a href="{{ route('tutors.index') }}">Каталог</a>
-                <a href="{{ route('for-tutors') }}">Преподавателям</a>
+<body x-data="{ scrolled: false, mobileOpen: false }" @scroll.window="scrolled = (window.pageYOffset > 20)">
+
+    <!-- NAVBAR WITH AUTH LOGIC -->
+    <header class="fixed top-0 w-full z-50 transition-all duration-300" :class="scrolled || mobileOpen ? 'glass-nav py-4' : 'py-8'">
+        <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+            <a href="{{ route('home') }}" class="font-rimma font-bold text-2xl tracking-tighter flex items-center gap-2 group">
+                EDUSFERA
+                <svg class="w-6 h-6 text-lime-400 group-hover:rotate-180 transition-transform duration-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M12 2L22 12L12 22L2 12L12 2Z" />
+                </svg>
+            </a>
+
+            <nav class="hidden md:flex items-center gap-12 font-bold text-xs uppercase tracking-widest text-gray-500">
+                <a href="{{ route('tutors.index') }}" class="hover:text-black transition-colors">Каталог</a>
+                <a href="{{ route('for-tutors') }}" class="hover:text-black transition-colors">Преподавателям</a>
             </nav>
-            @auth
-                <a class="login" href="/admin">Кабинет</a>
-            @else
-                <a class="login" href="/admin/login?redirect_to={{ urlencode(url()->full()) }}">Войти</a>
-            @endauth
-        </header>
 
-        <section class="wrap hero">
-            <div>
-                <div class="kicker">Подготовка по системе</div>
-                <h1 class="hero-title">Готовьтесь к ЦЭ и ЦТ по системе.</h1>
-                <p class="hero-copy">Edusfera — это не просто подбор преподавателя. Сначала фиксируем стартовый уровень, затем строим траекторию и ведём к целевому баллу шаг за шагом.</p>
-                <div class="cta-row">
-                    <a class="btn-lime" href="{{ route('tutors.index') }}">Подобрать преподавателя</a>
-                    <a class="btn-line" href="#system">Как это работает</a>
-                </div>
-            </div>
+            <div class="flex items-center gap-3">
+                {{-- Mobile burger menu --}}
+                <button @click="mobileOpen = !mobileOpen" class="md:hidden w-10 h-10 rounded-xl flex items-center justify-center text-gray-600 hover:bg-black/5 transition-colors" aria-label="Меню">
+                    <svg x-show="!mobileOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    <svg x-show="mobileOpen" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
 
-            <div class="hero-orbit" aria-hidden="true">
-                <div class="float-card float-a">
-                    <b>Цель зафиксирована</b>
-                    <span>ЦЭ по физике · 82 балла</span>
-                </div>
-                <div class="institution">
-                    <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 48L60 22L102 48"></path>
-                        <path d="M28 53H92"></path>
-                        <path d="M35 53V91"></path>
-                        <path d="M53 53V91"></path>
-                        <path d="M71 53V91"></path>
-                        <path d="M89 53V91"></path>
-                        <path d="M24 92H96"></path>
-                        <path d="M60 39H60.1"></path>
-                    </svg>
-                </div>
-                <div class="float-card float-b">
-                    <b>Следующий шаг</b>
-                    <span>Разбор тестовых ловушек</span>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <main>
-        <section id="system" class="section">
-            <div class="wrap">
-                <h2 class="section-title">Подготовка как система. Не как хаос.</h2>
-                <p class="section-lead">Диагностика, выбор преподавателя под цель и прозрачный прогресс по темам в одном рабочем контуре.</p>
-
-                <div class="system-grid">
-                    <article class="panel">
-                        <h3>Карта стартовой диагностики</h3>
-                        <div class="diagnostic-card">
-                            <div class="diagnostic-top">
-                                <div class="mini-avatar"></div>
-                                <span class="pill">Стабильно</span>
+                @auth
+                    @php
+                        $user = auth()->user();
+                        $unreadMessagesCount = app(\App\Services\ChatUnreadCounter::class)->countForUser($user);
+                        $linked = app(\App\Services\MultiAccountService::class)->getLinkedAccounts();
+                        $roleLabel = \App\Services\MultiAccountService::roleLabel($user->role);
+                    @endphp
+                    
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" @click.away="open = false" class="flex items-center gap-3 bg-white/50 backdrop-blur-md border border-white/40 pl-2 pr-4 py-1.5 rounded-full hover:bg-white/80 transition-all shadow-sm">
+                            <div class="w-8 h-8 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center font-bold text-sm">
+                                {{ mb_substr((string)$user->name, 0, 1) }}
                             </div>
-                            <strong>Физика</strong>
-                            <p>Механика и задачи · Текущий уровень 71%</p>
+                            <div class="text-left hidden sm:block">
+                                <div class="text-sm font-bold leading-tight text-gray-900">{{ $user->name }}</div>
+                                <div class="text-[10px] uppercase font-bold text-gray-400">{{ $roleLabel }}</div>
+                            </div>
+                            @if($unreadMessagesCount > 0)
+                                <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">
+                                    {{ $unreadMessagesCount > 9 ? '9+' : $unreadMessagesCount }}
+                                </div>
+                            @else
+                                <svg class="w-4 h-4 text-gray-400 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            @endif
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div x-show="open" x-transition.opacity.scale.95 style="display: none;" class="absolute right-0 mt-3 w-64 bg-white rounded-2xl border border-gray-200 shadow-xl p-2 z-50">
+                            <a href="/admin" class="block px-4 py-2 text-sm font-bold text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">Личный кабинет</a>
+                            
+                            <a href="{{ $user->role === 'tutor' ? '/admin/transactions' : '/admin/lessons' }}" class="block px-4 py-2 text-sm font-bold text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                                {{ $user->role === 'tutor' ? 'Мои финансы' : 'Мои занятия' }}
+                            </a>
+                            
+                            <a href="/admin/messages" class="flex items-center justify-between px-4 py-2 text-sm font-bold text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+                                Сообщения
+                                @if($unreadMessagesCount > 0)
+                                    <span class="bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-xs">{{ $unreadMessagesCount }}</span>
+                                @endif
+                            </a>
+
+                            @if(count($linked) > 0)
+                                <div class="h-px bg-gray-100 my-2 mx-2"></div>
+                                <div class="px-4 py-1 text-[10px] uppercase font-bold text-gray-400 tracking-wider">Связанные аккаунты</div>
+                                @foreach($linked as $account)
+                                    <a href="{{ route('account.switch', $account['id']) }}" class="flex items-center gap-3 px-4 py-2 hover:bg-violet-50 rounded-lg transition-colors group">
+                                        <div class="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs font-bold group-hover:bg-violet-200">{{ mb_substr($account['name'], 0, 1) }}</div>
+                                        <div>
+                                            <div class="text-sm font-bold text-gray-900">{{ $account['name'] }}</div>
+                                            <div class="text-[10px] font-bold text-gray-400 uppercase">{{ \App\Services\MultiAccountService::roleLabel($account['role']) }}</div>
+                                        </div>
+                                    </a>
+                                @endforeach
+                            @endif
+
+                            <div class="h-px bg-gray-100 my-2 mx-2"></div>
+                            
+                            <a href="{{ route('account.add') }}" class="block px-4 py-2 text-sm font-bold text-lime-700 hover:bg-lime-50 rounded-lg transition-colors">
+                                + Добавить аккаунт
+                            </a>
+                            
+                            <form method="POST" action="{{ route('logout') }}" class="m-0">
+                                @csrf
+                                <button type="submit" class="w-full text-left px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    Выйти
+                                </button>
+                            </form>
                         </div>
-                    </article>
-
-                    <article class="panel track-panel">
-                        <h3>Траектория подготовки</h3>
-                        <div class="track-list">
-                            <div class="track-item">ЦЭ и темп ученика...</div>
-                            <div class="track-item">Урок проведён: закрыт блок по пунктуации...</div>
-                            <div class="track-item">Добавлен следующий шаг: разбор тестовых ловушек...</div>
-                        </div>
-                    </article>
-
-                    <article class="panel">
-                        <h3>Следующий шаг ученика</h3>
-                        <div class="calendar">
-                            @foreach (['M','T','W','T','F','S','S'] as $day)
-                                <div class="day">{{ $day }}</div>
-                            @endforeach
-                            @for ($i = 1; $i <= 28; $i++)
-                                <div class="slot {{ $i === 18 ? 'active' : '' }}"></div>
-                            @endfor
-                        </div>
-                        <a class="btn-purple" href="{{ route('tutors.index') }}" style="width:100%;margin-top:28px;">Зафиксировать шаг</a>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-        <section class="section" style="background:#fbfbfd;">
-            <div class="wrap">
-                <h2 class="section-title">Выберите темп подготовки</h2>
-                <p class="section-lead">Платформа бесплатна для учеников. Оплата списывается только за проведённые уроки.</p>
-
-                <div class="prices">
-                    <article class="price-card">
-                        <h3>Знакомство</h3>
-                        <p>Быстрый старт и первичная диагностика</p>
-                        <div class="lessons">4 урока</div>
-                        <ul>
-                            <li>Полный доступ</li>
-                            <li>Базовый саппорт</li>
-                        </ul>
-                        <a class="btn-line" href="{{ route('tutors.index') }}" style="width:100%;">Выбрать</a>
-                    </article>
-
-                    <article class="price-card featured">
-                        <span class="pill" style="float:right;background:#050505;color:white;">Интенсив</span>
-                        <h3>Уверенный рост</h3>
-                        <p>Системная подготовка к целевому баллу</p>
-                        <div class="lessons">8 уроков</div>
-                        <ul>
-                            <li>Персональный трек</li>
-                            <li>Приоритетная поддержка</li>
-                            <li>Заморозка баланса</li>
-                        </ul>
-                        <a class="btn-purple" href="{{ route('tutors.index') }}" style="width:100%;">Выбрать пакет</a>
-                    </article>
-
-                    <article class="price-card">
-                        <h3>Максимум</h3>
-                        <p>Длинный маршрут для максимального результата</p>
-                        <div class="lessons">16 уроков</div>
-                        <ul>
-                            <li>Все фичи Интенсива</li>
-                            <li>Премиум аналитика</li>
-                        </ul>
-                        <a class="btn-line" href="{{ route('tutors.index') }}" style="width:100%;">Выбрать</a>
-                    </article>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <div class="wrap footer-inner">
-            <span class="brand" style="font-size:24px;">Edusfera <span class="brand-dot"></span></span>
-            <div class="footer-links">
-                <a href="{{ route('legal.offer') }}">Оферта</a>
-                <a href="{{ route('legal.privacy') }}">Политика</a>
-                <a href="{{ route('contacts') }}">Контакты</a>
+                    </div>
+                @else
+                    <a href="/admin/login" class="hidden sm:block text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-black transition-colors">Войти</a>
+                    <a href="/admin/register" class="btn-core btn-violet py-3 px-6 text-xs">Начать</a>
+                @endauth
             </div>
         </div>
-    </footer>
+
+        {{-- Mobile navigation menu --}}
+        <div x-show="mobileOpen" x-cloak
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-1"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-1"
+             class="md:hidden border-t border-gray-200/30">
+            <nav class="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-1">
+                <a href="{{ route('tutors.index') }}" @click="mobileOpen = false" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-black/5 transition-colors">
+                    <svg class="w-5 h-5 text-violet-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    Каталог репетиторов
+                </a>
+                <a href="{{ route('for-tutors') }}" @click="mobileOpen = false" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-black/5 transition-colors">
+                    <svg class="w-5 h-5 text-lime-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Преподавателям
+                </a>
+                @guest
+                <div class="h-px bg-gray-200/50 my-2 mx-4"></div>
+                <a href="/admin/login" @click="mobileOpen = false" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-black/5 transition-colors">
+                    <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                    Войти
+                </a>
+                @endguest
+            </nav>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="relative min-h-screen pt-40 pb-24 flex items-center overflow-hidden">
+        <!-- Subtle Background -->
+        <div class="absolute inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden">
+             <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-lime-300 rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
+             <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-violet-400 rounded-full mix-blend-multiply filter blur-[100px] opacity-20"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 w-full relative z-10 text-center">
+            <h1 class="text-[clamp(3rem,7vw,6rem)] font-rimma font-black uppercase tracking-tighter mb-6 text-gray-900 leading-[0.9]">
+                Сдайте ЦТ и ЦЭ на <br class="hidden sm:block"><span class="text-violet-600">90+ баллов</span>
+            </h1>
+
+            <p class="text-xl md:text-2xl text-gray-500 font-medium mb-12 max-w-3xl mx-auto leading-relaxed">
+                Занимайтесь с проверенными репетиторами. Пройдите бесплатную ИИ-диагностику и получите индивидуальный план подготовки на основе тестов РИКЗ.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center max-w-2xl mx-auto">
+                <a href="/tutors" class="btn-core btn-violet text-lg px-10 py-5 w-full sm:w-auto shadow-xl shadow-violet-500/30">
+                    Найти репетитора
+                </a>
+                <a href="/admin/register" class="btn-core bg-white text-gray-900 border border-gray-200 hover:border-gray-900 hover:bg-gray-50 w-full sm:w-auto text-lg px-10 py-5">
+                    Пройти диагностику
+                </a>
+            </div>
+            
+            <!-- TRUST BAR (Social Proof) -->
+            <div class="mt-20 pt-10 border-t border-gray-200/60 grid grid-cols-2 md:grid-cols-4 gap-6 text-center max-w-4xl mx-auto">
+                <div>
+                    <div class="text-3xl font-rimma font-black text-gray-900">86+</div>
+                    <div class="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">Средний балл</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-rimma font-black text-gray-900">100%</div>
+                    <div class="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">Безопасность</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-rimma font-black text-gray-900">ТОП</div>
+                    <div class="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">Преподаватели</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-rimma font-black text-gray-900">Всё</div>
+                    <div class="text-sm font-bold text-gray-500 uppercase tracking-widest mt-1">В браузере</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW WE WORK (Simplified) -->
+    <section class="py-24 bg-white overflow-hidden border-t border-gray-100">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-[clamp(2rem,4vw,3.5rem)] font-rimma font-black uppercase tracking-tight mb-4">Стандарт Edusfera</h2>
+                <p class="text-xl text-gray-500 font-medium max-w-2xl mx-auto">Мы убрали всё лишнее, чтобы вы сфокусировались только на результате.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 rounded-[2.5rem] p-10 border border-gray-100 hover:border-violet-200 transition-colors">
+                    <div class="w-14 h-14 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center mb-6">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Точечная диагностика</h3>
+                    <p class="text-gray-500 leading-relaxed">ИИ определяет ваши пробелы до начала занятий, экономя время и деньги на повторении известного.</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-[2.5rem] p-10 border border-gray-100 hover:border-lime-200 transition-colors">
+                    <div class="w-14 h-14 rounded-2xl bg-lime-100 text-lime-700 flex items-center justify-center mb-6">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Безопасная оплата</h3>
+                    <p class="text-gray-500 leading-relaxed">Деньги списываются только после того, как урок состоялся. Полная защита от мошенников.</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-[2.5rem] p-10 border border-gray-100 hover:border-blue-200 transition-colors">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-6">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Всё в одном окне</h3>
+                    <p class="text-gray-500 leading-relaxed">Интерактивная доска, видеосвязь и архив материалов — прямо в вашем браузере.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- RIKZ BLOCK (Premium Accent) -->
+    <section class="py-24 md:py-32 bg-gray-900 text-white relative overflow-hidden">
+        <!-- Abstract Neumorphic Glows -->
+        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-violet-600 rounded-full blur-[120px] opacity-40 pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-[600px] h-[600px] bg-lime-500 rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-8">
+                        <span class="w-2 h-2 rounded-full bg-lime-400 animate-pulse"></span>
+                        <span class="text-sm font-bold tracking-widest uppercase text-lime-400">Эксклюзивная технология</span>
+                    </div>
+                    <h2 class="text-[clamp(2.5rem,5vw,4rem)] font-rimma font-black uppercase tracking-tight mb-6 leading-none">
+                        Алгоритмы на базе <span class="text-transparent bg-clip-text bg-gradient-to-r from-lime-300 to-violet-400">РИКЗ 2026</span>
+                    </h2>
+                    <p class="text-xl text-gray-300 font-medium mb-10 leading-relaxed">
+                        Мы обучаем нашу нейросеть на тысячах реальных тестов. Система точно предсказывает ваш балл и выстраивает маршрут подготовки так, чтобы максимизировать результат на экзамене.
+                    </p>
+                    <a href="/admin/register" class="btn-core bg-lime-400 hover:bg-lime-300 text-gray-900 text-lg px-8 py-4 shadow-[0_0_30px_rgba(198,255,51,0.3)]">
+                        Узнать свой прогноз
+                    </a>
+                </div>
+
+                <!-- Gaussian Curve Visualization -->
+                <div class="glass-panel bg-white/5 border-white/10 p-8 md:p-12 rounded-[3rem] relative">
+                    <div class="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
+                        <div class="text-sm font-bold text-gray-400 uppercase tracking-widest">Прогноз результата</div>
+                        <div class="text-5xl font-rimma font-black text-white">96<span class="text-xl text-gray-500">/100</span></div>
+                    </div>
+                    
+                    <div class="h-64 w-full relative">
+                        <svg viewBox="0 0 400 200" class="w-full h-full overflow-visible">
+                            <!-- Axis -->
+                            <line x1="0" y1="160" x2="400" y2="160" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+                            
+                            <!-- Area Gradient -->
+                            <defs>
+                                <linearGradient id="gaussGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="var(--ed-violet)" stop-opacity="0.8"/>
+                                    <stop offset="100%" stop-color="var(--ed-violet)" stop-opacity="0.0"/>
+                                </linearGradient>
+                            </defs>
+
+                            <!-- Gaussian Path Area -->
+                            <path d="M 0 160 Q 100 160 160 100 T 200 20 T 240 100 T 300 160 T 400 160 L 400 160 L 0 160 Z" fill="url(#gaussGradient)"/>
+                            <!-- Gaussian Line -->
+                            <path d="M 0 160 Q 100 160 160 100 T 200 20 T 240 100 T 300 160 T 400 160" fill="none" stroke="var(--ed-lime)" stroke-width="4" class="svg-draw"/>
+                            
+                            <!-- Target Indicator -->
+                            <line x1="260" y1="20" x2="260" y2="160" stroke="white" stroke-width="2" stroke-dasharray="4 4"/>
+                            <circle cx="260" cy="120" r="6" fill="var(--ed-lime)" class="animate-pulse"/>
+                            <rect x="235" y="-10" width="50" height="26" rx="6" fill="white"/>
+                            <text x="260" y="8" fill="black" font-size="14" font-weight="900" text-anchor="middle">96</text>
+                            
+                            <!-- Current Indicator -->
+                            <line x1="140" y1="80" x2="140" y2="160" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-dasharray="4 4"/>
+                            <circle cx="140" cy="120" r="5" fill="var(--text-muted)"/>
+                            <rect x="120" y="60" width="40" height="24" rx="6" fill="rgba(255,255,255,0.1)" backdrop-filter="blur(10px)"/>
+                            <text x="140" y="76" fill="white" font-size="12" font-weight="700" text-anchor="middle">45</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TOP TUTORS -->
+    <section class="py-24 bg-gray-50/50 border-y border-gray-100">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                <div>
+                    <h2 class="text-[clamp(2rem,4vw,3.5rem)] font-rimma font-black uppercase tracking-tight mb-4">Архитекторы баллов</h2>
+                    <p class="text-xl text-gray-500 font-medium max-w-xl">У нас преподают только те, кто доказал свою компетентность реальными результатами учеников.</p>
+                </div>
+                <a href="/tutors" class="btn-core bg-white hover:bg-gray-50 text-gray-900 border border-gray-200">Смотреть всех</a>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Tutor Card 1 -->
+                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-6 rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
+                    <div class="relative w-full h-48 rounded-[1.5rem] bg-gray-200 mb-6 overflow-hidden">
+                        <img src="https://i.pravatar.cc/300?img=47" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Tutor">
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                            <span class="text-lime-600">★</span> 5.0
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-xl text-gray-900 mb-1">Елена М.</h4>
+                    <p class="text-sm font-bold text-violet-600 uppercase tracking-widest mb-4">Математика</p>
+                    <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-4 mb-4">
+                        <span class="text-gray-500">Ср. балл учеников</span>
+                        <span class="font-black text-gray-900">88.5</span>
+                    </div>
+                    <div class="w-full text-center py-2 rounded-xl bg-violet-50 text-violet-700 font-bold text-sm group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                        Записаться
+                    </div>
+                </a>
+
+                <!-- Tutor Card 2 -->
+                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-6 rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
+                    <div class="relative w-full h-48 rounded-[1.5rem] bg-gray-200 mb-6 overflow-hidden">
+                        <img src="https://i.pravatar.cc/300?img=12" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Tutor">
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                            <span class="text-lime-600">★</span> 4.9
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-xl text-gray-900 mb-1">Алексей В.</h4>
+                    <p class="text-sm font-bold text-violet-600 uppercase tracking-widest mb-4">Физика</p>
+                    <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-4 mb-4">
+                        <span class="text-gray-500">Ср. балл учеников</span>
+                        <span class="font-black text-gray-900">91.0</span>
+                    </div>
+                    <div class="w-full text-center py-2 rounded-xl bg-violet-50 text-violet-700 font-bold text-sm group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                        Записаться
+                    </div>
+                </a>
+
+                <!-- Tutor Card 3 -->
+                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-6 rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
+                    <div class="relative w-full h-48 rounded-[1.5rem] bg-gray-200 mb-6 overflow-hidden">
+                        <img src="https://i.pravatar.cc/300?img=5" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Tutor">
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                            <span class="text-lime-600">★</span> 5.0
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-xl text-gray-900 mb-1">Ирина К.</h4>
+                    <p class="text-sm font-bold text-violet-600 uppercase tracking-widest mb-4">Русский язык</p>
+                    <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-4 mb-4">
+                        <span class="text-gray-500">Ср. балл учеников</span>
+                        <span class="font-black text-gray-900">94.2</span>
+                    </div>
+                    <div class="w-full text-center py-2 rounded-xl bg-violet-50 text-violet-700 font-bold text-sm group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                        Записаться
+                    </div>
+                </a>
+
+                <!-- Tutor Card 4 -->
+                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-6 rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
+                    <div class="relative w-full h-48 rounded-[1.5rem] bg-gray-200 mb-6 overflow-hidden">
+                        <img src="https://i.pravatar.cc/300?img=33" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Tutor">
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                            <span class="text-lime-600">★</span> 4.8
+                        </div>
+                    </div>
+                    <h4 class="font-bold text-xl text-gray-900 mb-1">Сергей Н.</h4>
+                    <p class="text-sm font-bold text-violet-600 uppercase tracking-widest mb-4">Биология</p>
+                    <div class="flex justify-between items-center text-sm border-t border-gray-100 pt-4 mb-4">
+                        <span class="text-gray-500">Ср. балл учеников</span>
+                        <span class="font-black text-gray-900">86.0</span>
+                    </div>
+                    <div class="w-full text-center py-2 rounded-xl bg-violet-50 text-violet-700 font-bold text-sm group-hover:bg-violet-600 group-hover:text-white transition-colors">
+                        Записаться
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- REVIEWS -->
+    <section class="py-24 bg-white overflow-hidden" x-data="{
+        next() {
+            this.$refs.slider.scrollBy({ left: this.$refs.slider.offsetWidth, behavior: 'smooth' });
+        },
+        prev() {
+            this.$refs.slider.scrollBy({ left: -this.$refs.slider.offsetWidth, behavior: 'smooth' });
+        }
+    }">
+        <div class="max-w-7xl mx-auto px-6 mb-12 flex justify-between items-end">
+            <h2 class="text-[clamp(2rem,4vw,3.5rem)] font-rimma font-black uppercase tracking-tight leading-none">Они уже <span class="text-violet-600">поступили</span></h2>
+            
+            <div class="hidden md:flex gap-4">
+                <button @click="prev()" class="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button @click="next()" class="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto pl-6 pr-6 md:pr-0 relative">
+            <div x-ref="slider" class="flex overflow-x-auto gap-6 snap-x snap-mandatory scrollbar-hide pb-8">
+                
+                <!-- Review 1 -->
+                <div class="snap-start shrink-0 w-[85vw] md:w-[400px] bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex gap-1 text-lime-500 mb-4 text-xl">★★★★★</div>
+                        <p class="text-gray-700 leading-relaxed mb-6 font-medium">«Платформа невероятно удобная. Никаких сторонних ссылок. Мой репетитор по математике сразу выявил пробелы в тригонометрии с помощью теста. Итог: с 45 баллов на первом РТ до 92 на самом ЦТ.»</p>
+                    </div>
+                    <div class="flex items-center gap-4 mt-auto">
+                        <div class="w-12 h-12 rounded-full bg-violet-200 text-violet-700 flex items-center justify-center font-bold">М</div>
+                        <div>
+                            <div class="font-bold text-gray-900">Максим Д.</div>
+                            <div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-0.5">Поступил в БГУИР</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 2 -->
+                <div class="snap-start shrink-0 w-[85vw] md:w-[400px] bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex gap-1 text-lime-500 mb-4 text-xl">★★★★★</div>
+                        <p class="text-gray-700 leading-relaxed mb-6 font-medium">«Больше всего понравилась система безопасной оплаты. Родители были спокойны. Училась у Елены по физике — это просто восторг, материал объясняется на пальцах!»</p>
+                    </div>
+                    <div class="flex items-center gap-4 mt-auto">
+                        <div class="w-12 h-12 rounded-full bg-lime-200 text-lime-700 flex items-center justify-center font-bold">А</div>
+                        <div>
+                            <div class="font-bold text-gray-900">Анна С.</div>
+                            <div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-0.5">Поступила в БНТУ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Review 3 -->
+                <div class="snap-start shrink-0 w-[85vw] md:w-[400px] bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex gap-1 text-lime-500 mb-4 text-xl">★★★★★</div>
+                        <p class="text-gray-700 leading-relaxed mb-6 font-medium">«График прогресса мотивирует лучше любых слов. Ты видишь, как линия ползет вверх каждую неделю. Сдал английский на 98 баллов, хотя в начале года еле дотягивал до 60.»</p>
+                    </div>
+                    <div class="flex items-center gap-4 mt-auto">
+                        <div class="w-12 h-12 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center font-bold">Е</div>
+                        <div>
+                            <div class="font-bold text-gray-900">Егор В.</div>
+                            <div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-0.5">Поступил в БГУ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{-- Fade hint for horizontal scroll --}}
+            <div class="hidden md:block absolute right-0 top-0 bottom-8 w-24 bg-gradient-to-l from-white to-transparent pointer-events-none z-10"></div>
+        </div>
+    </section>
+
+    <!-- FAQ & CTA -->
+    <section class="py-24 bg-gray-50/50 border-t border-gray-100">
+        <div class="max-w-4xl mx-auto px-6 mb-24">
+            <h2 class="text-[clamp(2rem,4vw,3.5rem)] font-rimma font-black uppercase tracking-tight mb-10 text-center">Остались вопросы?</h2>
+            
+            <div class="space-y-4" x-data="{ activeAccordion: null }">
+                <div class="border border-gray-200 rounded-[2rem] bg-white overflow-hidden">
+                    <button @click="activeAccordion = activeAccordion === 1 ? null : 1" class="w-full flex items-center justify-between p-6 md:p-8 text-left focus:outline-none hover:bg-gray-50 transition-colors">
+                        <span class="font-bold text-lg text-gray-900">Как работает безопасная сделка?</span>
+                        <svg class="w-6 h-6 transform transition-transform duration-300 text-violet-600 flex-shrink-0" :class="activeAccordion === 1 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="activeAccordion === 1" x-collapse>
+                        <div class="px-6 md:px-8 pb-8 text-gray-600 leading-relaxed">
+                            Вы оплачиваете занятие картой на платформе, но деньги не уходят репетитору сразу. Они холдируются. Репетитор получит оплату только после того, как урок фактически состоится в нашем Встроенном классе.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-[2rem] bg-white overflow-hidden">
+                    <button @click="activeAccordion = activeAccordion === 2 ? null : 2" class="w-full flex items-center justify-between p-6 md:p-8 text-left focus:outline-none hover:bg-gray-50 transition-colors">
+                        <span class="font-bold text-lg text-gray-900">Что делать, если репетитор не подошел?</span>
+                        <svg class="w-6 h-6 transform transition-transform duration-300 text-violet-600 flex-shrink-0" :class="activeAccordion === 2 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="activeAccordion === 2" x-collapse>
+                        <div class="px-6 md:px-8 pb-8 text-gray-600 leading-relaxed">
+                            Вы можете отменить или заменить репетитора в любой момент через личный кабинет. Если вы оплатили урок, но отменили его заранее — деньги вернутся на баланс.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-[2rem] bg-white overflow-hidden">
+                    <button @click="activeAccordion = activeAccordion === 3 ? null : 3" class="w-full flex items-center justify-between p-6 md:p-8 text-left focus:outline-none hover:bg-gray-50 transition-colors">
+                        <span class="font-bold text-lg text-gray-900">Нужно ли устанавливать Zoom или Skype?</span>
+                        <svg class="w-6 h-6 transform transition-transform duration-300 text-violet-600 flex-shrink-0" :class="activeAccordion === 3 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div x-show="activeAccordion === 3" x-collapse>
+                        <div class="px-6 md:px-8 pb-8 text-gray-600 leading-relaxed">
+                            Нет. В Edusfera встроен собственный интерактивный класс. Занятия проходят прямо в браузере. Вы и преподаватель видите друг друга по видео, вместе рисуете на цифровой доске и решаете тесты в одном окне.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINAL CTA -->
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="bg-gray-900 rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
+                <div class="absolute inset-0 z-0">
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-violet-600 rounded-full blur-[150px] opacity-20"></div>
+                </div>
+                <div class="relative z-10">
+                    <h2 class="text-4xl md:text-6xl font-rimma font-black uppercase tracking-tighter mb-6 text-white leading-none">
+                        Готовы к высоким <span class="text-lime-400">баллам?</span>
+                    </h2>
+                    <p class="text-xl text-gray-400 font-medium mb-12 max-w-2xl mx-auto">
+                        Сделайте первый шаг прямо сейчас. Пройдите регистрацию и получите бесплатную диагностику знаний.
+                    </p>
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <a href="/admin/register" class="btn-core btn-violet text-lg px-12 py-5 w-full sm:w-auto">Создать аккаунт</a>
+                        <a href="/tutors" class="btn-core bg-white/10 hover:bg-white/20 text-white border border-white/20 text-lg px-12 py-5 w-full sm:w-auto transition-colors">Поиск репетитора</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @include('partials.site-footer')
+
 </body>
 </html>

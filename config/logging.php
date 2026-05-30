@@ -125,6 +125,19 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Канал `api` — структурированные JSON-логи публичного API
+        // (требования 5.4, 5.5 microservices-foundation). Каждая запись выходит
+        // как одна JSON-строка с полями ts, level, request_id, route, user_id,
+        // client_id, latency_ms, message, ctx — формат задаёт JsonFormatterTap.
+        'api' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/api.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'tap' => [App\Logging\JsonFormatterTap::class],
+            'replace_placeholders' => true,
+        ],
+
         'null' => [
             'driver' => 'monolog',
             'handler' => NullHandler::class,

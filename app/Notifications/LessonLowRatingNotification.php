@@ -19,7 +19,8 @@ class LessonLowRatingNotification extends Notification
         private readonly Lesson $lesson,
         private readonly User $student,
         private readonly int $rating,
-    ) {}
+    ) {
+    }
 
     public function via(object $notifiable): array
     {

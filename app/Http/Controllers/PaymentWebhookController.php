@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Webhooks\VerifiesWebhookSignature;
 use App\Services\Payment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,16 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentWebhookController extends Controller
 {
+    /**
+     * Общая логика проверки HMAC-SHA256 переиспользуется из трейта
+     * (требование 10.7). Этот легаси-приёмник сохраняет собственный контракт:
+     * заголовок `X-Webhook-Signature` (без префикса `sha256=`), IP-allowlist,
+     * канал логов `payments` и коды ответов 503/403/422/200 — поэтому он не
+     * использует template-method AbstractWebhookController, а вызывает только
+     * низкоуровневый помощник hmacEquals().
+     */
+    use VerifiesWebhookSignature;
+
     public function __invoke(Request $request, PaymentService $paymentService): JsonResponse
     {
         $signature = $request->header('X-Webhook-Signature', '');
@@ -37,7 +48,7 @@ class PaymentWebhookController extends Controller
             return response()->json(['success' => false, 'message' => 'Webhook is not configured.'], 503);
         }
 
-        if ($secret !== '' && ! $this->verifySignature($request->getContent(), (string) $signature, (string) $secret)) {
+        if ($secret !== '' && ! $this->hmacEquals($request->getContent(), (string) $signature, (string) $secret)) {
             Log::channel('payments')->warning('payment_webhook_invalid_signature', [
                 'ip' => $request->ip(),
                 'received_at' => now('UTC')->toISOString(),
@@ -93,12 +104,5 @@ class PaymentWebhookController extends Controller
             'success' => true,
             'message' => 'Webhook processed.',
         ]);
-    }
-
-    private function verifySignature(string $payload, string $signature, string $secret): bool
-    {
-        $expected = hash_hmac('sha256', $payload, $secret);
-
-        return hash_equals($expected, $signature);
     }
 }

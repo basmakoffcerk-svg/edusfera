@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Cookie;
 class MultiAccountService
 {
     private const COOKIE_NAME = 'edusfera_linked_ids';
-
     private const COOKIE_LIFETIME = 43200; // 30 days in minutes
 
     /**
@@ -77,7 +76,6 @@ class MultiAccountService
         $user = User::query()->find($userId);
         if (! $user) {
             $this->removeId($userId);
-
             return false;
         }
 
@@ -155,7 +153,7 @@ class MultiAccountService
     /**
      * Internal: Save IDs to cookie.
      *
-     * @param  int[]  $ids
+     * @param int[] $ids
      */
     private function saveIdsToCookie(array $ids): void
     {
@@ -163,7 +161,6 @@ class MultiAccountService
 
         if (empty($ids)) {
             Cookie::queue(Cookie::forget(self::COOKIE_NAME));
-
             return;
         }
 

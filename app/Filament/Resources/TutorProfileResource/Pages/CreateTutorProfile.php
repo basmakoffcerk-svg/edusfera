@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TutorProfileResource\Pages;
 
 use App\Filament\Resources\TutorProfileResource;
+use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTutorProfile extends CreateRecord
@@ -35,5 +36,10 @@ class CreateTutorProfile extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return static::getResource()::getUrl('index');
+    }
+
+    protected function getFormActions(): array
+    {
+        return [];
     }
 }

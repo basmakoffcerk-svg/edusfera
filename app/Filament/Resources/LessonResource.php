@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Contracts\Lesson\LessonBooker;
+use App\Domain\Lesson\CancelReason;
 use App\Filament\Resources\LessonResource\Pages;
 use App\Models\Lesson;
 use App\Models\LessonReview;
-use App\Notifications\LessonCancelledNotification;
 use App\Notifications\LessonConfirmedNotification;
 use App\Services\ChatService;
 use App\Services\Payment\PaymentService;
@@ -291,14 +292,12 @@ class LessonResource extends Resource
                     ->label('Подробнее')
                     ->button()
                     ->color('gray'),
-                Tables\Actions\Action::make('open_meeting')
-                    ->label('Войти')
+                Tables\Actions\Action::make('open_classroom')
+                    ->label('Войти в класс')
                     ->icon('heroicon-o-video-camera')
                     ->color('primary')
-                    ->url(fn (Lesson $record): ?string => $record->meeting_link)
-                    ->openUrlInNewTab()
-                    ->visible(fn (Lesson $record): bool => filled($record->meeting_link)
-                        && $record->payment_status === Lesson::PAYMENT_PAID
+                    ->url(fn (Lesson $record): string => route('classroom.show', $record))
+                    ->visible(fn (Lesson $record): bool => $record->payment_status === Lesson::PAYMENT_PAID
                         && in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true)),
                 Tables\Actions\Action::make('confirm')
                     ->label('Подтвердить')
@@ -466,23 +465,17 @@ class LessonResource extends Resource
                     })
                     ->requiresConfirmation()
                     ->action(function (Lesson $record): void {
-                        if ($record->payment_status === Lesson::PAYMENT_PAID) {
-                            app(PaymentService::class)->refundLessonPayment($record, 'lesson_cancelled');
+                        // Требование 6.3: мутация агрегата Lesson идёт через контракт
+                        // LessonBooker, а не через прямое изменение Eloquent-модели.
+                        $wasPaid = $record->payment_status === Lesson::PAYMENT_PAID;
 
-                            Notification::make()
-                                ->title('Урок отменен, возврат оформлен')
-                                ->success()
-                                ->send();
-
-                            return;
-                        }
-
-                        $record->update(['status' => Lesson::STATUS_CANCELLED]);
-                        $record->student?->notify(new LessonCancelledNotification($record->fresh()));
-                        $record->tutor?->notify(new LessonCancelledNotification($record->fresh()));
+                        app(LessonBooker::class)->cancel(
+                            (int) $record->id,
+                            CancelReason::lessonCancelled(),
+                        );
 
                         Notification::make()
-                            ->title('Урок отменен')
+                            ->title($wasPaid ? 'Урок отменен, возврат оформлен' : 'Урок отменен')
                             ->success()
                             ->send();
                     }),
