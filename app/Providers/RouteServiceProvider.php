@@ -27,14 +27,13 @@ use Illuminate\Support\ServiceProvider;
  */
 final class RouteServiceProvider extends ServiceProvider
 {
-    /**
-     * Имя rate-limiter'а, на который ссылается middleware `throttle:api.v1`.
-     */
     public const API_V1_LIMITER = 'api.v1';
+    public const WEB_AUTH_LIMITER = 'web.auth';
 
     public function boot(): void
     {
         $this->configureApiV1RateLimiter();
+        $this->configureWebAuthRateLimiter();
     }
 
     /**
@@ -143,6 +142,17 @@ final class RouteServiceProvider extends ServiceProvider
         }
 
         return null;
+    }
+
+    private function configureWebAuthRateLimiter(): void
+    {
+        RateLimiter::for(self::WEB_AUTH_LIMITER, function (Request $request): Limit {
+            return Limit::perMinute(5)
+                ->by($request->ip())
+                ->response(function (Request $request, array $headers): JsonResponse {
+                    return $this->tooManyRequestsResponse($headers);
+                });
+        });
     }
 
     /**

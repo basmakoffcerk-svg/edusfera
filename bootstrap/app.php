@@ -13,15 +13,32 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
-        // Входящие webhook'и микросервисов/провайдеров (требование 10).
+        // Входящие webhook'и микросервисов/провайдеров.
         // Префикс пути — `webhooks`, middleware-группа `api` (для AssignRequestId
-        // / X-Request-Id и structured logging), но БЕЗ throttle:api.v1 и без auth:
-        // аутентификация делается HMAC-подписью на уровне контроллера.
+        // и structured logging), но без throttle и auth.
+        // Аутентификация выполняется HMAC-подписью на уровне контроллера.
         then: function (): void {
             Route::middleware('api')
                 ->prefix('webhooks')
                 ->name('webhooks.')
                 ->group(base_path('routes/webhooks.php'));
+
+            // Эндпоинт метрик Prometheus.
+            // Регистрируется на корневом уровне как `GET /metrics`,
+            // чтобы быть доступным для стандартного сбора (scrape).
+            // Защищен с помощью middleware `metrics.auth`.
+            Route::middleware(['api', 'metrics.auth'])
+                ->get('/metrics', \App\Http\Api\V1\Controllers\MetricsController::class)
+                ->name('metrics');
+
+            // Internal S2S API для микросервисов.
+            // Префикс `/api/internal/v1`, middleware-группа `api` (AssignRequestId,
+            // StructuredLogging, RecordHttpMetrics). Аутентификация и scope-проверка
+            // определяются внутри routes/internal.php per-route.
+            Route::middleware('api')
+                ->prefix('api/internal/v1')
+                ->name('internal.v1.')
+                ->group(base_path('routes/internal.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -29,35 +46,31 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\ApplyRoleSessionLifetime::class,
         ]);
 
-        // Группа `api` используется маршрутами `routes/api.php` (см. `withRouting()`),
+        // Группа `api` используется маршрутами `routes/api.php`,
         // в т.ч. подгруппой `Route::prefix('v1')` для публичного API.
         //
-        // Порядок (соответствует design 3.3 microservices-foundation):
-        //   1. AssignRequestId   — генерит/принимает X-Request-Id, шарит его в Log context
-        //                          (требования 5.1–5.3, 5.6)
-        //   2. StructuredLogging — замеряет латентность и пишет JSON-запись в канал `api`
-        //                          в terminate() (требования 5.4, 5.5)
-        //   …дальше идут дефолтные api-middleware (SubstituteBindings и т.д.).
-        //
-        // Один вызов prependToGroup сохраняет порядок переданных классов:
-        // первый элемент массива станет первым в итоговом стеке.
+        // Регистрация базовых middleware для API-запросов:
+        //   1. AssignRequestId   — управление X-Request-Id для сквозного логирования.
+        //   2. StructuredLogging — структурированное логирование запросов.
         $middleware->prependToGroup('api', [
             \App\Http\Middleware\AssignRequestId::class,
             \App\Http\Middleware\StructuredLogging::class,
         ]);
 
-        // Алиас `scope` для middleware EnforceServiceScope.
-        // Использование: ->middleware('scope:lessons:read')
-        // Покрывает требование 13.2 спеки microservices-foundation.
-        //
-        // Алиас `idempotency` для middleware EnforceIdempotency.
-        // Вешается точечно на mutating-роуты: ->middleware('idempotency').
-        // На GET/HEAD/OPTIONS и на запросы без заголовка Idempotency-Key —
-        // прозрачно пропускает. Покрывает требование 4 спеки
-        // microservices-foundation.
+        // Сбор метрик HTTP-запросов. Middleware регистрируется в группе `api`
+        // для замера длительности и записи метрик в Prometheus.
+        $middleware->appendToGroup('api', [
+            \App\Http\Middleware\RecordHttpMetrics::class,
+        ]);
+
+        // Алиасы для middleware:
+        // - `scope`: проверка прав доступа по scope.
+        // - `idempotency`: обеспечение идемпотентности мутирующих запросов.
         $middleware->alias([
             'scope' => \App\Http\Middleware\EnforceServiceScope::class,
             'idempotency' => \App\Http\Middleware\EnforceIdempotency::class,
+            'metrics.auth' => \App\Http\Middleware\MetricsAuth::class,
+            'throttle:web.auth' => \Illuminate\Http\Middleware\ThrottleRequests::class.':web.auth',
         ]);
 
         $middleware->validateCsrfTokens(except: [
@@ -71,6 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('lessons:complete')->everyTenMinutes();
         $schedule->command('integration:publish-outbox')->everyMinute();
         $schedule->command('integration:cleanup-outbox')->dailyAt('03:30');
+        $schedule->command('reconcile:lessons-with-ai')->dailyAt('03:00');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
