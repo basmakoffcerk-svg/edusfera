@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Api\V1\Controllers\ClassroomTokenController;
 use App\Http\Api\V1\Controllers\JwksController;
 use App\Http\Api\V1\Controllers\MeController;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +38,20 @@ Route::prefix('v1')
         // Без валидного токена middleware `auth:sanctum` возвращает 401.
         Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('/me', MeController::class)->name('me');
+
+            // Classroom-токен для подключения пользователя к виртуальному классу
+            // (требования 11.5, 11.6). Доступ к уроку проверяется внутри
+            // ClassroomTokenService через LessonPolicy::view; 403 — без прав,
+            // 404 — если урок не найден.
+            //
+            // NB: scope `classroom:token:issue` намеренно НЕ навешан на этот
+            // пользовательский путь — Sanctum-токены пользователей такого scope
+            // не несут, и его проверка сломала бы сценарий 11.5. Для S2S-доступа
+            // микросервисов предполагается отдельный роут под Passport
+            // client_credentials с `->middleware('scope:classroom:token:issue')`
+            // (вводится вместе с internal-маршрутами, см. требование 13.6).
+            Route::get('/lessons/{id}/classroom-token', ClassroomTokenController::class)
+                ->name('lessons.classroom-token');
         });
 
         // Публичный JWKS endpoint — без auth middleware (требования 3.4, 3.7, 11.7).

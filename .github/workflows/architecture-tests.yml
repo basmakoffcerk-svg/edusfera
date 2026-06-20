@@ -1,0 +1,38 @@
+name: Architecture Tests
+
+# Требование 14.6: при падении архитектурного теста CI отмечает сборку как failed.
+# Прогоняет testsuite "Architecture" (tests/Architecture/LayerIsolationTest.php),
+# который защищает границы слоёв (требования 6.4, 6.5, 14.1–14.5):
+#   - app/Http/Api/V1/*   не ссылается на App\Models\*
+#   - app/Filament/*      ходит в контекст Lesson только через App\Contracts\*
+#   - app/Domain/*        не зависит от App\Filament\* и App\Http\*
+#   - app/Http/Webhooks/* не вызывает DB-фасад / Eloquent напрямую
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  architecture:
+    name: Layer isolation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run architecture testsuite
+        run: php artisan test --testsuite=Architecture

@@ -22,8 +22,6 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * Использование в роутах:
  *   Route::get('/resource', Handler::class)->middleware('scope:lessons:read');
- *
- * Покрывает требования 13.2, 13.3, 13.4 спеки microservices-foundation.
  */
 final class EnforceServiceScope
 {

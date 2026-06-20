@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\AccountSwitcherController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\DiagnosticController;
 use App\Http\Controllers\LessonBookingController;
 use App\Http\Controllers\PaymentWebhookController;
-use App\Http\Controllers\AccountSwitcherController;
-use App\Http\Controllers\ClassroomController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('home');
@@ -20,6 +20,15 @@ Route::get('/', function () {
 Route::get('/for-tutors', function () {
     return view('for-tutors');
 })->name('for-tutors');
+
+// ─── Public Diagnostic (entry point before registration) ───
+Route::get('/diagnostic', [DiagnosticController::class, 'show'])
+    ->name('diagnostic.show');
+Route::post('/diagnostic/submit', [DiagnosticController::class, 'submitStep'])
+    ->middleware('throttle:30,1')
+    ->name('diagnostic.submit');
+Route::get('/diagnostic/result', [DiagnosticController::class, 'finish'])
+    ->name('diagnostic.finish');
 
 Route::view('/offer', 'legal.offer')->name('legal.offer');
 Route::view('/refund-policy', 'legal.refund-policy')->name('legal.refund');
@@ -37,8 +46,10 @@ Route::post('/logout', function (Request $request) {
 })->middleware('auth')->name('logout');
 
 Route::match(['get', 'post'], '/account/switch/{userId}', [AccountSwitcherController::class, 'switch'])
+    ->middleware('auth')
     ->name('account.switch');
 Route::match(['get', 'post'], '/account/add', [AccountSwitcherController::class, 'addAccount'])
+    ->middleware('auth')
     ->name('account.add');
 
 Route::get('/tutors', [CatalogController::class, 'index'])->name('tutors.index');
@@ -78,17 +89,17 @@ Route::middleware('auth')->group(function (): void {
         ->name('classroom.notes.get');
     Route::post('/classroom/{lesson}/notes', [ClassroomController::class, 'storeNote'])
         ->name('classroom.notes.store');
-        
+
     Route::get('/classroom/{lesson}/files', [ClassroomController::class, 'getFiles'])
         ->name('classroom.files.get');
     Route::post('/classroom/{lesson}/files', [ClassroomController::class, 'uploadFile'])
         ->name('classroom.files.upload');
-        
+
     Route::get('/classroom/{lesson}/chat', [ClassroomController::class, 'getChat'])
         ->name('classroom.chat.get');
     Route::post('/classroom/{lesson}/chat', [ClassroomController::class, 'storeChat'])
         ->name('classroom.chat.store');
-        
+
     Route::get('/classroom/{lesson}/homework', [ClassroomController::class, 'getHomework'])
         ->name('classroom.homework.get');
     Route::get('/classroom/{lesson}/files/{file}/download', [ClassroomController::class, 'downloadFile'])

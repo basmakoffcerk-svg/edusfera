@@ -6,65 +6,18 @@ namespace Tests\Feature;
 
 /*
 |--------------------------------------------------------------------------
-| Bug Condition Exploration Tests — Package Settlement
+| Тесты расчетов пакетных уроков
 |--------------------------------------------------------------------------
 |
-| Эти тесты ДОЛЖНЫ упасть на UNFIXED коде. Они кодируют bug condition из
-| design.md / bugfix.md (Property 1 / 2): per-lesson partial settlement и
-| capture для пакетных уроков. Counterexample фиксируется ниже.
-|
-| Документированный counterexample (`pack_4`, price_per_hour = 40 BYN):
-|   transaction.amount      = 152.00
-|   transaction.net_amount  = 125.56  (= 152.00 - 22.80 commission - 3.64 fee)
-|   expected base net_share = floor(125.56 / 4, 2) = 31.39
-|   expected base gross_share = floor(152.00 / 4, 2) = 38.00
-|
-| Counterexamples при запуске на текущем (UNFIXED) коде:
-|
-|   1) test_first_package_settle_should_only_credit_one_share
-|      expected: tutor_balance.available_amount == '31.39' (одна доля)
-|      actual:   tutor_balance.available_amount == '125.56' (вся transaction.net_amount)
-|      отклонение: ×4 (100% пакета вместо 25%)
-|      Подтверждает: bugfix.md §1.1 — settle первого урока пакета зачисляет
-|      полную net_amount вместо доли (`floor(net_amount / N, 2)`).
-|
-|   2) test_child_package_lesson_settle_credits_share
-|      expected: tutor_balance.available_amount delta == '31.39'
-|      actual:   tutor_balance.available_amount delta == '0.00'
-|      причина:  у дочернего урока нет своей Transaction (UNIQUE
-|                transactions.lesson_id привязывает Transaction к родителю),
-|                поэтому в settleCompletedLesson проверка `! $lesson->transaction`
-|                приводит к раннему return.
-|      Подтверждает: bugfix.md §1.2 — settleCompletedLesson — no-op для
-|                                      дочерних уроков пакета.
-|
-|   3) test_refund_unsettled_child_decrements_pending_by_share
-|      expected: tutor_balance.pending_amount delta == '-31.39';
-|                в кошелёк возвращена доля gross_share = '38.00'.
-|      actual:   tutor_balance.pending_amount delta == '0.00';
-|                в кошелёк не возвращено ничего; lesson только переведён
-|                в STATUS_CANCELLED без финансового возврата.
-|      причина:  refundLessonPayment проверяет `! $lesson->transaction`,
-|                для дочерних — true → ранний return после установки
-|                status = cancelled, без затрагивания tutor_balance и
-|                student_balance.
-|      Подтверждает: bugfix.md §1.4, §1.5 — refund дочернего урока
-|                                            не выполняет финансового
-|                                            возврата.
-|
-| EXPECTED OUTCOME (UNFIXED code): все три теста FAIL — это success case
-| для exploration теста, баг подтверждён. После Task 3/4 (фикс) эти же
-| тесты должны проходить — Task 9 валидирует это.
+| Проверка корректности per-lesson partial settlement и capture для пакетов уроков.
 |
 */
 
 use App\Models\Lesson;
-use App\Models\LessonSettlement;
 use App\Models\StudentBalance;
 use App\Models\Transaction;
 use App\Models\TutorBalance;
 use App\Models\User;
-use App\Services\PackageService;
 use App\Services\Payment\PaymentService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -86,7 +39,7 @@ class PackageSettlementInvariantTest extends TestCase
      *     transaction: Transaction,
      * }
      */
-    private function bootstrapPaidPack4(bool $useWalletBalance = false): array
+    private function bootstrapPaidPack4(bool $useWalletBalance = false, string $walletAmount = '152.00'): array
     {
         Notification::fake();
 
@@ -119,9 +72,9 @@ class PackageSettlementInvariantTest extends TestCase
             // releaseHeldForLesson (wallet) instead of through gateway.
             StudentBalance::query()->create([
                 'user_id' => $student->id,
-                'available_amount' => '152.00',
+                'available_amount' => $walletAmount,
                 'locked_amount' => '0.00',
-                'total_topped_up' => '152.00',
+                'total_topped_up' => $walletAmount,
                 'total_spent' => '0.00',
                 'total_refunded' => '0.00',
             ]);
@@ -349,6 +302,44 @@ class PackageSettlementInvariantTest extends TestCase
             'Student locked_amount must decrease by exactly one gross share (38.00 BYN). '
             .'On UNFIXED code locked stays unchanged.'
         );
+
+        $child->refresh();
+        $this->assertSame(Lesson::STATUS_CANCELLED, $child->status);
+        $this->assertSame(Lesson::PAYMENT_REFUNDED, $child->payment_status);
+    }
+
+    /**
+     * Test that refund of a partially wallet-funded package lesson
+     * successfully credits the student's wallet rather than attempting a card gateway refund.
+     */
+    public function test_refund_partial_wallet_payment_credits_wallet(): void
+    {
+        // 100.00 BYN from wallet, 52.00 BYN from card (total 152.00 BYN)
+        $ctx = $this->bootstrapPaidPack4(useWalletBalance: true, walletAmount: '100.00');
+
+        /** @var Lesson $child */
+        $child = $ctx['children'][0];
+
+        $tutorBalanceBefore = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
+        $studentBalanceBefore = StudentBalance::query()->where('user_id', $ctx['student']->id)->firstOrFail();
+
+        $pendingBefore = (string) $tutorBalanceBefore->pending_amount;
+        $studentAvailableBefore = (string) $studentBalanceBefore->available_amount;
+        $studentLockedBefore = (string) $studentBalanceBefore->locked_amount;
+
+        // Refund one child lesson (gross share = 38.00)
+        app(PaymentService::class)->refundLessonPayment($child->fresh(), 'student_cancelled');
+
+        $tutorBalanceAfter = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
+        $studentBalanceAfter = StudentBalance::query()->where('user_id', $ctx['student']->id)->firstOrFail();
+
+        $pendingDelta = bcsub((string) $tutorBalanceAfter->pending_amount, $pendingBefore, 2);
+        $studentAvailableDelta = bcsub((string) $studentBalanceAfter->available_amount, $studentAvailableBefore, 2);
+        $studentLockedDelta = bcsub((string) $studentBalanceAfter->locked_amount, $studentLockedBefore, 2);
+
+        $this->assertSame('-31.39', $pendingDelta);
+        $this->assertSame('38.00', $studentAvailableDelta, 'Gross share of the refunded lesson must go to student wallet because wallet was partially used.');
+        $this->assertSame('-38.00', $studentLockedDelta);
 
         $child->refresh();
         $this->assertSame(Lesson::STATUS_CANCELLED, $child->status);

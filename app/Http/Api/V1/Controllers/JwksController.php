@@ -48,7 +48,47 @@ final class JwksController extends Controller
             $keys[] = $this->buildJwk((string) $previousKeyPath, 'previous');
         }
 
+        // Classroom публичный ключ (требование 11.7): отдельная RSA keypair с
+        // собственным kid, чтобы classroom-сервис мог валидировать classroom-JWT
+        // по JWKS без shared secret. Публикуется только если файл ключа доступен —
+        // в окружениях без classroom-ключа поведение JWKS не меняется.
+        $classroomKey = $this->buildClassroomJwk();
+        if ($classroomKey !== null) {
+            $keys[] = $classroomKey;
+        }
+
         return response()->json(['keys' => $keys]);
+    }
+
+    /**
+     * Строит JWK для classroom-публичного ключа (требование 11.7).
+     *
+     * KID вычисляется ИМЕННО так же, как в {@see \App\Domain\Classroom\RsaClassroomTokenIssuer}:
+     * `'classroom-'.substr(sha256(publicKeyPem), 0, 16)`. Это критично — иначе
+     * classroom-сервис не сопоставит ключ из JWKS с `kid` в header выпущенного
+     * токена и не сможет проверить подпись.
+     *
+     * Возвращает null, если classroom-публичный ключ не сконфигурирован или
+     * недоступен (тогда classroom-ключ просто не попадает в JWK Set).
+     */
+    private function buildClassroomJwk(): ?array
+    {
+        $publicKeyPath = config('classroom.jwt_public_key_path');
+
+        if (! $publicKeyPath || ! is_readable((string) $publicKeyPath)) {
+            return null;
+        }
+
+        $pem = file_get_contents((string) $publicKeyPath);
+
+        if ($pem === false || trim($pem) === '') {
+            return null;
+        }
+
+        // KID согласован с RsaClassroomTokenIssuer::resolveKeyId().
+        $kid = 'classroom-'.substr(hash('sha256', $pem), 0, 16);
+
+        return $this->buildJwkFromPem($pem, 'classroom', $kid);
     }
 
     /**
@@ -75,8 +115,13 @@ final class JwksController extends Controller
      *   kid — идентификатор ключа (sha256 от n, усечённый до 16 символов)
      *   n   — модуль RSA в base64url
      *   e   — публичная экспонента в base64url
+     *
+     * @param  string|null  $kidOverride  Явный kid (для classroom-ключа он должен
+     *                                    совпадать с тем, что issuer кладёт в header
+     *                                    токена). Если null — kid вычисляется из
+     *                                    модуля + суффикса (схема Passport-ключей).
      */
-    private function buildJwkFromPem(string $pem, string $kidSuffix): array
+    private function buildJwkFromPem(string $pem, string $kidSuffix, ?string $kidOverride = null): array
     {
         /** @var PublicKey $publicKey */
         $publicKey = PublicKeyLoader::load($pem);
@@ -92,8 +137,9 @@ final class JwksController extends Controller
         // phpseclib3 возвращает {"keys": [...]} — берём первый ключ
         $jwk = $jwkData['keys'][0] ?? $jwkData;
 
-        // Генерируем kid на основе хэша модуля + суффикса для уникальности при ротации
-        $kid = substr(hash('sha256', ($jwk['n'] ?? '').$kidSuffix), 0, 16);
+        // Для Passport-ключей kid генерируется из хэша модуля + суффикса (уникальность
+        // при ротации). Для classroom-ключа kid задаётся явно, чтобы совпасть с issuer.
+        $kid = $kidOverride ?? substr(hash('sha256', ($jwk['n'] ?? '').$kidSuffix), 0, 16);
 
         return [
             'kty' => 'RSA',

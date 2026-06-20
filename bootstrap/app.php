@@ -42,8 +42,16 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // M7: Global throttle on web routes — prevents brute-force and DDoS.
+        // 120 req/min per IP is generous for a tutor marketplace.
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\ApplyRoleSessionLifetime::class,
+            \App\Http\Middleware\SecurityHeaders::class,
+            'throttle:120,1',
+        ]);
+
+        $middleware->appendToGroup('api', [
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
 
         // Группа `api` используется маршрутами `routes/api.php`,
@@ -74,7 +82,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->validateCsrfTokens(except: [
-            '/account/*',
+            //
         ]);
     })
     ->withCommands([
@@ -85,6 +93,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('integration:publish-outbox')->everyMinute();
         $schedule->command('integration:cleanup-outbox')->dailyAt('03:30');
         $schedule->command('reconcile:lessons-with-ai')->dailyAt('03:00');
+        $schedule->command('health:check')->daily()->at('06:00');
+        $schedule->command('queue:prune-batches --hours=48')->daily();
+        $schedule->command('queue:prune-failed --hours=168')->daily();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

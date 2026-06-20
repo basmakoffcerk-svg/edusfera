@@ -17,12 +17,6 @@ use Symfony\Component\HttpFoundation\Response;
  * Запись содержит поля: `route`, `method`, `status`, `latency_ms`, `user_id`,
  * `client_id`. Поле `request_id` подмешивается автоматически из общего
  * контекста, который выставляет `AssignRequestId` через `Log::shareContext`.
- *
- * Покрывает требования 5.4 и 5.5 спеки microservices-foundation.
- *
- * Порядок в стеке `api`: `AssignRequestId` (генерит/принимает request_id)
- * стоит ПЕРЕД `StructuredLogging`, чтобы request_id уже жил в shared context
- * к моменту, когда middleware пишет запись в `terminate()`.
  */
 final class StructuredLogging
 {
@@ -36,8 +30,7 @@ final class StructuredLogging
     public function __construct(
         private readonly Application $app,
         private readonly LogManager $log,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -48,7 +41,7 @@ final class StructuredLogging
 
     /**
      * Вызывается фреймворком после отправки ответа клиенту, что позволяет
-     * писать в лог-канал без задержки ответа (требование 5.5).
+     * писать в лог-канал без задержки ответа.
      */
     public function terminate(Request $request, Response $response): void
     {
@@ -76,21 +69,19 @@ final class StructuredLogging
         $clientId = $this->resolveClientId($request);
 
         $context = [
-            'route'      => $routeIdentifier,
-            'method'     => $request->getMethod(),
-            'status'     => $response->getStatusCode(),
+            'route' => $routeIdentifier,
+            'method' => $request->getMethod(),
+            'status' => $response->getStatusCode(),
             'latency_ms' => $latencyMs,
-            'user_id'    => $userId,
-            'client_id'  => $clientId,
+            'user_id' => $userId,
+            'client_id' => $clientId,
         ];
 
         $this->log->channel('api')->info('http_request_completed', $context);
     }
 
     /**
-     * client_id выставляется S2S-аутентификацией (Passport client_credentials,
-     * задача 16). На фазе фундамента это значение, как правило, отсутствует;
-     * читаем его best-effort из request-атрибутов и контейнера.
+     * Чтение client_id из запроса или контейнера.
      */
     private function resolveClientId(Request $request): ?string
     {

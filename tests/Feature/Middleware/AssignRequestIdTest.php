@@ -22,7 +22,7 @@ class AssignRequestIdTest extends TestCase
         // Тестовый роут под группой `api`, чтобы реально прогнать middleware-стек.
         Route::middleware('api')->get('/test-request-id-probe', function () {
             return response()->json([
-                'container'   => app('request_id'),
+                'container' => app('request_id'),
                 'header_seen' => request()->headers->get(AssignRequestId::HEADER),
                 'log_context' => Log::sharedContext()['request_id'] ?? null,
             ]);

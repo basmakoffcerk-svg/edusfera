@@ -12,7 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ClassroomSession extends Model
 {
     public const STATUS_WAITING = 'waiting';
+
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_ENDED = 'ended';
 
     protected $fillable = [

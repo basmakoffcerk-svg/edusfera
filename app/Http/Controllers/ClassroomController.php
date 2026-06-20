@@ -21,9 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClassroomController extends Controller
 {
-    public function __construct(private readonly ClassroomService $classroomService)
-    {
-    }
+    public function __construct(private readonly ClassroomService $classroomService) {}
 
     public function show(Lesson $lesson, Request $request): View
     {
@@ -144,7 +142,7 @@ class ClassroomController extends Controller
         }
 
         $request->validate([
-            'file' => ['required', 'file', 'max:51200', 'mimes:pdf,doc,docx,png,jpg,jpeg,gif'],
+            'file' => ['required', 'file', 'max:51200', 'mimes:pdf,doc,docx,png,jpg,jpeg,gif', 'mimetypes:application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/gif'],
         ]);
 
         $session = $lesson->activeClassroom;
@@ -181,15 +179,32 @@ class ClassroomController extends Controller
             abort(403);
         }
 
+        $session = $lesson->activeClassroom;
+
+        if (! $session || $file->classroom_session_id !== $session->id) {
+            abort(404, 'Файл не найден.');
+        }
+
         $filePath = storage_path("app/{$file->path}");
+
+        $realPath = realpath($filePath);
+        $storageBase = realpath(storage_path('app'));
+
+        if ($realPath === false || $storageBase === false || ! str_starts_with($realPath, $storageBase)) {
+            abort(404, 'Файл не найден.');
+        }
 
         if (! file_exists($filePath)) {
             abort(404, 'Файл не найден.');
         }
 
+        // L3: strip newlines to prevent Content-Disposition header injection
+        $safeName = str_replace(["\r", "\n"], '', $file->original_name);
+        $safeName = preg_replace('/[^\w.\-]/', '_', $safeName);
+
         return response()->streamDownload(function () use ($filePath): void {
             readfile($filePath);
-        }, $file->original_name, [
+        }, $safeName, [
             'Content-Type' => $file->mime_type,
         ]);
     }
@@ -356,11 +371,14 @@ class ClassroomController extends Controller
 
     private function formatBytes(int $bytes): string
     {
-        if ($bytes === 0) return '0 Б';
+        if ($bytes === 0) {
+            return '0 Б';
+        }
         $units = ['Б', 'КБ', 'МБ', 'ГБ'];
         $k = 1024;
         $i = (int) floor(log($bytes) / log($k));
-        return round($bytes / pow($k, $i), 1) . ' ' . $units[$i];
+
+        return round($bytes / pow($k, $i), 1).' '.$units[$i];
     }
 
     public function assignHomework(Lesson $lesson, Request $request): JsonResponse
@@ -450,8 +468,12 @@ class ClassroomController extends Controller
 
     public function saveWhiteboardState(string $roomId, Request $request): JsonResponse
     {
-        $expectedToken = 'Bearer ' . config('classroom.jwt_secret');
-        if ($request->header('Authorization') !== $expectedToken) {
+        // M2: Use dedicated internal_secret with timing-safe comparison.
+        // Never reuse jwt_secret for auth — it's for JWT signing only.
+        $authHeader = $request->header('Authorization', '');
+        $internalSecret = config('classroom.internal_secret');
+
+        if ($internalSecret === '' || ! hash_equals('Bearer '.$internalSecret, $authHeader)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -462,7 +484,7 @@ class ClassroomController extends Controller
 
         $state = $request->json()->all();
         if (empty($state)) {
-             return response()->json(['success' => true]);
+            return response()->json(['success' => true]);
         }
 
         $this->classroomService->saveWhiteboardState($session, $state);

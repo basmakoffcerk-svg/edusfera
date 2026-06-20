@@ -316,7 +316,7 @@
                 <a href="/tutors" class="btn-core btn-violet text-lg px-10 py-5 w-full sm:w-auto shadow-xl shadow-violet-500/30">
                     Найти репетитора
                 </a>
-                <a href="/admin/register" class="btn-core bg-white text-gray-900 border border-gray-200 hover:border-gray-900 hover:bg-gray-50 w-full sm:w-auto text-lg px-10 py-5">
+                <a href="/diagnostic" class="btn-core bg-white text-gray-900 border border-gray-200 hover:border-gray-900 hover:bg-gray-50 w-full sm:w-auto text-lg px-10 py-5">
                     Пройти диагностику
                 </a>
             </div>

@@ -28,6 +28,7 @@ use Illuminate\Support\ServiceProvider;
 final class RouteServiceProvider extends ServiceProvider
 {
     public const API_V1_LIMITER = 'api.v1';
+
     public const WEB_AUTH_LIMITER = 'web.auth';
 
     public function boot(): void

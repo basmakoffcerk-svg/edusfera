@@ -77,7 +77,7 @@ class LessonOverviewWidget extends StatsOverviewWidget
             ? ($lesson->student?->name ?? 'Ученик')
             : ($lesson->tutor?->name ?? 'Репетитор');
 
-        return $participant . ' · ' . LessonResource::statusLabel($lesson->status) . ' · ' . LessonResource::paymentLabel($lesson->payment_status);
+        return $participant.' · '.LessonResource::statusLabel($lesson->status).' · '.LessonResource::paymentLabel($lesson->payment_status);
     }
 
     private function actionDescription(int $unpaidCount, int $pendingConfirmations): string
@@ -89,11 +89,11 @@ class LessonOverviewWidget extends StatsOverviewWidget
         $parts = [];
 
         if ($unpaidCount > 0) {
-            $parts[] = $unpaidCount . ' к оплате';
+            $parts[] = $unpaidCount.' к оплате';
         }
 
         if ($pendingConfirmations > 0) {
-            $parts[] = $pendingConfirmations . ' к подтверждению';
+            $parts[] = $pendingConfirmations.' к подтверждению';
         }
 
         return implode(' · ', $parts);
@@ -101,6 +101,6 @@ class LessonOverviewWidget extends StatsOverviewWidget
 
     private function money(float $amount): string
     {
-        return number_format($amount, 2, '.', ' ') . ' BYN';
+        return number_format($amount, 2, '.', ' ').' BYN';
     }
 }

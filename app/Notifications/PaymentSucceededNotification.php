@@ -15,9 +15,7 @@ class PaymentSucceededNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(private readonly Transaction $transaction)
-    {
-    }
+    public function __construct(private readonly Transaction $transaction) {}
 
     public function via(object $notifiable): array
     {
@@ -28,7 +26,7 @@ class PaymentSucceededNotification extends Notification implements ShouldQueue
     {
         return FilamentNotification::make()
             ->title('Оплата прошла успешно')
-            ->body('Урок #' . $this->transaction->lesson_id . ' успешно оплачен на сумму ' . $this->transaction->amount . '.')
+            ->body('Урок #'.$this->transaction->lesson_id.' успешно оплачен на сумму '.$this->transaction->amount.'.')
             ->icon('heroicon-o-credit-card')
             ->iconColor('success')
             ->getDatabaseMessage() + [
@@ -40,11 +38,11 @@ class PaymentSucceededNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Оплата прошла успешно')
-            ->greeting('Здравствуйте, ' . $notifiable->name . '!')
-            ->line('Оплата за урок #' . $this->transaction->lesson_id . ' успешно принята.')
-            ->line('Сумма: ' . $this->transaction->amount)
+            ->greeting('Здравствуйте, '.$notifiable->name.'!')
+            ->line('Оплата за урок #'.$this->transaction->lesson_id.' успешно принята.')
+            ->line('Сумма: '.$this->transaction->amount)
             ->action('Открыть оплаты', url('/admin/transactions'));
     }
 }

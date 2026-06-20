@@ -191,6 +191,26 @@
     <!-- HERO + SEARCH -->
     <section class="pt-36 pb-6">
         <div class="max-w-7xl mx-auto px-6">
+            {{-- Diagnostic context banner --}}
+            @if($diagnosticContext['subject'] ?? null)
+                <div class="mb-6 bg-gradient-to-r from-violet-50 to-amber-50 border border-violet-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-900">Подбор по результатам диагностики</p>
+                            <p class="text-xs text-gray-500">
+                                {{ $diagnosticContext['subject'] }}
+                                @if($diagnosticContext['exam_type'] ?? null) · {{ $diagnosticContext['exam_type'] }}@endif
+                                @if($diagnosticContext['current_score'] ?? null) · ваш уровень: {{ $diagnosticContext['current_score'] }} баллов@endif
+                            </p>
+                        </div>
+                    </div>
+                    <a href="{{ route('diagnostic.show') }}" class="text-xs font-bold text-violet-600 hover:text-violet-800 whitespace-nowrap">Пройти заново →</a>
+                </div>
+            @endif
+
             <div class="mb-8">
                 <h1 class="text-[clamp(2rem,4vw,3.5rem)] font-rimma font-black uppercase tracking-tight text-gray-900 mb-3 leading-tight">
                     Найдите <span class="text-violet-600">репетитора</span>
@@ -268,6 +288,9 @@
                         <label for="sort" class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Сортировка</label>
                         <select id="sort" name="sort" class="h-11 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition-all">
                             <option value="rating" @selected(request('sort','rating')==='rating')>По рейтингу</option>
+                            @if($diagnosticContext['subject'] ?? null)
+                                <option value="match" @selected(request('sort')==='match')>По соответствию диагностики</option>
+                            @endif
                             <option value="price_asc" @selected(request('sort')==='price_asc')>Сначала дешевле</option>
                             <option value="price_desc" @selected(request('sort')==='price_desc')>Сначала дороже</option>
                             <option value="experience" @selected(request('sort')==='experience')>По опыту</option>

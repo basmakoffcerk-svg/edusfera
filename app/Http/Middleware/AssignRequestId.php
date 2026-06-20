@@ -17,8 +17,6 @@ use Symfony\Component\HttpFoundation\Response;
  * либо генерируется как UUID v7. Значение помещается в контейнер под ключом
  * `request_id`, шарится в контекст логов через `Log::shareContext` и
  * выставляется на исходящий ответ.
- *
- * Покрывает требования 5.1, 5.2, 5.3, 5.6 спеки microservices-foundation.
  */
 final class AssignRequestId
 {
@@ -42,8 +40,7 @@ final class AssignRequestId
     public function __construct(
         private readonly Application $app,
         private readonly LogManager $log,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {

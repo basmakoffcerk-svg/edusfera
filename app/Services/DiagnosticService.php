@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 class DiagnosticService
 {
     /**
-     * @param array<int, string> $weakTopics
+     * @param  array<int, string>  $weakTopics
      */
     public function recordBaseline(
         StudentGoal $goal,
@@ -111,7 +111,7 @@ class DiagnosticService
     }
 
     /**
-     * @param array<int, string> $weakTopics
+     * @param  array<int, string>  $weakTopics
      */
     private function buildSummary(string $subject, ?int $currentScore, ?int $targetScore, array $weakTopics): string
     {
@@ -126,7 +126,7 @@ class DiagnosticService
         }
 
         if ($weakTopics !== []) {
-            $parts[] = 'В фокусе: ' . implode(', ', $weakTopics) . '.';
+            $parts[] = 'В фокусе: '.implode(', ', $weakTopics).'.';
         }
 
         return implode(' ', $parts);

@@ -17,8 +17,11 @@ class ClassroomIntegrationTest extends TestCase
     use RefreshDatabase;
 
     private User $tutor;
+
     private User $student;
+
     private Lesson $lesson;
+
     private ClassroomSession $session;
 
     protected function setUp(): void
@@ -131,18 +134,18 @@ class ClassroomIntegrationTest extends TestCase
         $response = $this->actingAs($this->tutor)->post(route('classroom.end', $this->lesson));
 
         $response->assertRedirect();
-        
+
         $this->lesson->refresh();
         $this->session->refresh();
 
         $this->assertEquals(Lesson::STATUS_COMPLETED, $this->lesson->status);
         $this->assertEquals(ClassroomSession::STATUS_ENDED, $this->session->status);
     }
-    
+
     public function test_unauthorized_user_cannot_access_classroom_api()
     {
         $stranger = User::factory()->create(['role' => 'student']);
-        
+
         $response = $this->actingAs($stranger)->getJson(route('classroom.chat.get', $this->lesson));
         $response->assertStatus(403);
     }

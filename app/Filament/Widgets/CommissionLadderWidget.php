@@ -67,7 +67,7 @@ class CommissionLadderWidget extends Widget
             'progress' => $progress,
             'monthlyRevenue' => number_format((float) $monthlyRevenue, 2, '.', ' '),
             'nextTierRevenueHint' => $nextTier
-                ? 'Каждый оплаченный урок приближает вас к ставке ' . $nextTier['rate'] . '%.'
+                ? 'Каждый оплаченный урок приближает вас к ставке '.$nextTier['rate'].'%.'
                 : 'Вы уже на максимальной выгодной ступени комиссии.',
         ];
     }

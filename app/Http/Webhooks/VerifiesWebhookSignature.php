@@ -13,46 +13,32 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Переиспользуемая логика верификации входящих webhook'ов от микросервисов
- * и провайдеров (требование 10 спеки microservices-foundation).
+ * и провайдеров.
  *
  * Подключается в {@see AbstractWebhookController} (а также в любых других
- * webhook-приёмниках), даёт три независимых проверки контракта:
+ * webhook-приёмниках), предоставляет три независимых проверки контракта:
  *
- *   10.2/10.3 — verifySignature(): `X-Signature: sha256=<hex>`, где
- *               `<hex>` == HMAC-SHA256(raw_body, client_secret). При
- *               отсутствии/несовпадении → 401 без побочных эффектов.
- *   10.4      — verifyTimestamp(): `X-Timestamp` (ISO-8601 UTC или unix-секунды);
- *               при `|now - ts| > maxDrift` (по умолчанию 300s) → 401.
- *   10.5      — verifyNonce(): `X-Nonce`; дедуп в Cache по ключу
- *               `webhook:nonce:{source}:{nonce}` c TTL (по умолчанию 600s).
- *               Повторный nonce → 409 Conflict.
+ *   - verifySignature(): `X-Signature: sha256=<hex>`, проверка HMAC-SHA256 подписи.
+ *   - verifyTimestamp(): `X-Timestamp`, проверка метки времени для защиты от replay.
+ *   - verifyNonce(): `X-Nonce`, дедупликация nonce через кэш.
  *
- * Все проверки «бросают» {@see HttpResponseException} с конвертом
- * `{"error":{code,message,request_id}}`, что гарантирует short-circuit ещё
- * до выполнения бизнес-логики и любых записей в БД (требование 10.3).
- *
- * Хранилище nonce — Cache-стор по умолчанию (`config('cache.default')`):
- * в проде это Redis, в тестах — array-драйвер, поэтому поведение
- * детерминировано и не требует реального Redis.
- *
- * Низкоуровневый помощник {@see hmacEquals()} переиспользуется легаси-приёмником
- * `PaymentWebhookController`, который использует собственный заголовок
- * (`X-Webhook-Signature`) и потому не вызывает verifySignature() напрямую.
+ * Все проверки выбрасывают {@see HttpResponseException} с ответом об ошибке,
+ * прерывая pipeline до выполнения бизнес-логики и любых записей в БД.
  */
 trait VerifiesWebhookSignature
 {
     /**
-     * Заголовок с HMAC-подписью нового webhook-контракта (требование 10.2).
+     * Заголовок с HMAC-подписью входящего запроса.
      */
     protected string $signatureHeader = 'X-Signature';
 
     /**
-     * Заголовок с меткой времени для replay-protection (требование 10.4).
+     * Заголовок с меткой времени для replay-protection.
      */
     protected string $timestampHeader = 'X-Timestamp';
 
     /**
-     * Заголовок с одноразовым nonce для replay-protection (требование 10.5).
+     * Заголовок с одноразовым nonce для replay-protection.
      */
     protected string $nonceHeader = 'X-Nonce';
 
@@ -60,8 +46,7 @@ trait VerifiesWebhookSignature
      * Проверяет HMAC-SHA256 подпись запроса по заголовку `X-Signature`.
      *
      * Формат: `sha256=<hex>`, где `<hex>` == HMAC-SHA256(raw_body, $secret).
-     * Сравнение — постоянного времени (hash_equals). При отсутствии заголовка
-     * или несовпадении подписи бросает 401 (требования 10.2, 10.3).
+     * Сравнение — постоянного времени (hash_equals).
      *
      * Если секрет не сконфигурирован (пустая строка) — 503: приёмник не может
      * аутентифицировать запрос, бизнес-логика не выполняется.
@@ -98,7 +83,7 @@ trait VerifiesWebhookSignature
     }
 
     /**
-     * Проверяет «свежесть» запроса по заголовку `X-Timestamp` (требование 10.4).
+     * Проверяет «свежесть» запроса по заголовку `X-Timestamp`.
      *
      * Принимает ISO-8601 UTC (`2024-01-01T00:00:00Z`) либо unix-секунды.
      * Отсутствие/невалидный формат, а также дрейф `|now - ts| > $maxDriftSeconds`
@@ -127,7 +112,7 @@ trait VerifiesWebhookSignature
     }
 
     /**
-     * Проверяет одноразовость запроса по заголовку `X-Nonce` (требование 10.5).
+     * Проверяет одноразовость запроса по заголовку `X-Nonce`.
      *
      * Дедуп в Cache по ключу `webhook:nonce:{source}:{nonce}` с TTL $ttlSeconds.
      * Запись производится атомарно (`add`): первый nonce сохраняется, повтор

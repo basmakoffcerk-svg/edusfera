@@ -15,8 +15,6 @@ use Monolog\LogRecord;
  * извлекаются из `context`/`extra` LogRecord (их кладут туда `Log::shareContext`
  * в `AssignRequestId` и middleware `StructuredLogging`). Всё остальное содержимое
  * `context`/`extra` сохраняется в поле `ctx`.
- *
- * Покрывает требование 5.4 спеки microservices-foundation.
  */
 final class CanonicalJsonFormatter extends JsonFormatter
 {
@@ -55,6 +53,7 @@ final class CanonicalJsonFormatter extends JsonFormatter
             if (array_key_exists($key, $context)) {
                 $reserved[$key] = $context[$key];
                 unset($context[$key]);
+
                 continue;
             }
 
@@ -72,15 +71,15 @@ final class CanonicalJsonFormatter extends JsonFormatter
         }
 
         $payload = [
-            'ts'         => $record->datetime->format('Y-m-d\TH:i:s.uP'),
-            'level'      => strtolower($record->level->getName()),
+            'ts' => $record->datetime->format('Y-m-d\TH:i:s.uP'),
+            'level' => strtolower($record->level->getName()),
             'request_id' => $reserved['request_id'] ?? null,
-            'route'      => $reserved['route'] ?? null,
-            'user_id'    => $reserved['user_id'] ?? null,
-            'client_id'  => $reserved['client_id'] ?? null,
+            'route' => $reserved['route'] ?? null,
+            'user_id' => $reserved['user_id'] ?? null,
+            'client_id' => $reserved['client_id'] ?? null,
             'latency_ms' => $reserved['latency_ms'] ?? null,
-            'message'    => $record->message,
-            'ctx'        => (object) $ctx,
+            'message' => $record->message,
+            'ctx' => (object) $ctx,
         ];
 
         $normalized = $this->normalize($payload);

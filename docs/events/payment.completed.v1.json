@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://edusfera.by/events/payment.completed.v1.json",
+    "title": "payment.completed.v1 payload",
+    "description": "Payload integration event payment.completed v1. Emitted when a lesson payment is successfully processed. Within major version 1 fields are only added, never removed or retyped (requirement 8.5). additionalProperties=true allows forward-compatible extensions.",
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+        "lesson_id",
+        "student_id",
+        "tutor_id",
+        "amount",
+        "currency"
+    ],
+    "properties": {
+        "lesson_id": {
+            "description": "Lesson aggregate id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "student_id": {
+            "description": "Student (payer) user id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "tutor_id": {
+            "description": "Tutor user id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "amount": {
+            "description": "Payment amount as decimal string (e.g. '25.00').",
+            "type": "string",
+            "minLength": 1
+        },
+        "currency": {
+            "description": "ISO-4217 currency code.",
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+        },
+        "transaction_id": {
+            "description": "Internal transaction id, if available.",
+            "type": ["integer", "null"]
+        }
+    }
+}

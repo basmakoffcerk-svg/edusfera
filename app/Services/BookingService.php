@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\Events\EventActor;
+use App\Domain\Shared\Events\EventEnvelopeFactory;
 use App\Exceptions\SlotUnavailableException;
+use App\Integrations\Outbox\OutboxRepository;
 use App\Models\Lesson;
 use App\Models\TutorAvailability;
 use App\Models\TutorProfile;
@@ -12,15 +15,16 @@ use App\Models\User;
 use App\Notifications\LessonBookedStudentNotification;
 use App\Notifications\LessonBookedTutorNotification;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
-    public function __construct(private readonly PackageService $packageService)
-    {
-    }
+    public function __construct(
+        private readonly PackageService $packageService,
+        private readonly EventEnvelopeFactory $eventFactory,
+        private readonly OutboxRepository $outbox,
+    ) {}
 
     public function createBooking(
         TutorProfile $tutorProfile,
@@ -105,6 +109,15 @@ class BookingService
                 'checkout_started_at' => now('UTC'),
                 'notes' => $notes,
             ]);
+
+            // Эмиссия интеграционного события lesson.booked.v1 в outbox.
+            // Запись атомарна с созданием урока (та же транзакция).
+            $this->outbox->append(
+                $this->eventFactory->lessonBooked(
+                    $lesson,
+                    new EventActor('user', $lesson->student_id, 'student'),
+                ),
+            );
 
             DB::afterCommit(function () use ($lesson): void {
                 $lesson->loadMissing('student', 'tutor');
@@ -276,6 +289,14 @@ class BookingService
                 ]);
             });
 
+            // Эмиссия интеграционного события lesson.booked.v1 в outbox.
+            $this->outbox->append(
+                $this->eventFactory->lessonBooked(
+                    $parentLesson,
+                    new EventActor('user', $parentLesson->student_id, 'student'),
+                ),
+            );
+
             DB::afterCommit(function () use ($parentLesson): void {
                 $parentLesson->loadMissing('student', 'tutor');
                 $parentLesson->student?->notify(new LessonBookedStudentNotification($parentLesson));
@@ -326,12 +347,12 @@ class BookingService
         foreach ($availability as $window) {
             $cursor = CarbonImmutable::createFromFormat(
                 'Y-m-d H:i:s',
-                $dayStartLocal->format('Y-m-d') . ' ' . $window->start_time,
+                $dayStartLocal->format('Y-m-d').' '.$window->start_time,
                 $timezone,
             );
             $windowEnd = CarbonImmutable::createFromFormat(
                 'Y-m-d H:i:s',
-                $dayStartLocal->format('Y-m-d') . ' ' . $window->end_time,
+                $dayStartLocal->format('Y-m-d').' '.$window->end_time,
                 $timezone,
             );
 
@@ -435,5 +456,4 @@ class BookingService
             ]);
         }
     }
-
 }

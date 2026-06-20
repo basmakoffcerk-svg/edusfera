@@ -74,6 +74,28 @@ php artisan test
 
 The test suite uses SQLite in memory via `phpunit.xml`, while local runtime uses PostgreSQL from `.env`.
 
+### Architecture tests (layer isolation)
+
+Architectural boundaries (Requirement 14 of the `microservices-foundation` spec) are
+enforced by `tests/Architecture/LayerIsolationTest.php` and exposed as a dedicated
+PHPUnit testsuite:
+
+```bash
+php artisan test --testsuite=Architecture
+# or
+make arch-test
+```
+
+The test analyses source files via PHP tokenization (no extra dependencies, no Pest)
+and fails the build if any of these boundaries are crossed:
+
+- `app/Http/Api/V1/*` must not reference `App\Models\*` directly (read the domain through DTOs/contracts);
+- `app/Filament/*` must reach the extracted Lesson domain through `App\Contracts\*`, not through `App\Services\Lesson\*` implementations;
+- `app/Domain/*` must not depend on `App\Filament\*` or `App\Http\*`;
+- `app/Http/Webhooks/*` must not call the `DB` facade or touch Eloquent models directly.
+
+CI runs this suite on every push/PR via `.github/workflows/architecture-tests.yml`.
+
 ## Public Pages
 
 - `/` - landing page

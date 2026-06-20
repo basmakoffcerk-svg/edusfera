@@ -29,4 +29,3 @@ class LogoutUnauthorizedSiteAdminUser
         return $next($request);
     }
 }
-

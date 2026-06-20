@@ -10,33 +10,27 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Базовый приёмник webhook'ов от внешних сервисов и провайдеров
- * (требования 10.1–10.7 спеки microservices-foundation).
+ * Базовый приёмник webhook'ов от внешних сервисов и провайдеров.
  *
- * Реализует template-method {@see __invoke()}: выполняет три проверки контракта
- * строго по порядку (подпись → timestamp → nonce) и только затем делегирует
- * управление доменному обработчику {@see handle()}. Любая неуспешная проверка
- * бросает HttpResponseException и прерывает pipeline ДО выполнения бизнес-логики
- * и любой записи в БД (требование 10.3, 10.6).
+ * Выполняет три проверки контракта строго по порядку (подпись → timestamp → nonce)
+ * и только затем делегирует управление доменному обработчику {@see handle()}.
+ * Любая неуспешная проверка прерывает pipeline ДО выполнения бизнес-логики
+ * и любых записей в БД.
  *
  * Наследники задают источник ({@see source()}) и секрет ({@see signingSecret()}),
  * а также реализуют доменную обработку в {@see handle()}.
- *
- * Контракт проверок намеренно вынесен в трейт {@see VerifiesWebhookSignature},
- * чтобы его можно было переиспользовать и в контроллерах вне этой иерархии
- * (требование 10.7).
  */
 abstract class AbstractWebhookController extends Controller
 {
     use VerifiesWebhookSignature;
 
     /**
-     * Максимально допустимый дрейф `X-Timestamp` в секундах (требование 10.4).
+     * Максимально допустимый дрейф `X-Timestamp` в секундах.
      */
     protected int $maxTimestampDriftSeconds = 300;
 
     /**
-     * TTL дедупа nonce в секундах (требование 10.5).
+     * TTL дедупликации nonce в секундах.
      */
     protected int $nonceTtlSeconds = 600;
 
@@ -59,13 +53,12 @@ abstract class AbstractWebhookController extends Controller
     abstract protected function source(): string;
 
     /**
-     * Per-client секрет для проверки HMAC-подписи (требование 10.2).
+     * Per-client секрет для проверки HMAC-подписи.
      */
     abstract protected function signingSecret(): string;
 
     /**
-     * Доменная обработка валидного webhook'а (требование 10.6).
-     * Вызывается только после успешных проверок подписи, timestamp и nonce.
+     * Доменная обработка валидного webhook'а.
      */
     abstract protected function handle(Request $request): JsonResponse;
 }

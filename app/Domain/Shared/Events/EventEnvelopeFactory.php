@@ -124,6 +124,92 @@ final readonly class EventEnvelopeFactory
     }
 
     /**
+     * Собрать конверт события `lesson.booked.v1`.
+     *
+     * Emitted при бронировании урока студентом.
+     * Payload соответствует JSON Schema `docs/events/lesson.booked.v1.json`.
+     */
+    public function lessonBooked(Lesson $lesson, EventActor|array $actor): EventEnvelope
+    {
+        return $this->make(
+            type: 'lesson.booked',
+            version: 1,
+            aggregateType: 'lesson',
+            aggregateId: $lesson->id,
+            payload: [
+                'lesson_id' => $lesson->id,
+                'tutor_id' => $lesson->tutor_id,
+                'student_id' => $lesson->student_id,
+                'start_time' => $lesson->start_time !== null
+                    ? Carbon::parse($lesson->start_time)->utc()->toIso8601String()
+                    : Carbon::now('UTC')->toIso8601String(),
+                'end_time' => $lesson->end_time !== null
+                    ? Carbon::parse($lesson->end_time)->utc()->toIso8601String()
+                    : Carbon::now('UTC')->toIso8601String(),
+                'duration_minutes' => (int) $lesson->duration_minutes,
+                'price' => (string) $lesson->price,
+                'package_code' => $lesson->package_code ?? 'single',
+            ],
+            actor: $actor,
+        );
+    }
+
+    /**
+     * Собрать конверт события `lesson.cancelled.v1`.
+     *
+     * Emitted при отмене урока.
+     * Payload соответствует JSON Schema `docs/events/lesson.cancelled.v1.json`.
+     */
+    public function lessonCancelled(
+        Lesson $lesson,
+        string $cancelledBy,
+        string $cancelReason,
+        EventActor|array $actor,
+    ): EventEnvelope {
+        return $this->make(
+            type: 'lesson.cancelled',
+            version: 1,
+            aggregateType: 'lesson',
+            aggregateId: $lesson->id,
+            payload: [
+                'lesson_id' => $lesson->id,
+                'tutor_id' => $lesson->tutor_id,
+                'student_id' => $lesson->student_id,
+                'cancelled_by' => $cancelledBy,
+                'cancel_reason' => $cancelReason,
+            ],
+            actor: $actor,
+        );
+    }
+
+    /**
+     * Собрать конверт события `payment.completed.v1`.
+     *
+     * Emitted при успешной обработке оплаты урока.
+     * Payload соответствует JSON Schema `docs/events/payment.completed.v1.json`.
+     *
+     * @param  array{lesson_id: int, student_id: int, tutor_id: int, amount: string, currency: string, transaction_id: int|null}  $data
+     */
+    public function paymentCompleted(array $data, EventActor|array $actor): EventEnvelope
+    {
+        return $this->make(
+            type: 'payment.completed',
+            version: 1,
+            aggregateType: 'payment',
+            aggregateId: $data['lesson_id'],
+            payload: [
+                'lesson_id' => $data['lesson_id'],
+                'student_id' => $data['student_id'],
+                'tutor_id' => $data['tutor_id'],
+                'amount' => $data['amount'],
+                'currency' => $data['currency'],
+                'transaction_id' => $data['transaction_id'] ?? null,
+            ],
+            actor: $actor,
+        );
+    }
+
+    /**
      * @param  EventActor|array<string,mixed>  $actor
      */
     private function normalizeActor(EventActor|array $actor): EventActor

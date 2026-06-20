@@ -1,7 +1,7 @@
 # Makefile — edusfera.by
 # Локальные утилиты для разработки и CI-проверок.
 
-.PHONY: help openapi-check openapi-install openapi-diff pint test
+.PHONY: help openapi-check openapi-install openapi-diff pint test arch-test backup backup-restore health
 
 # ─── Переменные ──────────────────────────────────────────────────────────────
 
@@ -71,5 +71,25 @@ openapi-diff: ## Показать полный diff openapi.yaml с main вет�
 pint: ## Запустить Laravel Pint (форматирование PHP-кода)
 	vendor/bin/pint
 
-test: ## Запустить тесты (PHPUnit / Pest)
-	vendor/bin/pest
+test: ## Запустить все тесты (PHPUnit)
+	php artisan test
+
+arch-test: ## Запустить архитектурные тесты изоляции слоёв (требование 14)
+	php artisan test --testsuite=Architecture
+
+# ─── Health & Backup ──────────────────────────────────────────────────────────
+
+health: ## Проверить здоровье приложения (DB, Redis, queue, disk)
+	php artisan health:check
+
+health-json: ## Проверить здоровье приложения (JSON output)
+	php artisan health:check --json
+
+backup: ## Создать бэкап PostgreSQL
+	@./scripts/backup/backup-db.sh manual
+
+backup-daily: ## Создать ежедневный бэкап PostgreSQL
+	@./scripts/backup/backup-db.sh daily
+
+backup-restore: ## Восстановить из бэкапа (usage: make backup-restore FILE=path/to/backup.sql.gz)
+	@./scripts/backup/restore-db.sh $(FILE)

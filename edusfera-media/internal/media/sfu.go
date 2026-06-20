@@ -113,7 +113,7 @@ func ForwardTrack(ctx context.Context, remote *webrtc.TrackRemote, local *webrtc
 		// Feed the VAD monitor if available (only for audio tracks).
 		if vad != nil {
 			var hdr rtp.Header
-			if err := hdr.Unmarshal(buf[:n]); err == nil {
+			if _, err := hdr.Unmarshal(buf[:n]); err == nil {
 				vad.FeedRTPHeader(&hdr)
 			}
 		}

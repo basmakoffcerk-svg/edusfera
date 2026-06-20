@@ -12,14 +12,15 @@ class StudentUpcomingLessonsWidget extends Widget
 {
     protected static string $view = 'filament.widgets.student-upcoming-lessons-widget';
 
-    protected int | string | array $columnSpan = 'half';
-    
+    protected int|string|array $columnSpan = 'half';
+
     protected static ?int $sort = 2; // Right after Welcome widget
 
     public static function canView(): bool
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+
         return $user && in_array($user->role, ['student', 'parent'], true);
     }
 
