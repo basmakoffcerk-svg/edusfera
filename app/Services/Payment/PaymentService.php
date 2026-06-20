@@ -105,6 +105,10 @@ class PaymentService
                 ]);
             }
 
+            $status = ($gatewayResponse['status'] ?? 'success') === 'pending' 
+                ? Transaction::STATUS_PENDING 
+                : Transaction::STATUS_SUCCESS;
+
             $transaction = Transaction::query()->updateOrCreate(
                 ['lesson_id' => $lesson->id],
                 [
@@ -114,7 +118,7 @@ class PaymentService
                     'acquiring_fee' => $acquiringFee,
                     'net_amount' => $netAmount,
                     'currency' => $currency,
-                    'status' => ($gatewayResponse['success'] ?? false) ? Transaction::STATUS_SUCCESS : Transaction::STATUS_FAILED,
+                    'status' => $status,
                     'payment_method' => $effectivePaymentMethod,
                     'gateway_transaction_id' => $gatewayResponse['gateway_transaction_id'] ?? null,
                     'gateway_response' => array_merge($gatewayResponse, [
@@ -126,7 +130,7 @@ class PaymentService
                         'payable_amount' => $payableAmount,
                         'wallet_contribution' => $walletContribution,
                     ]),
-                    'paid_at' => ($gatewayResponse['success'] ?? false) ? now('UTC') : null,
+                    'paid_at' => $status === Transaction::STATUS_SUCCESS ? now('UTC') : null,
                 ],
             );
 
@@ -134,14 +138,49 @@ class PaymentService
                 $lesson->update(['payment_status' => Lesson::PAYMENT_UNPAID]);
 
                 throw ValidationException::withMessages([
-                    'payment' => 'Имитация платежа завершилась ошибкой.',
+                    'payment' => 'Ошибка инициализации платежа: ' . ($gatewayResponse['message'] ?? 'Неизвестная ошибка'),
                 ]);
             }
 
-            if ($effectivePaymentMethod !== 'wallet' && bccomp($chargeAmount, '0', 2) === 1) {
+            if ($status === Transaction::STATUS_PENDING) {
+                // Async gateway (e.g. bePaid): just return the pending transaction.
+                // It contains the redirect_url in its gateway_response.
+                return $transaction->fresh(['lesson', 'user']);
+            }
+
+            // Sync gateway (e.g. Wallet or Mock): capture immediately
+            return $this->capturePendingPayment($transaction);
+        });
+    }
+
+    
+    public function capturePendingPayment(Transaction $transaction): Transaction
+    {
+        return DB::transaction(function () use ($transaction): Transaction {
+            $transaction = Transaction::query()->lockForUpdate()->findOrFail($transaction->id);
+            $lesson = Lesson::query()->with(['tutor', 'student', 'parent'])->lockForUpdate()->findOrFail($transaction->lesson_id);
+
+            if ($lesson->payment_status === Lesson::PAYMENT_PAID) {
+                return $transaction->fresh(['lesson', 'user']);
+            }
+
+            $userId = $transaction->user_id;
+            $currency = $transaction->currency;
+            $effectivePaymentMethod = $transaction->payment_method;
+            $payableAmount = $transaction->amount;
+            $platformCommission = $transaction->platform_commission;
+            $acquiringFee = $transaction->acquiring_fee;
+            $netAmount = $transaction->net_amount;
+
+            $chargeAmount = $transaction->gateway_response['charged_amount'] ?? $payableAmount;
+            $walletContribution = $transaction->gateway_response['wallet_contribution'] ?? '0.00';
+            
+            $studentBalance = $this->studentBalanceService->getOrCreate($userId);
+
+            if ($effectivePaymentMethod !== 'wallet' && bccomp((string)$chargeAmount, '0', 2) === 1) {
                 $this->studentBalanceService->credit(
                     balance: $studentBalance,
-                    amount: $chargeAmount,
+                    amount: (string)$chargeAmount,
                     currency: $currency,
                     type: StudentBalanceLedgerEntry::TYPE_TOPUP,
                     lesson: $lesson,
@@ -149,21 +188,21 @@ class PaymentService
                     meta: [
                         'reason' => 'checkout_payment',
                         'package_code' => $lesson->package_code,
-                        'wallet_contribution' => $walletContribution,
+                        'wallet_contribution' => (string)$walletContribution,
                     ],
                 );
             }
 
             $this->studentBalanceService->debitForLesson(
                 balance: $studentBalance->fresh(),
-                amount: $payableAmount,
+                amount: (string)$payableAmount,
                 currency: $currency,
                 lesson: $lesson,
                 transaction: $transaction,
                 meta: [
                     'reason' => 'lesson_hold',
                     'package_code' => $lesson->package_code,
-                    'wallet_contribution' => $walletContribution,
+                    'wallet_contribution' => (string)$walletContribution,
                 ],
             );
 
@@ -193,31 +232,29 @@ class PaymentService
             );
 
             $balance->update([
-                'pending_amount' => $this->add((string) $balance->pending_amount, $netAmount),
+                'pending_amount' => $this->add((string) $balance->pending_amount, (string)$netAmount),
             ]);
 
             $this->logFinancialOperation('payment_processed', [
                 'lesson_id' => $lesson->id,
                 'user_id' => $userId,
                 'tutor_id' => $lesson->tutor_id,
-                'amount' => $payableAmount,
-                'charged_amount' => $chargeAmount,
-                'wallet_contribution' => $walletContribution,
-                'platform_commission' => $platformCommission,
-                'acquiring_fee' => $acquiringFee,
-                'net_amount' => $netAmount,
+                'amount' => (string)$payableAmount,
+                'charged_amount' => (string)$chargeAmount,
+                'wallet_contribution' => (string)$walletContribution,
+                'platform_commission' => (string)$platformCommission,
+                'acquiring_fee' => (string)$acquiringFee,
+                'net_amount' => (string)$netAmount,
                 'transaction_id' => $transaction->id,
             ]);
 
-            // Эмиссия интеграционного события payment.completed.v1 в outbox.
-            // Запись атомарна с финансовой операцией (та же транзакция).
             $this->outbox->append(
                 $this->eventFactory->paymentCompleted(
                     data: [
                         'lesson_id' => $lesson->id,
                         'student_id' => $lesson->student_id,
                         'tutor_id' => $lesson->tutor_id,
-                        'amount' => $payableAmount,
+                        'amount' => (string)$payableAmount,
                         'currency' => $currency,
                         'transaction_id' => $transaction->id,
                     ],
@@ -230,6 +267,11 @@ class PaymentService
             $lesson->student?->notify(new PaymentSucceededNotification($transaction));
             $lesson->tutor?->notify(new PaymentSucceededNotification($transaction));
             app(ChatService::class)->unlockContactsForLesson($lesson);
+
+            $transaction->update([
+                'status' => Transaction::STATUS_SUCCESS,
+                'paid_at' => now('UTC'),
+            ]);
 
             return $transaction->fresh(['lesson', 'user']);
         });

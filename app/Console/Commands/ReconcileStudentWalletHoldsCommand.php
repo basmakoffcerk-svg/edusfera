@@ -20,24 +20,35 @@ class ReconcileStudentWalletHoldsCommand extends Command
     {
         $nowUtc = now('UTC');
 
-        $expectedByUser = Transaction::query()
-            ->select(['user_id', 'amount', 'gateway_response'])
+        $transactions = Transaction::query()
             ->where('status', Transaction::STATUS_SUCCESS)
-            ->whereHas('lesson', function ($query) use ($nowUtc): void {
-                $query
-                    ->whereIn('status', [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED])
-                    ->where('payment_status', Lesson::PAYMENT_PAID)
-                    ->where('end_time', '>', $nowUtc);
-            })
             ->get()
-            ->filter(fn (Transaction $transaction): bool => ($transaction->gateway_response['settled'] ?? false) !== true)
-            ->groupBy('user_id')
-            ->map(fn ($transactions): string => number_format(
-                (float) $transactions->sum(fn (Transaction $transaction): float => (float) $transaction->amount),
-                2,
-                '.',
-                '',
-            ));
+            ->filter(fn (Transaction $transaction): bool => ($transaction->gateway_response['settled'] ?? false) !== true);
+
+        $expectedByUser = [];
+
+        foreach ($transactions as $transaction) {
+            $settlements = \App\Models\LessonSettlement::query()
+                ->where('transaction_id', $transaction->id)
+                ->get();
+
+            $closedGross = '0.00';
+            foreach ($settlements as $settlement) {
+                $amount = $settlement->settled_at !== null
+                    ? (string) $settlement->gross_share
+                    : (string) ($settlement->meta['refunded_gross'] ?? '0.00');
+                $closedGross = bcadd($closedGross, $amount, 2);
+            }
+
+            $remainingHold = bcsub((string) $transaction->amount, $closedGross, 2);
+            if (bccomp($remainingHold, '0.00', 2) === 1) {
+                $userId = $transaction->user_id;
+                if (! isset($expectedByUser[$userId])) {
+                    $expectedByUser[$userId] = '0.00';
+                }
+                $expectedByUser[$userId] = bcadd($expectedByUser[$userId], $remainingHold, 2);
+            }
+        }
 
         $updated = 0;
 

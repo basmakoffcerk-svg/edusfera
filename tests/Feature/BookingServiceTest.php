@@ -73,8 +73,8 @@ class BookingServiceTest extends TestCase
             'student_id' => $student->id,
             'status' => Lesson::STATUS_PENDING,
             'price' => '100.00',
-            'platform_commission' => '15.00',
-            'net_amount' => '85.00',
+            'platform_commission' => '10.00',
+            'net_amount' => '90.00',
             'package_code' => 'single',
             'package_lessons' => 1,
             'package_total' => '100.00',
@@ -196,8 +196,8 @@ class BookingServiceTest extends TestCase
             'package_lessons_remaining' => 4,
             'package_total' => '190.00',
             'package_discount' => '10.00',
-            'platform_commission' => '28.50',
-            'net_amount' => '161.50',
+            'platform_commission' => '19.00',
+            'net_amount' => '171.00',
         ]);
     }
 

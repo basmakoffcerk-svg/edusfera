@@ -40,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(PaymentGatewayInterface::class, function () {
             return match (config('payments.gateway', 'mock')) {
+                'bepaid' => new \App\Services\Payment\BePaidPaymentGateway,
                 'mock' => new MockPaymentGateway,
                 'disabled' => new DisabledPaymentGateway,
                 default => throw new InvalidArgumentException('Unknown payment gateway ['.config('payments.gateway').'].'),

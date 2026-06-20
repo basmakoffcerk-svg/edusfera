@@ -85,20 +85,47 @@ class PaymentWebhookController extends Controller
         }
 
         match ($event) {
-            'payment.success', 'payment.completed' => Log::channel('payments')->info('payment_webhook_success', [
-                'transaction_id' => $transactionId,
-            ]),
-            'payment.failed' => Log::channel('payments')->info('payment_webhook_failed', [
-                'transaction_id' => $transactionId,
-            ]),
-            'payment.refunded' => Log::channel('payments')->info('payment_webhook_refunded', [
-                'transaction_id' => $transactionId,
-            ]),
-            default => Log::channel('payments')->info('payment_webhook_unknown_event', [
-                'event' => $event,
-                'transaction_id' => $transactionId,
-            ]),
+            'payment.success', 'payment.completed' => function () use ($transactionId, $paymentService) {
+                Log::channel('payments')->info('payment_webhook_success', ['transaction_id' => $transactionId]);
+                $transaction = \App\Models\Transaction::query()->where('gateway_transaction_id', $transactionId)->first();
+                if ($transaction && $transaction->status === \App\Models\Transaction::STATUS_PENDING) {
+                    $paymentService->capturePendingPayment($transaction);
+                }
+            },
+            'payment.failed' => function () use ($transactionId) {
+                Log::channel('payments')->info('payment_webhook_failed', ['transaction_id' => $transactionId]);
+                $transaction = \App\Models\Transaction::query()->where('gateway_transaction_id', $transactionId)->first();
+                if ($transaction && $transaction->status === \App\Models\Transaction::STATUS_PENDING) {
+                    $transaction->update(['status' => \App\Models\Transaction::STATUS_FAILED]);
+                    $transaction->lesson->update(['payment_status' => \App\Models\Lesson::PAYMENT_UNPAID]);
+                }
+            },
+            'payment.refunded' => function () use ($transactionId) {
+                Log::channel('payments')->info('payment_webhook_refunded', ['transaction_id' => $transactionId]);
+            },
+            default => function () use ($event, $transactionId) {
+                Log::channel('payments')->info('payment_webhook_unknown_event', ['event' => $event, 'transaction_id' => $transactionId]);
+            },
         };
+
+        // Call the matched closure
+        $closure = match ($event) {
+            'payment.success', 'payment.completed' => fn() => 
+                tap(\App\Models\Transaction::query()->where('gateway_transaction_id', $transactionId)->first(), function ($tx) use ($paymentService) {
+                    if ($tx && $tx->status === \App\Models\Transaction::STATUS_PENDING) {
+                        $paymentService->capturePendingPayment($tx);
+                    }
+                }),
+            'payment.failed' => fn() => 
+                tap(\App\Models\Transaction::query()->where('gateway_transaction_id', $transactionId)->first(), function ($tx) {
+                    if ($tx && $tx->status === \App\Models\Transaction::STATUS_PENDING) {
+                        $tx->update(['status' => \App\Models\Transaction::STATUS_FAILED]);
+                        $tx->lesson->update(['payment_status' => \App\Models\Lesson::PAYMENT_UNPAID]);
+                    }
+                }),
+            default => fn() => null,
+        };
+        $closure();
 
         return response()->json([
             'success' => true,

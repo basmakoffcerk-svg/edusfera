@@ -87,13 +87,17 @@ class CheckoutController extends Controller
 
         $this->applyPackageSelection($lesson, $packageCode, app(PackageService::class));
 
-        $paymentService->processPayment(
+        $transaction = $paymentService->processPayment(
             $lesson->id,
             (int) $request->user()->id,
             $validated['payment_method'],
             (bool) ($validated['remember_card'] ?? false),
             $useWalletBalance,
         );
+
+        if ($transaction->status === \App\Models\Transaction::STATUS_PENDING && isset($transaction->gateway_response['redirect_url'])) {
+            return redirect()->away($transaction->gateway_response['redirect_url']);
+        }
 
         return redirect()
             ->route('checkout.success', $lesson)
