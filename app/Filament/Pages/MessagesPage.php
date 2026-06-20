@@ -9,8 +9,8 @@ use App\Models\Lesson;
 use App\Models\Message;
 use App\Models\User;
 use App\Notifications\LessonLowRatingNotification;
-use App\Services\ChatUnreadCounter;
 use App\Services\ChatService;
+use App\Services\ChatUnreadCounter;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -390,6 +390,8 @@ class MessagesPage extends Page
     public function formatMessage(Message $message): Htmlable
     {
         $content = app(ChatService::class)->sanitizeMessageForDisplay($message->message);
+        // SECURITY (M5): e() MUST be called before any regex that produces HtmlString.
+        // Removing this escape or reordering will open XSS.
         $content = e($content);
         $content = preg_replace('/\[(контакты скрыты)\]/u', '<span class="ef-masked">[$1]</span>', $content) ?? $content;
         $content = preg_replace('/\[(платежные данные скрыты)\]/u', '<span class="ef-masked">[$1]</span>', $content) ?? $content;
@@ -411,7 +413,7 @@ class MessagesPage extends Page
         if ($otherUser->phone) {
             $actions[] = [
                 'label' => 'Позвонить',
-                'url' => 'tel:' . preg_replace('/\s+/', '', (string) $otherUser->phone),
+                'url' => 'tel:'.preg_replace('/\s+/', '', (string) $otherUser->phone),
                 'external' => false,
             ];
         }
@@ -421,7 +423,7 @@ class MessagesPage extends Page
         if ($telegram) {
             $actions[] = [
                 'label' => 'Написать в Telegram',
-                'url' => 'https://t.me/' . ltrim($telegram, '@'),
+                'url' => 'https://t.me/'.ltrim($telegram, '@'),
                 'external' => true,
             ];
         }
@@ -539,7 +541,7 @@ class MessagesPage extends Page
             'upsell_url' => route('tutors.show', [
                 'tutor' => $conversation->tutor?->tutorProfile,
                 'date' => now(config('booking.display_timezone'))->addDay()->format('Y-m-d'),
-            ]) . '#booking',
+            ]).'#booking',
         ];
     }
 }

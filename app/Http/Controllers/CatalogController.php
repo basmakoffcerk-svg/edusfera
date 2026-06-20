@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\TutorProfile;
 use App\Models\TutorAvailability;
+use App\Models\TutorProfile;
 use App\Services\BookingService;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class CatalogController extends Controller
 {
-    public function __construct(private readonly BookingService $bookingService)
-    {
-    }
+    public function __construct(private readonly BookingService $bookingService) {}
 
     public function index(Request $request)
     {
@@ -61,6 +59,9 @@ class CatalogController extends Controller
             $query->where('legal_status', '!=', 'none');
         }
 
+        // Diagnostic context from session or query params
+        $diagnosticContext = $this->getDiagnosticContext($request);
+
         match ($request->get('sort')) {
             'price_asc' => $query->orderBy('price_per_hour'),
             'price_desc' => $query->orderByDesc('price_per_hour'),
@@ -69,6 +70,7 @@ class CatalogController extends Controller
                 ->orderByDesc('students_prepared_count')
                 ->orderByDesc('average_score_growth')
                 ->orderByDesc('max_recent_score'),
+            'match' => $this->applyMatchSort($query, $diagnosticContext),
             default => $query->orderByDesc('rating_avg')->orderByDesc('created_at'),
         };
 
@@ -79,7 +81,7 @@ class CatalogController extends Controller
         $allSubjects = [
             'Математика', 'Физика', 'Химия', 'Биология',
             'Английский язык', 'Русский язык', 'Белорусский язык',
-            'История', 'Информатика'
+            'История', 'Информатика',
         ];
 
         $ratedBaseQuery = (clone $baseQuery)->where('rating_avg', '>', 0);
@@ -102,6 +104,7 @@ class CatalogController extends Controller
             'allSubjects' => $allSubjects,
             'stats' => $stats,
             'availabilityHints' => $availabilityHints,
+            'diagnosticContext' => $diagnosticContext,
         ]);
     }
 
@@ -179,5 +182,47 @@ class CatalogController extends Controller
         }
 
         return $hints;
+    }
+
+    /**
+     * Extract diagnostic context from session or query params.
+     *
+     * @return array{subject: string|null, exam_type: string|null, current_score: int|null, weak_topics: string[]}
+     */
+    private function getDiagnosticContext(Request $request): array
+    {
+        $sessionData = session('diagnostic_progress', []);
+
+        return [
+            'subject' => $request->get('subject') ?? $sessionData['subject'] ?? null,
+            'exam_type' => $request->get('exam_type') ?? $sessionData['exam_type'] ?? null,
+            'current_score' => $sessionData['current_score'] ?? null,
+            'weak_topics' => $sessionData['weak_topics'] ?? [],
+        ];
+    }
+
+    /**
+     * Apply match-based sorting: boost tutors who teach the diagnostic subject
+     * and specialize in the diagnostic exam type.
+     */
+    private function applyMatchSort(\Illuminate\Database\Eloquent\Builder $query, array $context): void
+    {
+        if ($context['subject'] !== null) {
+            $query->orderByRaw(
+                'CASE WHEN JSON_CONTAINS(subjects, ?) THEN 0 ELSE 1 END ASC',
+                [json_encode($context['subject'])]
+            );
+        }
+
+        if ($context['exam_type'] !== null) {
+            $query->orderByRaw(
+                'CASE WHEN JSON_CONTAINS(exam_specializations, ?) THEN 0 ELSE 1 END ASC',
+                [json_encode($context['exam_type'])]
+            );
+        }
+
+        $query->orderByDesc('average_score_growth')
+            ->orderByDesc('students_prepared_count')
+            ->orderByDesc('rating_avg');
     }
 }

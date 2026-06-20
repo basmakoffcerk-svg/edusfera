@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Payment;
 
+use App\Contracts\Events\EventActor;
+use App\Domain\Shared\Events\EventEnvelopeFactory;
+use App\Integrations\Outbox\OutboxRepository;
 use App\Models\Lesson;
+use App\Models\LessonSettlement;
 use App\Models\StudentBalanceLedgerEntry;
 use App\Models\Transaction;
 use App\Models\TutorBalance;
@@ -13,6 +17,7 @@ use App\Notifications\PaymentSucceededNotification;
 use App\Services\ChatService;
 use App\Services\Finance\StudentBalanceService;
 use App\Services\StudentGoalService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -23,9 +28,9 @@ class PaymentService
         private readonly PaymentGatewayInterface $gateway,
         private readonly StudentBalanceService $studentBalanceService,
         private readonly StudentGoalService $studentGoalService,
-    )
-    {
-    }
+        private readonly EventEnvelopeFactory $eventFactory,
+        private readonly OutboxRepository $outbox,
+    ) {}
 
     public function processPayment(
         int $lessonId,
@@ -33,8 +38,7 @@ class PaymentService
         ?string $paymentMethod = 'card',
         bool $rememberPaymentMethod = false,
         bool $useWalletBalance = false,
-    ): Transaction
-    {
+    ): Transaction {
         return DB::transaction(function () use ($lessonId, $paymentMethod, $rememberPaymentMethod, $useWalletBalance, $userId): Transaction {
             $lesson = Lesson::query()
                 ->with(['tutor', 'student', 'parent', 'transaction'])
@@ -64,7 +68,7 @@ class PaymentService
             $payableAmount = $this->money((string) ($lesson->package_total ?? $lesson->price));
             $effectivePaymentMethod = (string) ($paymentMethod ?? 'card');
             $chargeAmount = $effectivePaymentMethod === 'wallet'
-                ? $payableAmount
+                ? '0.00'
                 : $payableAmount;
             $studentBalance = $this->studentBalanceService->getOrCreate($userId);
             $walletContribution = '0.00';
@@ -205,6 +209,22 @@ class PaymentService
                 'transaction_id' => $transaction->id,
             ]);
 
+            // Эмиссия интеграционного события payment.completed.v1 в outbox.
+            // Запись атомарна с финансовой операцией (та же транзакция).
+            $this->outbox->append(
+                $this->eventFactory->paymentCompleted(
+                    data: [
+                        'lesson_id' => $lesson->id,
+                        'student_id' => $lesson->student_id,
+                        'tutor_id' => $lesson->tutor_id,
+                        'amount' => $payableAmount,
+                        'currency' => $currency,
+                        'transaction_id' => $transaction->id,
+                    ],
+                    actor: new EventActor('user', $userId, 'student'),
+                ),
+            );
+
             $this->studentGoalService->ensureGoalForPaidLesson($lesson->fresh(['tutor.tutorProfile', 'student']));
 
             $lesson->student?->notify(new PaymentSucceededNotification($transaction));
@@ -218,106 +238,458 @@ class PaymentService
     public function refundLessonPayment(Lesson $lesson, ?string $reason = null): void
     {
         DB::transaction(function () use ($lesson, $reason): void {
-            $lesson = Lesson::query()->with('transaction')->lockForUpdate()->findOrFail($lesson->id);
+            $lesson = Lesson::query()->lockForUpdate()->findOrFail($lesson->id);
 
-            if ($lesson->payment_status !== Lesson::PAYMENT_PAID || ! $lesson->transaction) {
+            // Resolve the backing transaction. Child package lessons own no
+            // Transaction (UNIQUE transactions.lesson_id binds it to the
+            // parent), so we look it up via package_parent_lesson_id.
+            $transaction = $this->resolvePackageTransaction($lesson);
+
+            // Unpaid lessons (or lessons without any backing transaction) are
+            // simply cancelled — no financial movement. Preserves the original
+            // guard behaviour for the single-lesson case.
+            if ($lesson->payment_status !== Lesson::PAYMENT_PAID || $transaction === null) {
                 $lesson->update(['status' => Lesson::STATUS_CANCELLED]);
 
                 return;
             }
 
-            $transaction = $lesson->transaction;
-            $gatewayTransactionId = $transaction->gateway_transaction_id ?? (string) $transaction->id;
-            $chargedAmount = (string) ($transaction->gateway_response['charged_amount'] ?? $transaction->amount);
-            $isWalletPayment = $transaction->payment_method === 'wallet';
-            $refundToWallet = $isWalletPayment || bccomp($chargedAmount, (string) $transaction->amount, 2) === 1;
+            $packageLessons = $this->resolvePackageLessons($lesson, $transaction);
 
-            if (! $refundToWallet) {
-                if (! $this->gateway->refundPayment($gatewayTransactionId, (float) $transaction->amount)) {
-                    throw ValidationException::withMessages([
-                        'payment' => 'Не удалось выполнить возврат.',
-                    ]);
-                }
+            // A "single" refund is a lesson that is neither a package child nor
+            // a multi-lesson package parent — its full transaction is refunded.
+            $isSingle = $packageLessons <= 1 && $lesson->package_parent_lesson_id === null;
+
+            if ($isSingle) {
+                $this->refundSingleLesson($lesson, $transaction, $reason);
+
+                return;
             }
 
-            $transaction->update([
-                'status' => Transaction::STATUS_REFUNDED,
-                'gateway_response' => array_merge($transaction->gateway_response ?? [], [
-                    'refund_reason' => $reason,
-                    'refunded_at' => now('UTC')->toISOString(),
-                    'refund_source' => $refundToWallet ? 'wallet' : 'gateway',
-                ]),
-            ]);
+            $this->refundPackageLesson($lesson, $transaction, $packageLessons, $reason);
+        });
+    }
 
-            $lesson->update([
-                'status' => Lesson::STATUS_CANCELLED,
-                'payment_status' => Lesson::PAYMENT_REFUNDED,
-            ]);
+    /**
+     * Single (non-package) refund. Semantically equivalent to the pre-fix
+     * behaviour: refund the full transaction.amount, zero this lesson's
+     * net_amount out of pending, flip the lesson to cancelled/refunded — plus
+     * an audit LessonSettlement row.
+     */
+    private function refundSingleLesson(Lesson $lesson, Transaction $transaction, ?string $reason): void
+    {
+        $gatewayTransactionId = $transaction->gateway_transaction_id ?? (string) $transaction->id;
+        $chargedAmount = (string) ($transaction->gateway_response['charged_amount'] ?? $transaction->amount);
+        $isWalletPayment = $transaction->payment_method === 'wallet';
+        $refundToWallet = $isWalletPayment || bccomp($chargedAmount, (string) $transaction->amount, 2) === -1;
+        $refundSource = $refundToWallet ? 'wallet' : 'gateway';
 
-            $balance = TutorBalance::query()->firstOrCreate(
-                ['user_id' => $lesson->tutor_id],
-                [
-                    'available_amount' => '0.00',
-                    'pending_amount' => '0.00',
-                    'total_earned' => '0.00',
-                    'total_withdrawn' => '0.00',
+        if (! $refundToWallet) {
+            if (! $this->gateway->refundPayment($gatewayTransactionId, (float) $transaction->amount)) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Не удалось выполнить возврат.',
+                ]);
+            }
+        }
+
+        $transaction->update([
+            'status' => Transaction::STATUS_REFUNDED,
+            'gateway_response' => array_merge($transaction->gateway_response ?? [], [
+                'refund_reason' => $reason,
+                'refunded_at' => now('UTC')->toISOString(),
+                'refund_source' => $refundSource,
+            ]),
+        ]);
+
+        $lesson->update([
+            'status' => Lesson::STATUS_CANCELLED,
+            'payment_status' => Lesson::PAYMENT_REFUNDED,
+        ]);
+
+        $balance = TutorBalance::query()->firstOrCreate(
+            ['user_id' => $lesson->tutor_id],
+            [
+                'available_amount' => '0.00',
+                'pending_amount' => '0.00',
+                'total_earned' => '0.00',
+                'total_withdrawn' => '0.00',
+            ],
+        );
+
+        $balance->update([
+            'pending_amount' => $this->maxZero(
+                $this->sub((string) $balance->pending_amount, (string) $transaction->net_amount)
+            ),
+        ]);
+
+        $studentBalance = $this->studentBalanceService->getOrCreate($transaction->user_id);
+
+        if ($refundToWallet) {
+            $this->studentBalanceService->releaseHeldForLesson(
+                balance: $studentBalance,
+                amount: (string) $transaction->amount,
+                currency: (string) $transaction->currency,
+                lesson: $lesson,
+                transaction: $transaction,
+                meta: [
+                    'reason' => $reason ?: 'lesson_release',
                 ],
             );
+        } else {
+            $this->studentBalanceService->refundHeldExternally(
+                balance: $studentBalance,
+                amount: (string) $transaction->amount,
+                currency: (string) $transaction->currency,
+                lesson: $lesson,
+                transaction: $transaction,
+                meta: [
+                    'reason' => $reason ?: 'external_refund',
+                ],
+            );
+        }
 
-            $balance->update([
-                'pending_amount' => $this->maxZero(
-                    $this->sub((string) $balance->pending_amount, (string) $transaction->net_amount)
-                ),
-            ]);
-
-            $studentBalance = $this->studentBalanceService->getOrCreate($transaction->user_id);
-
-            if ($refundToWallet) {
-                $this->studentBalanceService->releaseHeldForLesson(
-                    balance: $studentBalance,
-                    amount: (string) $transaction->amount,
-                    currency: (string) $transaction->currency,
-                    lesson: $lesson,
-                    transaction: $transaction,
-                    meta: [
-                        'reason' => $reason ?: 'lesson_release',
-                    ],
-                );
-            } else {
-                $this->studentBalanceService->refundHeldExternally(
-                    balance: $studentBalance,
-                    amount: (string) $transaction->amount,
-                    currency: (string) $transaction->currency,
-                    lesson: $lesson,
-                    transaction: $transaction,
-                    meta: [
-                        'reason' => $reason ?: 'external_refund',
-                    ],
-                );
-            }
-
-            $this->logFinancialOperation('payment_refunded', [
+        // Audit-only LessonSettlement. A concurrent insert racing on the UNIQUE
+        // lesson_id means the audit row already exists — skip it, the financial
+        // movement above is intentionally unguarded.
+        try {
+            LessonSettlement::query()->create([
                 'lesson_id' => $lesson->id,
                 'transaction_id' => $transaction->id,
-                'tutor_id' => $lesson->tutor_id,
-                'net_amount' => (string) $transaction->net_amount,
-                'reason' => $reason,
+                'net_share' => '0.00',
+                'gross_share' => '0.00',
+                'refunded_at' => now('UTC'),
+                'meta' => [
+                    'refunded_net' => (string) $transaction->net_amount,
+                    'refunded_gross' => (string) $transaction->amount,
+                    'refund_source' => $refundSource,
+                ],
             ]);
+        } catch (QueryException $exception) {
+            if (! $this->isUniqueViolation($exception)) {
+                throw $exception;
+            }
+        }
 
-            $lesson->student?->notify(new LessonCancelledNotification($lesson));
-            $lesson->tutor?->notify(new LessonCancelledNotification($lesson));
-        });
+        $this->logFinancialOperation('payment_refunded', [
+            'lesson_id' => $lesson->id,
+            'transaction_id' => $transaction->id,
+            'tutor_id' => $lesson->tutor_id,
+            'net_amount' => (string) $transaction->net_amount,
+            'reason' => $reason,
+        ]);
+
+        $lesson->student?->notify(new LessonCancelledNotification($lesson));
+        $lesson->tutor?->notify(new LessonCancelledNotification($lesson));
+    }
+
+    /**
+     * Partial (per-lesson) refund of one package lesson. Returns only this
+     * lesson's gross share to the student, decrements only its net share from
+     * the tutor's pending balance, leaves already-settled shares in
+     * available_amount untouched, and never touches sibling lessons.
+     */
+    private function refundPackageLesson(Lesson $lesson, Transaction $transaction, int $packageLessons, ?string $reason): void
+    {
+        // Lock the transaction and all its settlements to serialize
+        // against concurrent settle/refund of sibling package lessons.
+        $tx = Transaction::query()->lockForUpdate()->find($transaction->id);
+
+        if ($tx === null) {
+            return;
+        }
+
+        $settlements = LessonSettlement::query()
+            ->where('transaction_id', $tx->id)
+            ->lockForUpdate()
+            ->get();
+
+        $existing = $settlements->firstWhere('lesson_id', $lesson->id);
+
+        // A settled lesson cannot be refunded.
+        if ($existing !== null && $existing->settled_at !== null) {
+            throw ValidationException::withMessages([
+                'payment' => 'Урок уже проведён, возврат недоступен.',
+            ]);
+        }
+
+        // Idempotency: this lesson is already refunded.
+        if ($existing !== null && $existing->refunded_at !== null) {
+            return;
+        }
+
+        // Compute this lesson's share. "Closed" lessons (settled OR
+        // refunded) are both subtracted when resolving the residual so the
+        // package always closes out to exactly transaction totals.
+        $closedSettlements = $settlements->filter(
+            fn (LessonSettlement $settlement): bool => $settlement->settled_at !== null || $settlement->refunded_at !== null
+        );
+
+        $alreadyClosedNet = $this->sumClosedShares($closedSettlements, 'net_share', 'refunded_net');
+        $alreadyClosedGross = $this->sumClosedShares($closedSettlements, 'gross_share', 'refunded_gross');
+        $closedCount = $closedSettlements->count();
+
+        $remainingLessons = $packageLessons - $closedCount;
+        $isResidual = $remainingLessons <= 1;
+
+        if ($isResidual) {
+            $netShare = bcsub((string) $tx->net_amount, $alreadyClosedNet, 2);
+            $grossShare = bcsub((string) $tx->amount, $alreadyClosedGross, 2);
+        } else {
+            $netShare = bcdiv((string) $tx->net_amount, (string) $packageLessons, 2);
+            $grossShare = bcdiv((string) $tx->amount, (string) $packageLessons, 2);
+        }
+
+        // Reduce the tutor's pending balance by this lesson's net share.
+        // available_amount is NOT touched — already-settled shares stay earned.
+        $balance = TutorBalance::query()->firstOrCreate(
+            ['user_id' => $lesson->tutor_id],
+            [
+                'available_amount' => '0.00',
+                'pending_amount' => '0.00',
+                'total_earned' => '0.00',
+                'total_withdrawn' => '0.00',
+            ],
+        );
+
+        $balance->update([
+            'pending_amount' => $this->maxZero($this->sub((string) $balance->pending_amount, $netShare)),
+        ]);
+
+        // Refund only this lesson's gross share to the student.
+        $gatewayTransactionId = $tx->gateway_transaction_id ?? (string) $tx->id;
+        $chargedAmount = (string) ($tx->gateway_response['charged_amount'] ?? $tx->amount);
+        $isWalletPayment = $tx->payment_method === 'wallet';
+        $refundToWallet = $isWalletPayment || bccomp($chargedAmount, (string) $tx->amount, 2) === -1;
+        $refundSource = $refundToWallet ? 'wallet' : 'gateway';
+
+        $studentBalance = $this->studentBalanceService->getOrCreate($tx->user_id);
+
+        if ($refundToWallet) {
+            $this->studentBalanceService->releaseHeldForLesson(
+                balance: $studentBalance,
+                amount: $grossShare,
+                currency: (string) $tx->currency,
+                lesson: $lesson,
+                transaction: $tx,
+                meta: [
+                    'reason' => $reason ?: 'lesson_release_partial',
+                ],
+            );
+        } else {
+            if (! $this->gateway->refundPayment($gatewayTransactionId, (float) $grossShare)) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Не удалось выполнить возврат.',
+                ]);
+            }
+
+            $this->studentBalanceService->refundHeldExternally(
+                balance: $studentBalance,
+                amount: $grossShare,
+                currency: (string) $tx->currency,
+                lesson: $lesson,
+                transaction: $tx,
+                meta: [
+                    'reason' => $reason ?: 'external_refund_partial',
+                ],
+            );
+        }
+
+        // Record the refund. net_share/gross_share stay 0 (a refund is
+        // not earnings); the real amounts are kept in meta for audit/residual.
+        // A concurrent insert racing on UNIQUE lesson_id means this lesson was
+        // already refunded, so we return idempotently.
+        try {
+            LessonSettlement::query()->create([
+                'lesson_id' => $lesson->id,
+                'transaction_id' => $tx->id,
+                'net_share' => '0.00',
+                'gross_share' => '0.00',
+                'refunded_at' => now('UTC'),
+                'meta' => [
+                    'refunded_net' => $netShare,
+                    'refunded_gross' => $grossShare,
+                    'refund_source' => $refundSource,
+                    'reason' => $reason,
+                    'is_residual' => $isResidual,
+                ],
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isUniqueViolation($exception)) {
+                return;
+            }
+
+            throw $exception;
+        }
+
+        // Only this lesson is cancelled/refunded; siblings are untouched.
+        $lesson->update([
+            'status' => Lesson::STATUS_CANCELLED,
+            'payment_status' => Lesson::PAYMENT_REFUNDED,
+        ]);
+
+        // Recompute the transaction status from the package's settlements.
+        $afterSettlements = LessonSettlement::query()
+            ->where('transaction_id', $tx->id)
+            ->get();
+
+        $settledCount = $afterSettlements->filter(
+            fn (LessonSettlement $settlement): bool => $settlement->settled_at !== null
+        )->count();
+        $refundedCount = $afterSettlements->filter(
+            fn (LessonSettlement $settlement): bool => $settlement->refunded_at !== null
+        )->count();
+
+        if ($refundedCount === $packageLessons) {
+            $transactionStatus = Transaction::STATUS_REFUNDED;
+        } elseif (($settledCount + $refundedCount) === $packageLessons && $refundedCount > 0) {
+            $transactionStatus = Transaction::STATUS_PARTIALLY_REFUNDED;
+        } else {
+            $transactionStatus = Transaction::STATUS_SUCCESS;
+        }
+
+        // Preserve any existing flags (e.g. gateway_response.settled) — only
+        // append refund metadata.
+        $tx->update([
+            'status' => $transactionStatus,
+            'gateway_response' => array_merge($tx->gateway_response ?? [], [
+                'refund_reason' => $reason,
+                'refunded_at' => now('UTC')->toISOString(),
+                'refund_source' => $refundSource,
+            ]),
+        ]);
+
+        // Audit log.
+        $this->logFinancialOperation('lesson_refunded_partial', [
+            'lesson_id' => $lesson->id,
+            'transaction_id' => $tx->id,
+            'refunded_net' => $netShare,
+            'refunded_gross' => $grossShare,
+            'is_residual' => $isResidual,
+            'refund_source' => $refundSource,
+            'transaction_status_after' => $transactionStatus,
+            'tutor_id' => $lesson->tutor_id,
+        ]);
+
+        $lesson->student?->notify(new LessonCancelledNotification($lesson));
+        $lesson->tutor?->notify(new LessonCancelledNotification($lesson));
+    }
+
+    /**
+     * Sum closed (settled or refunded) share amounts. Settled rows carry the
+     * real amount in their net_share/gross_share column; refunded rows keep
+     * net_share/gross_share at 0 and store the real amount under meta.
+     *
+     * @param  \Illuminate\Support\Collection<int, LessonSettlement>  $settlements
+     */
+    private function sumClosedShares($settlements, string $column, string $metaKey): string
+    {
+        return $settlements->reduce(
+            function (string $carry, LessonSettlement $settlement) use ($column, $metaKey): string {
+                $amount = $settlement->settled_at !== null
+                    ? (string) $settlement->{$column}
+                    : (string) (($settlement->meta[$metaKey] ?? '0.00'));
+
+                return bcadd($carry, $amount, 2);
+            },
+            '0.00',
+        );
     }
 
     public function settleCompletedLesson(Lesson $lesson): void
     {
         DB::transaction(function () use ($lesson): void {
-            $lesson = Lesson::query()->with('transaction')->lockForUpdate()->findOrFail($lesson->id);
+            $lesson = Lesson::query()->lockForUpdate()->findOrFail($lesson->id);
 
-            if ($lesson->status !== Lesson::STATUS_COMPLETED || $lesson->payment_status !== Lesson::PAYMENT_PAID || ! $lesson->transaction) {
+            // 3.1 — A completed, paid lesson is required. The transaction is
+            // resolved via the package parent for child lessons (which never
+            // own their own Transaction), so we must NOT bail on a missing
+            // own-transaction here.
+            if ($lesson->status !== Lesson::STATUS_COMPLETED || $lesson->payment_status !== Lesson::PAYMENT_PAID) {
                 return;
             }
 
+            $transaction = $this->resolvePackageTransaction($lesson);
+
+            if ($transaction === null || $transaction->status !== Transaction::STATUS_SUCCESS) {
+                return;
+            }
+
+            // 3.2 — Lock the transaction and all its settlements for the
+            // duration of this settlement to serialize concurrent completions
+            // of sibling package lessons.
+            $tx = Transaction::query()->lockForUpdate()->find($transaction->id);
+
+            if ($tx === null || $tx->status !== Transaction::STATUS_SUCCESS) {
+                return;
+            }
+
+            $settlements = LessonSettlement::query()
+                ->where('transaction_id', $tx->id)
+                ->lockForUpdate()
+                ->get();
+
+            // 3.2 — Idempotency: this lesson is already settled or refunded.
+            $existing = $settlements->firstWhere('lesson_id', $lesson->id);
+
+            if ($existing !== null && ($existing->settled_at !== null || $existing->refunded_at !== null)) {
+                return;
+            }
+
+            // 3.3 — Resolve package size and compute this lesson's share.
+            $packageLessons = $this->resolvePackageLessons($lesson, $tx);
+
+            $settledSettlements = $settlements->filter(
+                fn (LessonSettlement $settlement): bool => $settlement->settled_at !== null
+            );
+
+            $alreadySettledNet = $this->sumShares($settledSettlements, 'net_share');
+            $alreadySettledGross = $this->sumShares($settledSettlements, 'gross_share');
+            $settledCount = $settledSettlements->count();
+
+            $isResidual = ($settledCount + 1) === $packageLessons;
+
+            if ($packageLessons <= 1) {
+                // Single lesson (or package metadata absent): settle the full
+                // transaction in one shot.
+                $netShare = (string) $tx->net_amount;
+                $grossShare = (string) $tx->amount;
+                $isResidual = true;
+            } elseif ($isResidual) {
+                // Last lesson of the package: close out the exact remainder so
+                // Σ shares == transaction totals to the kopeck.
+                $netShare = bcsub((string) $tx->net_amount, $alreadySettledNet, 2);
+                $grossShare = bcsub((string) $tx->amount, $alreadySettledGross, 2);
+            } else {
+                // Base share: bcdiv with scale 2 truncates (rounds down).
+                $netShare = bcdiv((string) $tx->net_amount, (string) $packageLessons, 2);
+                $grossShare = bcdiv((string) $tx->amount, (string) $packageLessons, 2);
+            }
+
+            // 3.4 — Record the settlement. A concurrent insert racing on the
+            // UNIQUE lesson_id constraint means another worker already settled
+            // this lesson, so we return idempotently.
+            try {
+                LessonSettlement::query()->create([
+                    'lesson_id' => $lesson->id,
+                    'transaction_id' => $tx->id,
+                    'net_share' => $netShare,
+                    'gross_share' => $grossShare,
+                    'settled_at' => now('UTC'),
+                    'meta' => [
+                        'package_lessons' => $packageLessons,
+                        'is_residual' => $isResidual,
+                        'settled_count_after' => $settledCount + 1,
+                    ],
+                ]);
+            } catch (QueryException $exception) {
+                if ($this->isUniqueViolation($exception)) {
+                    return;
+                }
+
+                throw $exception;
+            }
+
+            // 3.5 — Credit the tutor only for this lesson's net share.
             $balance = TutorBalance::query()->firstOrCreate(
                 ['user_id' => $lesson->tutor_id],
                 [
@@ -328,44 +700,116 @@ class PaymentService
                 ],
             );
 
-            $response = $lesson->transaction->gateway_response ?? [];
+            $balance->update([
+                'pending_amount' => $this->maxZero($this->sub((string) $balance->pending_amount, $netShare)),
+                'available_amount' => $this->add((string) $balance->available_amount, $netShare),
+                'total_earned' => $this->add((string) $balance->total_earned, $netShare),
+            ]);
 
-            if (($response['settled'] ?? false) === true) {
-                return;
-            }
-
-            $studentBalance = $this->studentBalanceService->getOrCreate($lesson->transaction->user_id);
+            // 3.6 — Capture only this lesson's gross share from the hold.
+            $studentBalance = $this->studentBalanceService->getOrCreate($tx->user_id);
             $this->studentBalanceService->captureHeldForLesson(
                 balance: $studentBalance,
-                amount: (string) $lesson->transaction->amount,
-                currency: (string) $lesson->transaction->currency,
+                amount: $grossShare,
+                currency: (string) $tx->currency,
                 lesson: $lesson,
-                transaction: $lesson->transaction,
+                transaction: $tx,
                 meta: [
-                    'reason' => 'lesson_completed',
+                    'reason' => 'lesson_completed_partial',
+                    'net_share' => $netShare,
+                    'is_residual' => $isResidual,
                 ],
             );
 
-            $balance->update([
-                'pending_amount' => $this->maxZero($this->sub((string) $balance->pending_amount, (string) $lesson->transaction->net_amount)),
-                'available_amount' => $this->add((string) $balance->available_amount, (string) $lesson->transaction->net_amount),
-                'total_earned' => $this->add((string) $balance->total_earned, (string) $lesson->transaction->net_amount),
-            ]);
+            // 3.7 — On the lesson that closes the package, mark the transaction
+            // settled for backward-compat / audit. This is NOT the idempotency
+            // source of truth — LessonSettlement is.
+            if (($settledCount + 1) === $packageLessons) {
+                $tx->update([
+                    'gateway_response' => array_merge($tx->gateway_response ?? [], [
+                        'settled' => true,
+                        'settled_at' => now('UTC')->toISOString(),
+                    ]),
+                ]);
+            }
 
-            $lesson->transaction->update([
-                'gateway_response' => array_merge($response, [
-                    'settled' => true,
-                    'settled_at' => now('UTC')->toISOString(),
-                ]),
-            ]);
-
-            $this->logFinancialOperation('lesson_settled', [
+            // 3.8 — Audit log.
+            $this->logFinancialOperation('lesson_settled_partial', [
                 'lesson_id' => $lesson->id,
-                'transaction_id' => $lesson->transaction->id,
+                'transaction_id' => $tx->id,
+                'net_share' => $netShare,
+                'gross_share' => $grossShare,
+                'is_residual' => $isResidual,
+                'package_lessons' => $packageLessons,
+                'settled_count_after' => $settledCount + 1,
                 'tutor_id' => $lesson->tutor_id,
-                'net_amount' => (string) $lesson->transaction->net_amount,
             ]);
         });
+    }
+
+    /**
+     * Resolve the package/single Transaction that backs a lesson. Child
+     * package lessons (package_parent_lesson_id != null) have no own
+     * Transaction, so we look it up via the parent lesson.
+     */
+    private function resolvePackageTransaction(Lesson $lesson): ?Transaction
+    {
+        if ($lesson->package_parent_lesson_id !== null) {
+            return Transaction::query()
+                ->where('lesson_id', $lesson->package_parent_lesson_id)
+                ->first();
+        }
+
+        return $lesson->transaction()->first();
+    }
+
+    /**
+     * Resolve the number of lessons in the package. Prefer the value recorded
+     * on the transaction at processPayment time, falling back to the parent
+     * lesson's package_lessons. Defaults to 1 (single) when unavailable.
+     */
+    private function resolvePackageLessons(Lesson $lesson, Transaction $transaction): int
+    {
+        $fromGateway = (int) (($transaction->gateway_response['package_lessons'] ?? 0));
+
+        if ($fromGateway > 0) {
+            return $fromGateway;
+        }
+
+        if ($lesson->package_parent_lesson_id !== null) {
+            $parent = Lesson::query()->find($lesson->package_parent_lesson_id);
+
+            if ($parent !== null && (int) $parent->package_lessons > 0) {
+                return (int) $parent->package_lessons;
+            }
+        }
+
+        return max((int) $lesson->package_lessons, 1);
+    }
+
+    /**
+     * Sum a decimal share column across a collection of settlements using
+     * bcadd with scale 2.
+     *
+     * @param  \Illuminate\Support\Collection<int, LessonSettlement>  $settlements
+     */
+    private function sumShares($settlements, string $column): string
+    {
+        return $settlements->reduce(
+            fn (string $carry, LessonSettlement $settlement): string => bcadd($carry, (string) $settlement->{$column}, 2),
+            '0.00',
+        );
+    }
+
+    /**
+     * Detect a UNIQUE constraint violation (SQLSTATE 23000) from a concurrent
+     * insert racing on lesson_settlements.lesson_id.
+     */
+    private function isUniqueViolation(QueryException $exception): bool
+    {
+        return (string) ($exception->getCode()) === '23000'
+            || ((int) ($exception->errorInfo[1] ?? 0)) === 1062 // MySQL duplicate key
+            || str_contains(strtolower($exception->getMessage()), 'unique');
     }
 
     public function requestPayout(int $tutorId): TutorBalance

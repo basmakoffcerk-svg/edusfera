@@ -23,5 +23,11 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# macOS AppleDouble
-._*
+# MS Office temporary lock files
+~$*
+
+# Cookies log/tmp files
+cookies*.txt
+
+# IDE / Env specific
+.kiro/

@@ -6,11 +6,11 @@ namespace App\Filament\Pages\Auth;
 
 use App\Models\User;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\TextInput;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Models\Contracts\FilamentUser;
-use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Hash;
 
 class Login extends \Filament\Pages\Auth\Login
@@ -161,11 +161,11 @@ class Login extends \Filament\Pages\Auth\Login
         $normalized = preg_replace('/[^\d+]/', '', $phone) ?? $phone;
 
         if (str_starts_with($normalized, '375')) {
-            return '+' . $normalized;
+            return '+'.$normalized;
         }
 
         if (str_starts_with($normalized, '80')) {
-            return '+375' . substr($normalized, 2);
+            return '+375'.substr($normalized, 2);
         }
 
         return $normalized;

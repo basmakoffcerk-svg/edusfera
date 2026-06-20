@@ -15,9 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 class LessonBookingController extends Controller
 {
-    public function __construct(private readonly BookingService $bookingService)
-    {
-    }
+    public function __construct(private readonly BookingService $bookingService) {}
 
     public function store(Request $request, TutorProfile $tutor, PaymentService $paymentService): RedirectResponse
     {

@@ -20,8 +20,7 @@ class ChatBypassAttemptNotification extends Notification
         private readonly Conversation $conversation,
         private readonly Message $message,
         private readonly int $attemptsCount,
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {

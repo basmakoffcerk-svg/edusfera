@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'ai' => [
+        // Per-client секрет для HMAC-SHA256 проверки входящих webhook'ов
+        // AI-сервиса на POST /webhooks/ai/recommendations (требование 10).
+        'webhook_secret' => env('AI_WEBHOOK_SECRET'),
+    ],
+
 ];

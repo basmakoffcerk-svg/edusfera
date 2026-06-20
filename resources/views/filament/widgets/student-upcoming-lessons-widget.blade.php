@@ -81,12 +81,21 @@
                             
                             <div class="ml-4 shrink-0">
                                 @if($isStartingSoon && $lesson->meeting_link)
-                                    <a href="{{ $lesson->meeting_link }}" target="_blank" class="flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-black text-white transition hover:bg-violet-700 shadow-lg shadow-violet-200 dark:shadow-none active:scale-95">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                        </svg>
-                                        Войти
-                                    </a>
+                                    @if(Route::has('classroom.show'))
+                                        <a href="{{ route('classroom.show', $lesson) }}" class="flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-black text-white transition hover:bg-violet-700 shadow-lg shadow-violet-200 dark:shadow-none active:scale-95">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            Войти
+                                        </a>
+                                    @else
+                                        <a href="{{ $lesson->meeting_link }}" target="_blank" class="flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-black text-white transition hover:bg-violet-700 shadow-lg shadow-violet-200 dark:shadow-none active:scale-95">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            Войти
+                                        </a>
+                                    @endif
                                 @else
                                     <a href="{{ url('/admin/lessons/' . $lesson->id) }}" class="flex h-10 items-center rounded-xl border border-gray-100 bg-gray-50/50 px-4 text-xs font-bold text-gray-600 transition hover:bg-white hover:border-violet-100 hover:text-violet-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white group-hover:shadow-sm">
                                         Детали

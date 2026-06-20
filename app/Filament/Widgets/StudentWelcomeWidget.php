@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Models\HomeworkAssignment;
 use App\Models\Lesson;
+use App\Models\ProgressSnapshot;
 use App\Models\StudentBalance;
 use App\Models\StudentGoal;
-use App\Models\HomeworkAssignment;
-use App\Models\ProgressSnapshot;
-use App\Models\SkillGap;
 use App\Models\Transaction;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
@@ -18,14 +17,15 @@ class StudentWelcomeWidget extends Widget
 {
     protected static string $view = 'filament.widgets.student-welcome-widget';
 
-    protected int | string | array $columnSpan = 'full';
-    
+    protected int|string|array $columnSpan = 'full';
+
     protected static ?int $sort = 1;
 
     public static function canView(): bool
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
+
         return $user && in_array($user->role, ['student', 'parent'], true);
     }
 

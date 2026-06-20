@@ -172,8 +172,8 @@ class TutorAvailabilityPage extends Page
                 $slots = collect();
 
                 if (($row['is_active'] ?? false) === true) {
-                    $cursor = CarbonImmutable::parse($date->format('Y-m-d') . ' ' . $row['start_time'], config('booking.display_timezone'));
-                    $end = CarbonImmutable::parse($date->format('Y-m-d') . ' ' . $row['end_time'], config('booking.display_timezone'));
+                    $cursor = CarbonImmutable::parse($date->format('Y-m-d').' '.$row['start_time'], config('booking.display_timezone'));
+                    $end = CarbonImmutable::parse($date->format('Y-m-d').' '.$row['end_time'], config('booking.display_timezone'));
 
                     while ($cursor->lt($end)) {
                         $slots->push($cursor->format('H:i'));

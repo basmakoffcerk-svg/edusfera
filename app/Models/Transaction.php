@@ -13,9 +13,13 @@ class Transaction extends Model
     use SoftDeletes;
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_SUCCESS = 'success';
+
     public const STATUS_FAILED = 'failed';
+
     public const STATUS_REFUNDED = 'refunded';
+
     public const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
 
     protected $fillable = [

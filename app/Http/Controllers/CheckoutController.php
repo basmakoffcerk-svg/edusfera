@@ -9,9 +9,9 @@ use App\Models\StudentBalance;
 use App\Models\TutorProfile;
 use App\Services\PackageService;
 use App\Services\Payment\PaymentService;
-use Illuminate\Http\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -114,7 +114,7 @@ class CheckoutController extends Controller
             'lesson' => $lesson,
             'googleCalendarUrl' => $this->googleCalendarUrl($lesson),
             'calendarDownloadUrl' => route('checkout.calendar', $lesson),
-            'chatUrl' => '/admin/messages?conversation=' . optional($lesson->conversation)->id,
+            'chatUrl' => '/admin/messages?conversation='.optional($lesson->conversation)->id,
         ]);
     }
 
@@ -135,13 +135,13 @@ class CheckoutController extends Controller
             'PRODID:-//Edusfera//Lesson Booking//RU',
             'CALSCALE:GREGORIAN',
             'BEGIN:VEVENT',
-            'UID:lesson-' . $lesson->id . '@edusfera.by',
-            'DTSTAMP:' . now('UTC')->format('Ymd\THis\Z'),
-            'DTSTART:' . $lesson->start_time->utc()->format('Ymd\THis\Z'),
-            'DTEND:' . $lesson->end_time->utc()->format('Ymd\THis\Z'),
-            'SUMMARY:' . $this->escapeIcs($summary),
-            'DESCRIPTION:' . $this->escapeIcs($description),
-            'LOCATION:' . $this->escapeIcs($location),
+            'UID:lesson-'.$lesson->id.'@edusfera.by',
+            'DTSTAMP:'.now('UTC')->format('Ymd\THis\Z'),
+            'DTSTART:'.$lesson->start_time->utc()->format('Ymd\THis\Z'),
+            'DTEND:'.$lesson->end_time->utc()->format('Ymd\THis\Z'),
+            'SUMMARY:'.$this->escapeIcs($summary),
+            'DESCRIPTION:'.$this->escapeIcs($description),
+            'LOCATION:'.$this->escapeIcs($location),
             'END:VEVENT',
             'END:VCALENDAR',
             '',
@@ -149,7 +149,7 @@ class CheckoutController extends Controller
 
         return response($content, 200, [
             'Content-Type' => 'text/calendar; charset=utf-8',
-            'Content-Disposition' => 'attachment; filename="edusfera-lesson-' . $lesson->id . '.ics"',
+            'Content-Disposition' => 'attachment; filename="edusfera-lesson-'.$lesson->id.'.ics"',
         ]);
     }
 
@@ -193,19 +193,19 @@ class CheckoutController extends Controller
     {
         $subject = $lesson->tutor?->tutorProfile?->subjects[0] ?? 'Урок';
         $text = "Edusfera: {$subject} с {$lesson->tutor?->name}";
-        $dates = $lesson->start_time->utc()->format('Ymd\THis\Z') . '/' . $lesson->end_time->utc()->format('Ymd\THis\Z');
+        $dates = $lesson->start_time->utc()->format('Ymd\THis\Z').'/'.$lesson->end_time->utc()->format('Ymd\THis\Z');
 
         return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='
-            . urlencode($text)
-            . '&dates=' . urlencode($dates)
-            . '&details=' . urlencode('Занятие забронировано и оплачено через Edusfera.')
-            . '&location=' . urlencode($lesson->meeting_link ?: 'Edusfera');
+            .urlencode($text)
+            .'&dates='.urlencode($dates)
+            .'&details='.urlencode('Занятие забронировано и оплачено через Edusfera.')
+            .'&location='.urlencode($lesson->meeting_link ?: 'Edusfera');
     }
 
     private function escapeIcs(string $value): string
     {
         return str_replace(
-            ["\\", ';', ',', "\n", "\r"],
+            ['\\', ';', ',', "\n", "\r"],
             ['\\\\', '\;', '\,', '\n', ''],
             $value,
         );

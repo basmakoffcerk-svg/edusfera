@@ -1,0 +1,476 @@
+openapi: 3.1.0
+
+info:
+  title: Edusfera API
+  version: 1.0.0
+  description: |
+    Публичный REST API платформы edusfera.by (v1).
+
+    ## Правила совместимости (Compatibility Policy)
+
+    В рамках версии `v1` действуют следующие правила:
+
+    - **Добавлять поля можно** в любом релизе без предупреждения.
+      Клиенты обязаны игнорировать неизвестные поля (forward compatibility).
+    - **Удалять или переименовывать поля нельзя** без смены major-версии.
+      Удаление поля = bump до `/api/v2/*` + заголовок `Deprecation: true`
+      в ответах `/api/v1/*` минимум **два цикла релиза** до фактического удаления.
+    - **Изменять тип поля нельзя** в рамках v1 (например, `string` → `integer`).
+    - **Удалять эндпоинты нельзя** без аналогичной процедуры deprecation.
+
+    Нарушение этих правил автоматически блокирует merge через CI-чекер `oasdiff`
+    (см. `.github/workflows/openapi-compat.yml`).
+
+  contact:
+    name: Edusfera Engineering
+    url: https://edusfera.by
+
+  license:
+    name: Proprietary
+
+x-compatibility-rules:
+  policy: additive-only-within-major
+  breaking-change-procedure:
+    - bump-major-version
+    - add-deprecation-header-to-v1
+    - maintain-v1-for-min-2-release-cycles
+  ci-checker: oasdiff
+  ci-workflow: .github/workflows/openapi-compat.yml
+
+servers:
+  - url: /api/v1
+    description: API v1 (current)
+
+security:
+  - SanctumBearer: []
+
+components:
+  securitySchemes:
+    SanctumBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: PersonalAccessToken
+      description: |
+        Laravel Sanctum personal access token.
+        Выдаётся через `POST /api/v1/auth/tokens` или из Filament-панели.
+        Передаётся в заголовке `Authorization: Bearer <token>`.
+
+    PassportClientCredentials:
+      type: oauth2
+      description: |
+        Laravel Passport OAuth2 Client Credentials Grant (RS256).
+        Используется для service-to-service (S2S) аутентификации.
+        Каждый микросервис получает `client_id` + `client_secret` и обменивает
+        их на короткоживущий JWT (TTL ≤ 30 мин).
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes:
+            lessons:read: Чтение данных уроков
+            lessons:write: Создание и изменение уроков
+            homework:read: Чтение домашних заданий
+            homework:write: Создание и изменение домашних заданий
+            ai:invoke: Вызов AI-ассистента
+            ai:write: Запись результатов AI
+            classroom:token:issue: Выпуск classroom-JWT
+            internal:outbox:read: Чтение очереди outbox (внутренний)
+            internal:metrics:read: Чтение метрик (внутренний)
+
+  schemas:
+    SubjectDto:
+      type: object
+      description: Аутентифицированный субъект (пользователь или сервис).
+      required:
+        - user_id
+        - scopes
+      properties:
+        user_id:
+          type: integer
+          description: Идентификатор пользователя.
+          example: 42
+        role:
+          type:
+            - string
+            - "null"
+          description: Роль пользователя (admin, tutor, student, parent). Null для сервисных токенов.
+          example: tutor
+          enum:
+            - admin
+            - tutor
+            - student
+            - parent
+            - null
+        scopes:
+          type: array
+          description: Список abilities/scope-ов токена, под которым выполнен запрос.
+          items:
+            type: string
+          example:
+            - lessons:read
+            - homework:write
+        request_id:
+          type:
+            - string
+            - "null"
+          description: UUID v7 текущего запроса (из X-Request-Id). Null если middleware не применялся.
+          example: "01J5T3ABCDEF0000000000000000"
+
+    JwkKey:
+      type: object
+      description: Публичный ключ RSA в формате JWK (RFC 7517 + RFC 7518).
+      required:
+        - kty
+        - use
+        - alg
+        - kid
+        - n
+        - e
+      properties:
+        kty:
+          type: string
+          description: Тип ключа. Всегда "RSA".
+          example: RSA
+          enum:
+            - RSA
+        use:
+          type: string
+          description: Назначение ключа. "sig" — для проверки подписи.
+          example: sig
+          enum:
+            - sig
+        alg:
+          type: string
+          description: Алгоритм подписи. Всегда "RS256".
+          example: RS256
+          enum:
+            - RS256
+        kid:
+          type: string
+          description: |
+            Идентификатор ключа. Для Passport-ключей — 16 hex-символов (sha256 от
+            модуля + суффикс). Для classroom-ключа — `classroom-` + 16 hex-символов
+            (sha256 от PEM публичного ключа), что совпадает с `kid` в header
+            выпущенного classroom-JWT.
+          example: "a1b2c3d4e5f60001"
+        n:
+          type: string
+          description: Модуль RSA в base64url-кодировке (RFC 7518 §6.3.1.1).
+          example: "sXch6..."
+        e:
+          type: string
+          description: Публичная экспонента RSA в base64url-кодировке (RFC 7518 §6.3.1.2).
+          example: AQAB
+
+    JwkSet:
+      type: object
+      description: JWK Set — набор публичных ключей RS256 (RFC 7517 §5).
+      required:
+        - keys
+      properties:
+        keys:
+          type: array
+          description: |
+            Массив JWK. Содержит публичный ключ Passport (service-to-service) и,
+            при ротации, предыдущий ключ (с kid = "previous") для обеспечения
+            zero-downtime key rotation. Дополнительно публикуется отдельный
+            classroom-ключ (kid с префиксом "classroom-") для проверки classroom-JWT
+            (требование 11.7), если classroom keypair сконфигурирована.
+          items:
+            $ref: "#/components/schemas/JwkKey"
+          minItems: 1
+
+    ClassroomTokenResponse:
+      type: object
+      description: |
+        Ответ эндпоинта `GET /api/v1/lessons/{id}/classroom-token` (требование 11.5).
+        Содержит короткоживущий classroom-JWT (RS256), идентификатор комнаты
+        и служебные URL для подключения фронтенда к виртуальному классу.
+      required:
+        - token
+        - room
+        - urls
+      properties:
+        token:
+          type: string
+          description: |
+            Classroom-JWT, подписанный RS256. Header содержит `kid`
+            (`classroom-...`), сопоставимый с ключом из `/.well-known/jwks.json`.
+            Claim `exp` ограничен концом урока + grace.
+          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImNsYXNzcm9vbS0..."
+        room:
+          type: string
+          description: |
+            Идентификатор комнаты виртуального класса. Берётся из активной
+            classroom-сессии урока либо детерминированный fallback `lesson-{id}`.
+          example: "lesson-42"
+        urls:
+          type: object
+          description: Служебные URL для подключения к виртуальному классу.
+          required:
+            - media_server
+            - ice_servers
+          properties:
+            media_server:
+              type: string
+              description: Адрес media-сервера (WebSocket).
+              example: "wss://media.edusfera.by"
+            ice_servers:
+              type: array
+              description: Список ICE-серверов (STUN/TURN) для установления P2P-соединения.
+              items:
+                type: object
+                properties:
+                  urls:
+                    type: string
+                    description: URL STUN/TURN-сервера.
+                    example: "stun:stun.l.google.com:19302"
+                  username:
+                    type: string
+                    description: Имя пользователя для TURN-сервера (если требуется).
+                  credential:
+                    type: string
+                    description: Пароль/credential для TURN-сервера (если требуется).
+              example:
+                - urls: "stun:stun.l.google.com:19302"
+
+    ErrorResponse:
+      type: object
+      description: Стандартный формат ошибки API.
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Машиночитаемый код ошибки.
+              example: unauthenticated
+            message:
+              type: string
+              description: Человекочитаемое описание ошибки.
+              example: Unauthenticated.
+            request_id:
+              type:
+                - string
+                - "null"
+              description: UUID запроса для трассировки.
+              example: "01J5T3ABCDEF0000000000000000"
+
+  responses:
+    Unauthorized:
+      description: Токен отсутствует, истёк или невалиден.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: unauthenticated
+              message: Unauthenticated.
+              request_id: "01J5T3ABCDEF0000000000000000"
+
+    Forbidden:
+      description: Нет прав доступа к ресурсу.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: forbidden
+              message: You do not have access to this lesson.
+              request_id: "01J5T3ABCDEF0000000000000000"
+
+    NotFound:
+      description: Ресурс не найден.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: not_found
+              message: Resource not found.
+              request_id: "01J5T3ABCDEF0000000000000000"
+
+paths:
+  /me:
+    get:
+      operationId: getMe
+      summary: Информация об аутентифицированном субъекте
+      description: |
+        Smoke-эндпоинт. Возвращает `user_id`, `role`, `scopes` и `request_id`
+        аутентифицированного пользователя.
+
+        Требует валидный Sanctum personal access token в заголовке
+        `Authorization: Bearer <token>`. Без токена возвращает 401.
+
+        Реализован в `app/Http/Api/V1/Controllers/MeController.php`.
+        Ответ формируется через readonly DTO `SubjectDto` без прямой
+        сериализации Eloquent-модели (требование 6.6).
+      tags:
+        - Identity
+      security:
+        - SanctumBearer: []
+      parameters:
+        - name: X-Request-Id
+          in: header
+          required: false
+          description: |
+            UUID v4/v7 для трассировки запроса. Если не передан, генерируется
+            автоматически middleware `AssignRequestId` и возвращается в ответе.
+          schema:
+            type: string
+            format: uuid
+            example: "01J5T3ABCDEF0000000000000000"
+      responses:
+        "200":
+          description: Успешный ответ с данными аутентифицированного субъекта.
+          headers:
+            X-Request-Id:
+              description: UUID запроса (сгенерирован или принят из входящего заголовка).
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubjectDto"
+              example:
+                user_id: 42
+                role: tutor
+                scopes:
+                  - lessons:read
+                  - homework:write
+                request_id: "01J5T3ABCDEF0000000000000000"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /.well-known/jwks.json:
+    get:
+      operationId: getJwks
+      summary: JWK Set с публичными ключами RS256
+      description: |
+        Публичный эндпоинт (без аутентификации). Возвращает JWK Set (RFC 7517)
+        с текущим публичным ключом RS256, используемым для подписи:
+        - Passport access-токенов (service-to-service)
+        - Classroom JWT (RS256, для виртуального класса)
+
+        При ротации ключей публикуются одновременно текущий (`kid` = "current")
+        и предыдущий (`kid` = "previous") ключи, обеспечивая zero-downtime rotation
+        (требование 3.7).
+
+        Микросервисы кешируют этот ответ и используют для самостоятельной
+        валидации JWT без обращения к ядру.
+
+        Реализован в `app/Http/Api/V1/Controllers/JwksController.php`.
+      tags:
+        - Auth
+      security: []
+      parameters:
+        - name: X-Request-Id
+          in: header
+          required: false
+          description: UUID v4/v7 для трассировки запроса.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: JWK Set с публичными ключами.
+          headers:
+            X-Request-Id:
+              description: UUID запроса.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JwkSet"
+              example:
+                keys:
+                  - kty: RSA
+                    use: sig
+                    alg: RS256
+                    kid: "a1b2c3d4e5f60001"
+                    n: "sXch6aADIj6T4pBnB8aaL4..."
+                    e: AQAB
+                  - kty: RSA
+                    use: sig
+                    alg: RS256
+                    kid: "classroom-9f8e7d6c5b4a3210"
+                    n: "rZ9kLp3qWcXmN0vTbY..."
+                    e: AQAB
+
+  /lessons/{id}/classroom-token:
+    get:
+      operationId: getClassroomToken
+      summary: Classroom-JWT для подключения к виртуальному классу
+      description: |
+        Выпускает короткоживущий classroom-JWT (RS256) для подключения
+        аутентифицированного пользователя к виртуальному классу урока
+        (требования 11.5, 11.6).
+
+        Требует валидный Sanctum personal access token. Доступ к уроку
+        проверяется через `LessonPolicy::view` внутри `ClassroomTokenService`:
+        - 401 — токен отсутствует или невалиден;
+        - 403 — пользователь не имеет прав на урок (токен не выпускается);
+        - 404 — урок с указанным `id` не найден.
+
+        Claim `exp` выпущенного токена ограничен `min(lesson.end + grace, now + max_ttl)`.
+        Публичный ключ для проверки подписи публикуется в `/.well-known/jwks.json`
+        (kid с префиксом `classroom-`).
+
+        Реализован в `app/Http/Api/V1/Controllers/ClassroomTokenController.php`.
+      tags:
+        - Classroom
+      security:
+        - SanctumBearer: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор урока.
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          example: 42
+        - name: X-Request-Id
+          in: header
+          required: false
+          description: UUID v4/v7 для трассировки запроса.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Classroom-токен успешно выпущен.
+          headers:
+            X-Request-Id:
+              description: UUID запроса.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassroomTokenResponse"
+              example:
+                token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6ImNsYXNzcm9vbS0..."
+                room: "lesson-42"
+                urls:
+                  media_server: "wss://media.edusfera.by"
+                  ice_servers:
+                    - urls: "stun:stun.l.google.com:19302"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"

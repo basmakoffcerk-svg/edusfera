@@ -7,10 +7,12 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Crypt;
 
 class MultiAccountService
 {
     private const COOKIE_NAME = 'edusfera_linked_ids';
+
     private const COOKIE_LIFETIME = 43200; // 30 days in minutes
 
     /**
@@ -76,6 +78,7 @@ class MultiAccountService
         $user = User::query()->find($userId);
         if (! $user) {
             $this->removeId($userId);
+
             return false;
         }
 
@@ -132,13 +135,23 @@ class MultiAccountService
     }
 
     /**
-     * Internal: Read IDs from cookie.
+     * Internal: Read IDs from encrypted cookie.
      *
      * @return int[]
      */
     private function getIdsFromCookie(): array
     {
-        $cookie = request()->cookie(self::COOKIE_NAME);
+        $encrypted = request()->cookie(self::COOKIE_NAME);
+
+        if (! is_string($encrypted) || $encrypted === '') {
+            return [];
+        }
+
+        try {
+            $cookie = Crypt::decrypt($encrypted, false);
+        } catch (\Throwable) {
+            return [];
+        }
 
         if (! is_string($cookie) || $cookie === '') {
             return [];
@@ -151,9 +164,9 @@ class MultiAccountService
     }
 
     /**
-     * Internal: Save IDs to cookie.
+     * Internal: Save IDs to encrypted cookie.
      *
-     * @param int[] $ids
+     * @param  int[]  $ids
      */
     private function saveIdsToCookie(array $ids): void
     {
@@ -161,13 +174,21 @@ class MultiAccountService
 
         if (empty($ids)) {
             Cookie::queue(Cookie::forget(self::COOKIE_NAME));
+
             return;
         }
 
+        $plainValue = implode(',', $ids);
+        $encryptedValue = Crypt::encrypt($plainValue, false);
+
         Cookie::queue(
             self::COOKIE_NAME,
-            implode(',', $ids),
-            self::COOKIE_LIFETIME
+            $encryptedValue,
+            self::COOKIE_LIFETIME,
+            '/',
+            null,
+            true,
+            true
         );
     }
 }
