@@ -1765,6 +1765,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
                 <button type="button" class="bf-role-btn active" data-role="parent">Родитель / Ученик</button>
                 <button type="button" class="bf-role-btn" data-role="tutor">Репетитор</button>
                 <input type="hidden" name="role" id="bf-role-input" value="parent">
+                <input type="text" name="mid_name" id="bf-mid-name" style="display:none !important;" autocomplete="off" tabindex="-1">
               </div>
               
               <div class="bf-field">
@@ -2152,6 +2153,7 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
       const phoneInput = document.getElementById('bf-phone');
       const emailInput = document.getElementById('bf-email');
       const subjectInput = document.getElementById('bf-subject');
+      const midNameInput = document.getElementById('bf-mid-name');
       
       let hasError = false;
       
@@ -2196,7 +2198,8 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
           name: nameInput.value.trim(),
           phone: phoneInput.value.trim(),
           email: emailInput.value.trim(),
-          subject: subjectInput.value
+          subject: subjectInput.value,
+          mid_name: midNameInput ? midNameInput.value : ''
         })
       })
       .then(response => {

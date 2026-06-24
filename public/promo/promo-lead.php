@@ -1,17 +1,52 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-// --- НАСТРОЙКИ ДЛЯ ХОСТИНГА (впишите ваши данные перед загрузкой) ---
-define('GOOGLE_SCRIPT_URL', 'https://script.google.com/macros/s/AKfycbyJv0SYgfdYbvzoygAjnQWV3ufonH8L2p1QuHVFSjWyYdbt4M_t2EXEuKwq5DX3IJmS/exec');
+// --- ЗАГРУЗКА НАСТРОЕК ИЗ .ENV (ДЛЯ БЕЗОПАСНОСТИ СЕКРЕТОВ) ---
+function loadEnv() {
+    $paths = [
+        __DIR__ . '/../../.env',
+        __DIR__ . '/../.env',
+        __DIR__ . '/.env'
+    ];
+    
+    foreach ($paths as $path) {
+        if (file_exists($path)) {
+            $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line) || strpos($line, '#') === 0) continue;
+                
+                $parts = explode('=', $line, 2);
+                if (count($parts) === 2) {
+                    $key = trim($parts[0]);
+                    $value = trim($parts[1]);
+                    // Убираем внешние кавычки
+                    $value = trim($value, '"\'');
+                    
+                    if (!array_key_exists($key, $_SERVER) && !array_key_exists($key, $_ENV)) {
+                        putenv("{$key}={$value}");
+                        $_ENV[$key] = $value;
+                        $_SERVER[$key] = $value;
+                    }
+                }
+            }
+            break; // Останавливаемся на первом найденном файле
+        }
+    }
+}
+loadEnv();
 
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 465);
-define('SMTP_SECURE', 'ssl'); // 'ssl' или 'tls'
-define('SMTP_USER', 'edusferaby@gmail.com');
-define('SMTP_PASS', 'ttvkqdwzfqawfqas'); // Пароль приложений Google
-define('SMTP_FROM_EMAIL', 'edusferaby@gmail.com');
-define('SMTP_FROM_NAME', 'Edusfera');
-// ---------------------------------------------------------------------
+// Конфигурация с fallback значениями (по умолчанию)
+$googleScriptUrl = getenv('PROMO_GOOGLE_SCRIPT_URL') ?: 'https://script.google.com/macros/s/AKfycbyJv0SYgfdYbvzoygAjnQWV3ufonH8L2p1QuHVFSjWyYdbt4M_t2EXEuKwq5DX3IJmS/exec';
+
+$smtpHost = getenv('MAIL_HOST') ?: 'smtp.gmail.com';
+$smtpPort = getenv('MAIL_PORT') ?: 465;
+$smtpSecure = getenv('MAIL_ENCRYPTION') ?: 'ssl';
+$smtpUser = getenv('MAIL_USERNAME') ?: 'edusferaby@gmail.com';
+$smtpPass = getenv('MAIL_PASSWORD') ?: 'ttvkqdwzfqawfqas';
+$smtpFromEmail = getenv('MAIL_FROM_ADDRESS') ?: 'edusferaby@gmail.com';
+$smtpFromName = getenv('MAIL_FROM_NAME') ?: 'Edusfera';
+// -------------------------------------------------------------
 
 // Подключаем автономный PHPMailer
 require __DIR__ . '/PHPMailer/Exception.php';
@@ -27,8 +62,33 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Запускаем сессию для Rate Limiting
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.use_only_cookies', 1);
+    session_start();
+}
+
+// Rate Limiting: отправка не чаще раза в 15 секунд с одного IP/сессии
+$currentTime = time();
+if (isset($_SESSION['last_submit_time']) && ($currentTime - $_SESSION['last_submit_time']) < 15) {
+    http_response_code(429);
+    echo json_encode(['status' => 'error', 'message' => 'Слишком много запросов. Пожалуйста, подождите 15 секунд перед следующей отправкой.']);
+    exit;
+}
+
 // Получаем JSON из тела запроса
 $input = json_decode(file_get_contents('php://input'), true);
+
+// Honeypot защита от спам-ботов
+if (!empty($input['mid_name'])) {
+    // Имитируем успешный ответ для спам-бота, но прерываем выполнение без отправки
+    echo json_encode([
+        'status' => 'success',
+        'inviteCode' => 'EDUSFERA-' . strtoupper(bin2hex(random_bytes(2))) . '-2026'
+    ]);
+    exit;
+}
 
 $name = isset($input['name']) ? trim($input['name']) : '';
 $email = isset($input['email']) ? trim($input['email']) : '';
@@ -36,18 +96,51 @@ $phone = isset($input['phone']) ? trim($input['phone']) : '';
 $role = isset($input['role']) ? trim($input['role']) : '';
 $subject = isset($input['subject']) ? trim($input['subject']) : '';
 
-// Простая валидация
+// Ограничение по длине полей (защита от переполнения буфера / DOS)
+if (strlen($name) > 100 || strlen($email) > 100 || strlen($phone) > 25 || strlen($role) > 20 || strlen($subject) > 100) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Превышена допустимая длина полей']);
+    exit;
+}
+
+// Валидация роли
+$allowedRoles = ['parent', 'tutor'];
+if (!in_array($role, $allowedRoles)) {
+    $role = 'parent';
+}
+
+// Валидация имени
 if (empty($name)) {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'Пожалуйста, введите ваше имя']);
     exit;
 }
 
+// Валидация Email
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'Пожалуйста, введите корректный email']);
     exit;
 }
+
+// Валидация Телефона (Беларусь)
+$cleanPhone = preg_replace('/[\s\(\)\-]/', '', $phone);
+if (!preg_match('/^\+375\d{9}$/', $cleanPhone)) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Пожалуйста, введите корректный телефон в формате +375 (XX) XXX-XX-XX']);
+    exit;
+}
+
+// Защита от Formula Injection в Google Sheets
+// Удаляем символы '=', '+', '-', '@' в начале полей
+function sanitizeFormula($str) {
+    return ltrim($str, '=+-@');
+}
+
+$name = sanitizeFormula($name);
+$phone = sanitizeFormula($phone);
+$role = sanitizeFormula($role);
+$subject = sanitizeFormula($subject);
 
 // Генерация уникального инвайт-кода
 $inviteCode = 'EDUSFERA-' . strtoupper(bin2hex(random_bytes(2))) . '-2026';
@@ -62,7 +155,7 @@ $payload = json_encode([
     'inviteCode' => $inviteCode
 ]);
 
-$ch = curl_init(GOOGLE_SCRIPT_URL);
+$ch = curl_init($googleScriptUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
@@ -83,16 +176,16 @@ $mail = new PHPMailer(true);
 try {
     // Настройки SMTP сервера
     $mail->isSMTP();
-    $mail->Host       = SMTP_HOST;
+    $mail->Host       = $smtpHost;
     $mail->SMTPAuth   = true;
-    $mail->Username   = SMTP_USER;
-    $mail->Password   = SMTP_PASS;
-    $mail->SMTPSecure = SMTP_SECURE;
-    $mail->Port       = SMTP_PORT;
+    $mail->Username   = $smtpUser;
+    $mail->Password   = $smtpPass;
+    $mail->SMTPSecure = $smtpSecure;
+    $mail->Port       = $smtpPort;
     $mail->CharSet    = 'UTF-8';
 
     // Получатели
-    $mail->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
+    $mail->setFrom($smtpFromEmail, $smtpFromName);
     $mail->addAddress($email, $name);
 
     // Контент
@@ -120,9 +213,12 @@ try {
 
     $mail->send();
 } catch (Exception $e) {
-    // Записываем ошибку в системный лог хостинга, чтобы не ломать выполнение фронтенда
-    error_log('Ошибка отправки email через PHPMailer: ' . $mail->ErrorInfo);
+    // Записываем только общие сведения без конфиденциальной отладки соединения
+    error_log('Ошибка отправки email через PHPMailer');
 }
+
+// Записываем время успешной отправки для Rate Limiting
+$_SESSION['last_submit_time'] = time();
 
 // Возвращаем успешный ответ клиенту вместе со сгенерированным инвайт-кодом
 echo json_encode([
