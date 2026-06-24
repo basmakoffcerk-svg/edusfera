@@ -1,0 +1,47 @@
+# ═══ Edusfera: Apache-конфигурация для промо-лендинга ═══
+
+# ── GZIP-сжатие (уменьшает размер HTML/CSS/JS/SVG/шрифтов при передаче) ──
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript
+    AddOutputFilterByType DEFLATE image/svg+xml application/json
+    AddOutputFilterByType DEFLATE font/ttf font/woff font/woff2 application/font-woff application/font-woff2
+</IfModule>
+
+# ── HTML-страницы: НЕ кэшировать (чтобы правки были видны сразу) ──
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html)$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "Thu, 01 Jan 1970 00:00:00 GMT"
+    </FilesMatch>
+</IfModule>
+
+# ── Статические ресурсы: кэшировать 30 дней ──
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|woff2|woff|ttf|svg|png|jpg|jpeg|ico|webp)$">
+        Header set Cache-Control "max-age=2592000, public, immutable"
+        Header unset Pragma
+        Header unset Expires
+    </FilesMatch>
+</IfModule>
+
+# ── Дополнительно: mod_expires (если mod_headers не сработал) ──
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType font/ttf "access plus 1 month"
+    ExpiresByType font/woff "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# ── Редирект favicon.ico на favicon.svg для Яндекса ──
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^favicon\.ico$ favicon.svg [L]
+</IfModule>

@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Промо-лендинг (заглушка до запуска платформы)
+# Платформа /admin/* и /api/* закрыты от индексации ниже
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /livewire/
+
+Sitemap: https://edusfera.by/sitemap.xml
+Host: https://edusfera.by
