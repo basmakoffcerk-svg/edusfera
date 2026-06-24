@@ -190,17 +190,24 @@
             .glass {
                 padding: 24px 16px;
             }
+            h1 {
+                font-size: 1.22rem;
+                letter-spacing: -0.01em;
+            }
         }
 
         h1 {
             font-family: 'Rimma Sans', 'Inter', sans-serif;
             font-weight: 800;
-            font-size: clamp(1.5rem, 4vw, 2.6rem);
+            font-size: clamp(1.4rem, 4vw, 2.6rem);
             line-height: 1.1;
             letter-spacing: -.03em;
             text-transform: uppercase;
             margin-bottom: 8px;
             color: var(--text-main);
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         .meta-info {
