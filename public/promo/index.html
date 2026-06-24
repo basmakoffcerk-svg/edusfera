@@ -20,7 +20,7 @@
 <meta property="og:title" content="Edusfera — легальные репетиторы ЦТ и ЦЭ из госреестра">
 <meta property="og:description" content="Все наши репетиторы в госреестре с 1 июля. Безопасная оплата, договор, ИИ-диагностика и гарантированный результат. Подайте заявку на бета-тест.">
 <meta property="og:url" content="https://edusfera.by/">
-<meta property="og:image" content="https://edusfera.by/promo/og-image.png">
+<meta property="og:image" content="https://edusfera.by/og-image.png">
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
@@ -49,7 +49,7 @@
       "name": "Edusfera",
       "alternateName": "ООО Эдусфера",
       "url": "https://edusfera.by/",
-      "logo": "https://edusfera.by/promo/favicon.svg",
+      "logo": "https://edusfera.by/favicon.svg",
       "description": "Платформа для подготовки к централизованному тестированию (ЦТ) и экзаменам (ЦЭ) в Беларуси с проверенными репетиторами и безопасной оплатой.",
       "taxID": "192854899",
       "address": {
@@ -1314,7 +1314,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
       <a href="#faq">Вопросы</a>
     </nav>
     <div class="hdr-actions">
-      <a href="#beta" class="btn btn-violet btn-sm">Бета-тест</a>
+      <a href="#beta" class="btn btn-violet btn-sm magnetic">Бета-тест</a>
     </div>
   </div>
 </header>
@@ -1352,19 +1352,19 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
         <!-- Контент: РОДИТЕЛЬ -->
         <div class="audience-content active" data-aud="parent">
           <h1>Подготовка к ЦЭ и ЦТ у репетиторов <span class="gradient-text">из госреестра</span></h1>
-          <p class="hero-sub">С 1 июля заниматься с репетиторами вне реестра в Беларуси незаконно. Все преподаватели Edusfera уже включены в реестр или завершают верификацию. ИИ-диагностика найдет пробелы за 15 минут, а безопасная оплата защитит ваши средства.</p>
+          <p class="hero-sub">С 1 июля репетиторы вне реестра — незаконны. У нас каждый проверен, оплата под защитой, а ИИ найдёт пробелы за 15 минут.</p>
           <div class="hero-ctas">
             <a href="#beta" class="btn btn-violet">Найти легального репетитора</a>
-            <a href="#diag-results" class="btn btn-white">Пройти диагностику знаний</a>
+            <a href="#diag-results" class="btn btn-white">Пройти диагностику</a>
           </div>
         </div>
 
         <!-- Контент: РЕПЕТИТОР -->
         <div class="audience-content" data-aud="tutor">
           <h1>Преподавайте легально <span class="gradient-text">без штрафов и бюрократии</span></h1>
-          <p class="hero-sub">С 1 июля работа без включения в госреестр запрещена. Подключайтесь к Edusfera: мы берем на себя оформление чеков, уплату налогов и помощь с регистрацией в Минобре. Получайте стабильный поток учеников.</p>
+          <p class="hero-sub">С 1 июля без реестра нельзя. Мы берём на себя чеки, налоги и регистрацию в Минобре — вы просто преподаёте.</p>
           <div class="hero-ctas">
-            <a href="#beta" class="btn btn-lime">Подать заявку в реестр Edusfera</a>
+            <a href="#beta" class="btn btn-lime">Подать заявку</a>
             <a href="#calc" class="btn btn-white">Калькулятор дохода</a>
           </div>
         </div>
@@ -1438,57 +1438,79 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
 <section class="trust">
   <div class="wrap">
     <div class="trust-grid rv">
-      <div class="trust-item"><div class="trust-n"><span class="ac-v">+35</span> б.</div><div class="trust-l">Средний рост за 3 мес</div></div>
-      <div class="trust-item"><div class="trust-n"><span class="ac-l">15</span> мин</div><div class="trust-l">Диагностика знаний</div></div>
-      <div class="trust-item"><div class="trust-n">100<span class="ac-v">%</span></div><div class="trust-l">Безопасная оплата</div></div>
-      <div class="trust-item"><div class="trust-n">0 <span class="ac-l">BYN</span></div><div class="trust-l">Первый урок бесплатно</div></div>
+      <div class="trust-item"><div class="trust-n"><span class="ac-v">+<span data-count="35">35</span></span> б.</div><div class="trust-l">Средний рост за 3 мес</div></div>
+      <div class="trust-item"><div class="trust-n"><span class="ac-l"><span data-count="15">15</span></span> мин</div><div class="trust-l">Диагностика знаний</div></div>
+      <div class="trust-item"><div class="trust-n"><span data-count="100">100</span><span class="ac-v">%</span></div><div class="trust-l">Безопасная оплата</div></div>
+      <div class="trust-item"><div class="trust-n"><span data-count="0">0</span> <span class="ac-l">BYN</span></div><div class="trust-l">Первый урок бесплатно</div></div>
     </div>
   </div>
 </section>
+
+<!-- ═══ Бегущая строка предметов ═══ -->
+<div class="marquee rv" aria-hidden="true">
+  <div class="marquee-track">
+    <span class="mq-item"><span class="emoji">📐</span> Математика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">⚛️</span> Физика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">🧪</span> Химия</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">🧬</span> Биология</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">✍️</span> Русский язык</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">📖</span> Белорусский язык</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">📜</span> История</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">🌐</span> Английский</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">⚖️</span> Обществоведение</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">💻</span> Информатика</span><span class="mq-sep">◆</span>
+    <!-- дубликат для бесшовного цикла -->
+    <span class="mq-item"><span class="emoji">📐</span> Математика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">⚛️</span> Физика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">🧪</span> Химия</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">🧬</span> Биология</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">✍️</span> Русский язык</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">📖</span> Белорусский язык</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">📜</span> История</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">🌐</span> Английский</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">⚖️</span> Обществоведение</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><span class="emoji">💻</span> Информатика</span><span class="mq-sep">◆</span>
+  </div>
+</div>
 
 <!-- ═══ ГОСРЕЕСТР ИНФО БЛОК ═══ -->
 <section class="sec" id="registry-info" style="background: #fff; border-bottom: 1px solid var(--border)">
   <div class="wrap">
     <div class="sec-top rv">
       <div class="eyebrow">Закон и легальность</div>
-      <h2 class="sec-h">Госреестр с 1 июля: <span class="gradient-text">что изменилось?</span></h2>
-      <p class="sec-sub">В Беларуси вступают в силу новые правила работы для преподавателей. Edusfera помогает родителям и репетиторам полностью соответствовать закону.</p>
+      <h2 class="sec-h">Госреестр с 1 июля: <span class="gradient-text">что изменилось</span></h2>
     </div>
     
     <div class="calc-grid">
       <!-- Блок для родителей -->
-      <div class="offer-card rv" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div class="oc-ic v" style="background: #fee2e2; color: #ef4444; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px;">⚠️</div>
-          <h3 style="color: #dc2626;">Родителям и ученикам</h3>
-          <p style="margin-top: 10px; margin-bottom: 12px; font-weight: 700;">Риск занятий вне реестра:</p>
-          <p style="margin-bottom: 20px; font-size: 0.92rem; line-height: 1.6; color: var(--text-muted);">
-            С 1 июля преподавание без включения в госреестр Минобра Республики Беларусь признается незаконным. Родители рискуют столкнуться с внезапной отменой занятий из-за проверок налоговой и потерять деньги, переведенные «в серую».
-          </p>
-        </div>
-        <div style="background: var(--ed-bg); padding: 16px; border-radius: 12px; border-left: 4px solid var(--ed-violet);">
-          <strong style="display: block; margin-bottom: 4px; font-size: 0.9rem; color: var(--text-main);">Решение Edusfera:</strong>
-          <span style="font-size: 0.86rem; color: var(--text-muted); line-height: 1.5; display: block;">
-            Все репетиторы на платформе проходят обязательную проверку документов и подтверждают свой статус в реестре. Оплата через безопасную сделку (эскроу) защищает ваши средства.
-          </span>
+      <div class="offer-card rv" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="oc-ic v" style="background:#fee2e2;color:#ef4444;">⚠️</div>
+        <h3 style="color:#dc2626;">Родителям</h3>
+        <p style="margin:6px 0 16px;font-weight:700;">Риск занятий вне реестра</p>
+        <ul style="list-style:none;display:grid;gap:10px;font-size:.92rem;color:var(--text-muted);line-height:1.5;">
+          <li>⛔ Занятия могут прервать проверки налоговой</li>
+          <li>💸 Деньги «в серую» не вернуть</li>
+          <li>🚫 Репетитора нет в базе Минобра — нет гарантий</li>
+        </ul>
+        <div style="margin-top:auto;padding-top:18px;background:var(--ed-bg);padding:14px 16px;border-radius:12px;border-left:4px solid var(--ed-violet);">
+          <strong style="display:block;margin-bottom:4px;font-size:.88rem;">✓ Решение Edusfera</strong>
+          <span style="font-size:.84rem;color:var(--text-muted);display:block;">Все репетиторы проверены, оплата под защитой эскроу.</span>
         </div>
       </div>
 
       <!-- Блок для репетиторов -->
-      <div class="offer-card rv rv-d1" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div class="oc-ic l" style="background: #fef3c7; color: #d97706; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 24px;">🛑</div>
-          <h3 style="color: #d97706;">Преподавателям</h3>
-          <p style="margin-top: 10px; margin-bottom: 12px; font-weight: 700;">Штрафы и блокировки:</p>
-          <p style="margin-bottom: 20px; font-size: 0.92rem; line-height: 1.6; color: var(--text-muted);">
-            Работа без реестра влечет штраф до 100 базовых величин (до 4000 BYN) с конфискацией до 100% полученного дохода. Также блокируются рекламные объявления нелегальных преподавателей.
-          </p>
-        </div>
-        <div style="background: var(--ed-bg); padding: 16px; border-radius: 12px; border-left: 4px solid var(--ed-lime);">
-          <strong style="display: block; margin-bottom: 4px; font-size: 0.9rem; color: var(--text-main);">Решение Edusfera:</strong>
-          <span style="font-size: 0.86rem; color: var(--text-muted); line-height: 1.5; display: block;">
-            Мы берем всю бюрократию на себя: помогаем составить уведомления в Минобр и налоговую, автоматически генерируем электронные чеки для учеников и уплачиваем НПД через платформу.
-          </span>
+      <div class="offer-card rv rv-d1" style="height: 100%; display: flex; flex-direction: column;">
+        <div class="oc-ic l" style="background:#fef3c7;color:#d97706;">🛑</div>
+        <h3 style="color:#d97706;">Преподавателям</h3>
+        <p style="margin:6px 0 16px;font-weight:700;">Работа без реестра</p>
+        <ul style="list-style:none;display:grid;gap:10px;font-size:.92rem;color:var(--text-muted);line-height:1.5;">
+          <li>💰 Штраф до 100 базовых величин (≈4000 BYN)</li>
+          <li>📦 Конфискация до 100% дохода</li>
+          <li>📵 Блокировка рекламы и объявлений</li>
+        </ul>
+        <div style="margin-top:auto;padding-top:18px;background:var(--ed-bg);padding:14px 16px;border-radius:12px;border-left:4px solid var(--ed-lime);">
+          <strong style="display:block;margin-bottom:4px;font-size:.88rem;">✓ Решение Edusfera</strong>
+          <span style="font-size:.84rem;color:var(--text-muted);display:block;">Чеки, налоги и регистрация в Минобре — берём на себя.</span>
         </div>
       </div>
     </div>
@@ -1500,29 +1522,32 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
   <div class="wrap">
     <div class="sec-top rv">
       <div class="eyebrow">Родителям и ученикам</div>
-      <h2 class="sec-h">Почему готовиться к экзаменам с Edusfera — <span class="gradient-text">безопасно</span></h2>
-      <p class="sec-sub">С 1 июля заниматься с репетиторами вне реестра незаконно. Мы защищаем вас от штрафов, срыва подготовки и потери денег.</p>
+      <h2 class="sec-h">Почему с нами <span class="gradient-text">безопасно</span></h2>
     </div>
     <div class="offer-grid">
-      <article class="offer-card rv">
+      <article class="offer-card rv tilt">
+        <div class="spot"></div>
         <div class="oc-ic v">🛡️</div>
         <h3>Репетиторы в реестре</h3>
-        <p>Только верифицированные педагоги. Вы можете проверить официальный статус каждого репетитора на платформе перед началом занятий.</p>
+        <p>Только проверенные педагоги. Статус каждого видно в профиле.</p>
       </article>
-      <article class="offer-card rv rv-d1">
+      <article class="offer-card rv rv-d1 tilt">
+        <div class="spot"></div>
         <div class="oc-ic l">🧾</div>
-        <h3>Официальный договор</h3>
-        <p>Полная юридическая защита. Каждая оплата подтверждается чеком, заключается договор, дающий 100% гарантию легальности.</p>
+        <h3>Договор и чек</h3>
+        <p>Полная юридическая защита. Каждая оплата — с документом.</p>
       </article>
-      <article class="offer-card rv rv-d2">
+      <article class="offer-card rv rv-d2 tilt">
+        <div class="spot"></div>
         <div class="oc-ic b">🎯</div>
         <h3>ИИ-диагностика РИКЗ</h3>
-        <p>Нейросеть на базе реальных тестов РИКЗ находит пробелы за 15 минут и строит индивидуальный пошаговый трек обучения.</p>
+        <p>Находит пробелы за 15 минут и строит пошаговый план подготовки.</p>
       </article>
-      <article class="offer-card rv rv-d3">
+      <article class="offer-card rv rv-d3 tilt">
+        <div class="spot"></div>
         <div class="oc-ic o">📈</div>
-        <h3>Гарантия и эскроу</h3>
-        <p>Деньги резервируются и списываются только после урока. Никаких рисков невыхода на связь со стороны преподавателя.</p>
+        <h3>Эскроу-оплата</h3>
+        <p>Деньги списываются только после урока. Риска для вас — ноль.</p>
       </article>
     </div>
   </div>
@@ -1533,20 +1558,19 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
   <div class="wrap">
     <div class="sec-top rv">
       <div class="eyebrow eyebrow-lime">Репетиторам</div>
-      <h2 class="sec-h">Преподавайте спокойно, <span class="ac-l">работая легально</span></h2>
-      <p class="sec-sub">Платформа берет на себя всю бюрократию: чеки, налоги и помощь во включении в госреестр репетиторов. Вы занимаетесь только обучением.</p>
+      <h2 class="sec-h">Преподавайте <span class="ac-l">легально</span></h2>
     </div>
 
     <div class="bento">
       <div class="glass-dark bento-card b1 rv">
         <span class="bc-badge">Госреестр 1 июля</span>
-        <h3>Помогаем войти в реестр</h3>
-        <p>Мы помогаем правильно составить уведомления в Минобр и ИМНС, а также ведем отчетность. Вы работаете полностью в правовом поле, не опасаясь проверок и штрафов.</p>
+        <h3>Войдём в реестр за вас</h3>
+        <p>Уведомления в Минобр и ИМНС, отчётность — на нас. Вы работаете без страха проверок.</p>
       </div>
       <div class="glass-dark bento-card b2 rv rv-d1">
         <span class="bc-badge">Прозрачно</span>
-        <h3>Официальный доход без ИП</h3>
-        <p>Родители платят картой. Edusfera автоматически генерирует чеки и отчитывается по налогу на профессиональный доход (НПД). Никаких серых переводов.</p>
+        <h3>Доход без ИП</h3>
+        <p>Чеки и НПД — автоматически. Никаких серых переводов на карту.</p>
         <div class="comm-ladder">
           <div class="comm-tier"><div class="pct">15%</div><div class="nm">Старт</div><div class="req">до 5 уроков/мес</div></div>
           <div class="comm-tier"><div class="pct">13%</div><div class="nm">Рост</div><div class="req">от 5 уроков/мес</div></div>
@@ -1556,14 +1580,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
       <div class="glass-dark bento-card b3 rv rv-d2">
         <span class="bc-badge">Авто</span>
         <h3>Умное расписание</h3>
-        <p>Настройте свободные часы один раз. Ученики бронируют слоты сами, система шлёт напоминания.</p>
+        <p>Настройте часы один раз — ученики бронируют слоты сами.</p>
       </div>
       <div class="glass-dark bento-card b4 rv rv-d3">
         <div class="zero-badge">
           <div class="zero-circle"><div class="n">0</div><div class="u">BYN</div></div>
           <div>
-            <h3>Никаких подписок</h3>
-            <p>Вы не платите за анкету или отклики. Честная комиссия — только за реально проведённые и оплаченные уроки.</p>
+            <h3>Без подписок</h3>
+            <p>Комиссия — только за проведённый урок. Нет урока — нет расходов.</p>
           </div>
         </div>
       </div>
@@ -1579,9 +1603,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
 <section class="sec" id="calc">
   <div class="wrap">
     <div class="sec-top rv">
-      <div class="eyebrow">Калькулятор выгоды и безопасности</div>
+      <div class="eyebrow">Калькулятор</div>
       <h2 class="sec-h">Сравните <span class="ac-v">напрямую</span></h2>
-      <p class="sec-sub">Посчитайте выгоду и сравните риски: легальное обучение против штрафов и внезапных отмен.</p>
     </div>
 
     <div class="calc-grid rv">
@@ -1642,170 +1665,26 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
     <div class="sec-top rv">
       <div class="eyebrow">Как это работает</div>
       <h2 class="sec-h">Три шага к <span class="ac-v">результату</span></h2>
-      <p class="sec-sub">Без воды — конкретные действия, которые приводят к баллу.</p>
     </div>
     <div class="steps">
-      <article class="step rv">
+      <article class="step rv tilt">
+        <div class="spot"></div>
         <div class="step-n">01</div>
         <h3>Диагностика</h3>
-        <p>Ученик проходит адаптивный тест по спецификации РИКЗ. ИИ анализирует ответы и строит карту знаний с точностью до темы.</p>
+        <p>Адаптивный тест по РИКЗ. ИИ строит карту знаний с точностью до темы.</p>
       </article>
-      <article class="step rv rv-d1">
+      <article class="step rv rv-d1 tilt">
+        <div class="spot"></div>
         <div class="step-n">02</div>
-        <h3>Индивидуальный план</h3>
-        <p>На основе диагностики система формирует персональный трек. Репетитор видит те же данные и работает прицельно по пробелам.</p>
+        <h3>План</h3>
+        <p>Персональный трек по пробелам. Репетитор работает прицельно.</p>
       </article>
-      <article class="step rv rv-d2">
+      <article class="step rv rv-d2 tilt">
+        <div class="spot"></div>
         <div class="step-n">03</div>
         <h3>Рост баллов</h3>
-        <p>После каждого урока ИИ пересчитывает карту знаний. Прогресс виден на графике в реальном времени — какие темы закрыты.</p>
+        <p>Карта знаний обновляется после каждого урока. Прогресс виден на графике.</p>
       </article>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════ ЧТО ВЫ ПОЛУЧИТЕ ПОСЛЕ ДИАГНОСТИКИ ═══════ -->
-<section class="sec ai-diagnostic-results" id="diag-results" style="background:#fff; border-bottom:1px solid var(--border)">
-  <div class="wrap">
-    <div class="sec-top rv">
-      <div class="eyebrow">ИИ-диагностика Edusfera</div>
-      <h2 class="sec-h">Что вы получите после <span class="ac-v">15-минутного теста</span></h2>
-      <p class="sec-sub">Вместо общих обещаний вы увидите детальный разбор знаний вашего ребенка и пошаговую стратегию роста.</p>
-    </div>
-    
-    <div class="diag-grid">
-      <!-- Блок 1: Карта знаний -->
-      <div class="diag-card rv">
-        <div class="diag-card-badge">Анализ пробелов</div>
-        <h3>1. Интерактивная карта знаний</h3>
-        <p class="diag-card-desc">Показывает реальный уровень усвоения по каждой теме кодификатора РИКЗ.</p>
-        
-        <div class="km-wrapper">
-          <div class="km-row">
-            <div class="km-info">
-              <span>Тригонометрия</span>
-              <strong>40%</strong>
-            </div>
-            <div class="km-bar"><div class="km-fill fill-red" style="width: 40%"></div></div>
-          </div>
-          <div class="km-row">
-            <div class="km-info">
-              <span>Алгебраические уравнения</span>
-              <strong>85%</strong>
-            </div>
-            <div class="km-bar"><div class="km-fill fill-green" style="width: 85%"></div></div>
-          </div>
-          <div class="km-row">
-            <div class="km-info">
-              <span>Функции и графики</span>
-              <strong>60%</strong>
-            </div>
-            <div class="km-bar"><div class="km-fill fill-yellow" style="width: 60%"></div></div>
-          </div>
-          <div class="km-row">
-            <div class="km-info">
-              <span>Планиметрия (Геометрия)</span>
-              <strong>30%</strong>
-            </div>
-            <div class="km-bar"><div class="km-fill fill-red" style="width: 30%"></div></div>
-          </div>
-          <div class="km-row">
-            <div class="km-info">
-              <span>Стереометрия</span>
-              <strong>15%</strong>
-            </div>
-            <div class="km-bar"><div class="km-fill fill-red" style="width: 15%"></div></div>
-          </div>
-        </div>
-        
-        <div class="km-footer-note">
-          <span class="dot red"></span> Требуют внимания: 3 ключевые темы
-        </div>
-      </div>
-      
-      <!-- Блок 2: Персональный план -->
-      <div class="diag-card rv rv-d1">
-        <div class="diag-card-badge badge-blue">Индивидуальный трек</div>
-        <h3>2. Пошаговый план подготовки</h3>
-        <p class="diag-card-desc">Алгоритм подбирает темы в оптимальном порядке, чтобы быстрее всего добрать баллы.</p>
-        
-        <div class="plan-steps">
-          <div class="plan-step active">
-            <div class="ps-num">Шаг 1</div>
-            <div class="ps-content">
-              <h4>Закрыть пробелы в Геометрии</h4>
-              <p>Разбор формул площадей и теоремы синусов/косинусов. Даст <strong>+12 баллов</strong> к результату.</p>
-            </div>
-          </div>
-          <div class="plan-step">
-            <div class="ps-num">Шаг 2</div>
-            <div class="ps-content">
-              <h4>Изучить основы Тригонометрии</h4>
-              <p>Тригонометрический круг и формулы приведения. Устранение пробелов даст еще <strong>+10 баллов</strong>.</p>
-            </div>
-          </div>
-          <div class="plan-step">
-            <div class="ps-num">Шаг 3</div>
-            <div class="ps-content">
-              <h4>Наработка тестов РИКЗ</h4>
-              <p>Практика по частям А и Б под контролем репетитора для закрепления.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Блок 3: Прогноз роста -->
-      <div class="diag-card rv rv-d2">
-        <div class="diag-card-badge badge-violet">Прогноз баллов</div>
-        <h3>3. Динамика и прогноз роста</h3>
-        <p class="diag-card-desc">График прогнозирует итоговый балл на ЦЭ/ЦТ в зависимости от интенсивности занятий.</p>
-        
-        <div class="forecast-wrapper">
-          <div class="fc-chart-container">
-            <!-- Визуальный график роста баллов -->
-            <svg class="fc-svg" viewBox="0 0 260 120" style="overflow:visible">
-              <!-- Grid lines -->
-              <line x1="0" y1="90" x2="260" y2="90" stroke="#f0f0f3" stroke-width="1"/>
-              <line x1="0" y1="60" x2="260" y2="60" stroke="#f0f0f3" stroke-width="1"/>
-              <line x1="0" y1="30" x2="260" y2="30" stroke="#f0f0f3" stroke-width="1"/>
-              
-              <!-- Growth Path -->
-              <path d="M 10 95 Q 70 85, 130 50 T 250 15" fill="none" stroke="var(--ed-violet)" stroke-width="3" stroke-linecap="round"/>
-              <path d="M 10 95 Q 70 85, 130 50 T 250 15" fill="none" stroke="var(--ed-violet)" stroke-width="6" stroke-linecap="round" opacity="0.12"/>
-              
-              <!-- Points dots -->
-              <circle cx="10" cy="95" r="5" fill="#ef4444"/>
-              <text x="18" y="99" class="fc-lbl">35 б. (Старт)</text>
-              
-              <circle cx="130" cy="50" r="5" fill="var(--ed-violet)"/>
-              <text x="138" y="54" class="fc-lbl">65 б. (2 мес)</text>
-              
-              <circle cx="250" cy="15" r="5.5" fill="var(--ed-lime)" stroke="var(--ed-violet)" stroke-width="2"/>
-              <text x="200" y="32" class="fc-lbl" font-weight="700">85+ б. (Цель)</text>
-            </svg>
-          </div>
-          
-          <div class="fc-summary">
-            <div class="fc-sum-item">
-              <div class="fc-val">35 б.</div>
-              <div class="fc-lbl">Текущий балл</div>
-            </div>
-            <div class="fc-sum-arrow">➔</div>
-            <div class="fc-sum-item">
-              <div class="fc-val val-green">85+ б.</div>
-              <div class="fc-lbl">Прогноз на ЦЭ</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- CTA кнопка снизу -->
-    <div style="text-align: center; margin-top: 48px;" class="rv">
-      <a href="#beta" class="btn btn-violet btn-lg">Пройти диагностику бесплатно</a>
-      <p style="margin-top: 14px; font-size: 0.88rem; color: var(--text-muted);">
-        ⏱ Занимает около 15 минут · Результаты доступны сразу
-      </p>
     </div>
   </div>
 </section>
@@ -1819,28 +1698,28 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
     </div>
     <div class="faq-list">
       <details class="faq-item rv" open>
-        <summary>В чём отличие Edusfera от самостоятельного поиска репетитора?</summary>
-        <div class="ans">С 1 июля 2026 года в Беларуси все репетиторы обязаны состоять в госреестре Минобра. На Edusfera все преподаватели проходят обязательную юридическую верификацию. Кроме того, ваши оплаты защищены системой эскроу (деньги списываются только после урока), а ИИ-диагностика строит точную карту знаний.</div>
+        <summary>Чем Edusfera лучше самостоятельного поиска?</summary>
+        <div class="ans">Все репетиторы верифицированы в госреестре, оплата под защитой эскроу, а ИИ строит точную карту знаний. Вы платите только за проведённый урок.</div>
       </details>
       <details class="faq-item rv rv-d1">
-        <summary>Нужно ли репетитору открывать ИП, чтобы работать на платформе?</summary>
-        <div class="ans">Нет, платформа полностью берет на себя формирование чеков и уплату налога на профессиональный доход (НПД) за каждый проведенный урок. Мы помогаем подать уведомление о применении НПД в налоговую и обеспечиваем легальный статус в реестре.</div>
+        <summary>Нужно ли репетитору открывать ИП?</summary>
+        <div class="ans">Нет. Платформа сама формирует чеки, платит НПД и помогает встать в реестр. Вы получаете белый доход без ИП.</div>
       </details>
       <details class="faq-item rv rv-d2">
-        <summary>Нужно ли устанавливать Zoom или Skype для занятий?</summary>
-        <div class="ans">Нет. В Edusfera встроен собственный интерактивный класс: видеосвязь, общая цифровая доска и материалы — прямо в браузере. Сторонние программы устанавливать не нужно, всё работает в одном окне.</div>
+        <summary>Нужен ли Zoom или Skype?</summary>
+        <div class="ans">Нет. Встроенный класс: видео, доска и материалы — прямо в браузере, в одном окне.</div>
       </details>
       <details class="faq-item rv">
-        <summary>Что такое бета-тестирование и как попасть?</summary>
-        <div class="ans">Бета-тестирование — ранний доступ к платформе до официального запуска. Участники получают бесплатные занятия, ИИ-диагностику знаний и приоритет при подборе репетитора из госреестра. Чтобы попасть, оставьте заявку в форме ниже.</div>
+        <summary>Как попасть на бета-тест?</summary>
+        <div class="ans">Ранний доступ до запуска: бесплатные занятия, ИИ-диагностика и приоритетный подбор репетитора. Оставьте заявку в форме ниже.</div>
       </details>
       <details class="faq-item rv rv-d1">
-        <summary>Как родители могут убедиться, что репетитор состоит в госреестре?</summary>
-        <div class="ans">Перед допуском преподавателя к занятиям мы запрашиваем официальное подтверждение из базы Министерства образования. В профиле каждого репетитора на Edusfera отображается верифицированный статус. При необходимости наша поддержка предоставит вам подтверждающие данные.</div>
+        <summary>Как убедиться, что репетитор в реестре?</summary>
+        <div class="ans">Перед допуском к занятиям мы проверяем статус в базе Минобра. В профиле преподавателя стоит верифицированный значок.</div>
       </details>
       <details class="faq-item rv rv-d2">
-        <summary>Что делать, если репетитор не подошёл?</summary>
-        <div class="ans">Вы можете отменить или заменить репетитора в любой момент через личный кабинет. Если оплата уже прошла, но урок отменён заранее — деньги вернутся на баланс аккаунта.</div>
+        <summary>Что если репетитор не подошёл?</summary>
+        <div class="ans">Отмените или замените в любой момент. Если урок отменён заранее — деньги вернутся на баланс.</div>
       </details>
     </div>
   </div>
@@ -1899,6 +1778,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
                 <input type="tel" id="bf-phone" name="phone" placeholder="+375 (29) 123-45-67" required>
                 <span class="bf-error" id="bf-phone-error">Введите телефон в формате +375 (XX) XXX-XX-XX</span>
               </div>
+
+              <div class="bf-field">
+                <label for="bf-email">Ваш Email</label>
+                <input type="email" id="bf-email" name="email" placeholder="example@edusfera.by" required>
+                <span class="bf-error" id="bf-email-error">Пожалуйста, введите корректный Email</span>
+              </div>
               
               <div class="bf-field">
                 <label for="bf-subject" id="bf-subject-label">Предмет для подготовки</label>
@@ -1923,7 +1808,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
               </button>
               
               <p class="bf-agreement" style="font-size: 0.74rem; color: var(--text-dim); margin-top: 16px; text-align: center;">
-                Нажимая кнопку, вы соглашаетесь с <a href="/privacy-policy" style="text-decoration: underline; color: var(--ed-lime);">политикой конфиденциальности</a>
+                Нажимая кнопку, вы соглашаетесь с <a href="privacy-policy.html" style="text-decoration: underline; color: var(--ed-lime);">политикой конфиденциальности</a>
               </p>
             </form>
             
@@ -1931,9 +1816,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
             <div class="beta-form-success" id="bf-success" style="display: none; text-align: center; padding: 40px 20px;">
               <div style="font-size: 4rem; margin-bottom: 20px; animation: scaleUp .5s ease;">🎉</div>
               <h3 style="font-family: 'Rimma Sans', sans-serif; font-size: 1.55rem; margin-bottom: 12px; color: var(--ed-lime);">Заявка принята!</h3>
-              <p style="font-size: 0.95rem; line-height: 1.6; color: #fff; margin-bottom: 24px;">
-                Спасибо, <span id="bf-success-name" style="color: var(--ed-lime); font-weight: 700;"></span>! Мы свяжемся с вами в Telegram или по телефону в течение 15 минут для подтверждения статуса и записи на бесплатный урок.
+              <p style="font-size: 0.95rem; line-height: 1.6; color: #fff; margin-bottom: 16px;">
+                Спасибо, <span id="bf-success-name" style="color: var(--ed-lime); font-weight: 700;"></span>! Мы свяжемся с вами в Telegram или по телефону в течение 15 минут для подтверждения статуса и активации бонуса.
               </p>
+              <div style="background: rgba(255,255,255,0.07); border: 1px dashed var(--ed-lime); border-radius: 8px; padding: 16px; margin-bottom: 24px; display: inline-block; width: 100%; max-width: 320px; box-sizing: border-box;">
+                <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 4px;">Ваш инвайт-код раннего доступа:</div>
+                <div id="bf-success-code" style="font-family: monospace; font-size: 1.4rem; font-weight: bold; color: var(--ed-lime); letter-spacing: 1px; word-break: break-all;">EDUSFERA-XXXX-2026</div>
+                <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 6px;">Код также отправлен на вашу почту</div>
+              </div>
               <button type="button" id="bf-reset-btn" class="btn btn-ghost btn-sm" style="margin: 0 auto; display: block;">Отправить еще одну заявку</button>
             </div>
           </div>
@@ -1965,7 +1855,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
         <h4>Документы</h4>
         <a href="/offer">Публичная оферта</a>
         <a href="/refund-policy">Правила возврата</a>
-        <a href="/privacy-policy">Конфиденциальность</a>
+        <a href="privacy-policy.html">Конфиденциальность</a>
       </div>
       <div class="ftr-col">
         <h4>Связь</h4>
@@ -1996,11 +1886,89 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
 </footer>
 
 <script>
-/* ═══ HEADER scroll ═══ */
-addEventListener('scroll',()=>document.getElementById('hdr').classList.toggle('scrolled',scrollY>20),{passive:true});
+/* ═══ HEADER scroll + Scroll progress bar ═══ */
+const progressBar=document.getElementById('progress');
+function onScroll(){
+  document.getElementById('hdr').classList.toggle('scrolled',scrollY>20);
+  // прогресс прокрутки
+  const h=document.documentElement;
+  const max=h.scrollHeight-h.clientHeight;
+  const p=max>0?(scrollY/max)*100:0;
+  progressBar.style.width=p+'%';
+}
+addEventListener('scroll',onScroll,{passive:true});
+addEventListener('resize',onScroll,{passive:true});
+onScroll();
 
 /* ═══ YEAR ═══ */
 document.getElementById('year').textContent=new Date().getFullYear();
+
+/* ═══ 3D-tilt карточек + spotlight (2026) ═══ */
+const supportsHover=matchMedia('(hover:hover)').matches;
+const reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;
+if(supportsHover&&!reduceMotion){
+  document.querySelectorAll('.tilt').forEach(card=>{
+    const spot=card.querySelector('.spot');
+    let raf=null;
+    card.addEventListener('mousemove',e=>{
+      const r=card.getBoundingClientRect();
+      const px=(e.clientX-r.left)/r.width;   // 0..1 по X
+      const py=(e.clientY-r.top)/r.height;   // 0..1 по Y
+      const rx=(py-.5)*-8;                    // наклон по оси X (градусы)
+      const ry=(px-.5)*8;                     // наклон по оси Y
+      if(raf)cancelAnimationFrame(raf);
+      raf=requestAnimationFrame(()=>{
+        card.style.transform=`perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-4px)`;
+        if(spot){spot.style.setProperty('--mx',(px*100)+'%');spot.style.setProperty('--my',(py*100)+'%')}
+      });
+    });
+    card.addEventListener('mouseleave',()=>{
+      if(raf)cancelAnimationFrame(raf);
+      card.style.transform='';
+    });
+  });
+}
+
+/* ═══ Magnetic-кнопки (CTA тянутся к курсору) ═══ */
+if(supportsHover&&!reduceMotion){
+  document.querySelectorAll('.magnetic').forEach(btn=>{
+    let raf=null;
+    btn.addEventListener('mousemove',e=>{
+      const r=btn.getBoundingClientRect();
+      const mx=e.clientX-(r.left+r.width/2);
+      const my=e.clientY-(r.top+r.height/2);
+      if(raf)cancelAnimationFrame(raf);
+      raf=requestAnimationFrame(()=>{btn.style.transform=`translate(${mx*0.25}px,${my*0.35}px)`});
+    });
+    btn.addEventListener('mouseleave',()=>{if(raf)cancelAnimationFrame(raf);btn.style.transform=''});
+  });
+}
+
+/* ═══ Count-up анимация цифр trust-bar ═══ */
+const reduceFast = reduceMotion;
+function countUp(el,target,dur,dec){
+  if(reduceFast){el.textContent=String(target).replace('.',',');return}
+  const start=performance.now();
+  !function tick(now){
+    const p=Math.min((now-start)/dur,1);
+    const eased=1-Math.pow(1-p,3); // easeOutCubic
+    const val=target*eased;
+    el.textContent=(dec?val.toFixed(dec):Math.round(val)).replace('.',',');
+    if(p<1)requestAnimationFrame(tick);
+  }(start);
+}
+const trustObserver=new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{
+    if(!en.isIntersecting)return;
+    en.target.querySelectorAll('[data-count]').forEach(n=>{
+      const target=parseFloat(n.dataset.count);
+      const dec=(n.dataset.count+'').includes('.')?1:0;
+      countUp(n,target,1400,dec);
+    });
+    trustObserver.unobserve(en.target);
+  });
+},{threshold:.5});
+document.querySelectorAll('.trust-grid').forEach(g=>trustObserver.observe(g));
 
 /* ═══ Reveal animation ═══ */
 const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)}}),{threshold:.08});
@@ -2165,6 +2133,11 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
     return /^\+375\d{9}$/.test(clean);
   }
 
+  // Валидация email
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
   // Сброс ошибок
   function clearErrors() {
     document.querySelectorAll('.bf-field').forEach(f => f.classList.remove('has-error'));
@@ -2177,6 +2150,7 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
       
       const nameInput = document.getElementById('bf-name');
       const phoneInput = document.getElementById('bf-phone');
+      const emailInput = document.getElementById('bf-email');
       const subjectInput = document.getElementById('bf-subject');
       
       let hasError = false;
@@ -2190,6 +2164,11 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
         document.getElementById('bf-phone-error').parentNode.classList.add('has-error');
         hasError = true;
       }
+
+      if (!validateEmail(emailInput.value.trim())) {
+        document.getElementById('bf-email-error').parentNode.classList.add('has-error');
+        hasError = true;
+      }
       
       if (!subjectInput.value) {
         document.getElementById('bf-subject-error').parentNode.classList.add('has-error');
@@ -2198,7 +2177,7 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
       
       if (hasError) return;
       
-      // Имитация отправки
+      // Отправка запроса
       const submitBtn = form.querySelector('.bf-submit-btn');
       const btnText = form.querySelector('.bf-btn-text');
       const spinner = form.querySelector('.bf-spinner');
@@ -2207,25 +2186,58 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
       if (btnText) btnText.textContent = 'Отправка...';
       if (spinner) spinner.style.display = 'inline-block';
       
-      setTimeout(() => {
-        const escapedName = escapeHTML(nameInput.value.trim());
-        
-        // Сохраняем в localStorage
-        try {
-          localStorage.setItem('edusfera_submitted', 'true');
-          localStorage.setItem('edusfera_name', escapedName);
-        } catch(err) {}
-        
-        // Показываем блок успеха
-        form.style.display = 'none';
-        if (successBlock) successBlock.style.display = 'block';
-        if (successName) successName.textContent = escapedName;
-        
+      fetch('promo-lead.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          role: roleInput.value,
+          name: nameInput.value.trim(),
+          phone: phoneInput.value.trim(),
+          email: emailInput.value.trim(),
+          subject: subjectInput.value
+        })
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => { throw err; });
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.status === 'success') {
+          const escapedName = escapeHTML(nameInput.value.trim());
+          const inviteCode = data.inviteCode;
+          
+          // Сохраняем в localStorage
+          try {
+            localStorage.setItem('edusfera_submitted', 'true');
+            localStorage.setItem('edusfera_name', escapedName);
+            localStorage.setItem('edusfera_invite_code', inviteCode);
+          } catch(err) {}
+          
+          // Показываем блок успеха и инвайт-код
+          form.style.display = 'none';
+          if (successBlock) successBlock.style.display = 'block';
+          if (successName) successName.textContent = escapedName;
+          
+          const codeEl = document.getElementById('bf-success-code');
+          if (codeEl) codeEl.textContent = inviteCode;
+        } else {
+          alert('Ошибка при отправке: ' + (data.message || 'Неизвестная ошибка'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'Произошла ошибка при отправке заявки. Пожалуйста, попробуйте позже.');
+      })
+      .finally(() => {
         // Восстанавливаем кнопку
         submitBtn.disabled = false;
         if (btnText) btnText.textContent = 'Отправить заявку';
         if (spinner) spinner.style.display = 'none';
-      }, 1000);
+      });
     });
   }
 
@@ -2235,6 +2247,7 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
       try {
         localStorage.removeItem('edusfera_submitted');
         localStorage.removeItem('edusfera_name');
+        localStorage.removeItem('edusfera_invite_code');
       } catch(err) {}
       
       if (successBlock) successBlock.style.display = 'none';
@@ -2250,10 +2263,15 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
   try {
     const isSubmitted = localStorage.getItem('edusfera_submitted');
     const savedName = localStorage.getItem('edusfera_name');
+    const savedCode = localStorage.getItem('edusfera_invite_code');
     if (isSubmitted === 'true' && savedName) {
       if (form) form.style.display = 'none';
       if (successBlock) successBlock.style.display = 'block';
       if (successName) successName.textContent = savedName;
+      if (savedCode) {
+        const codeEl = document.getElementById('bf-success-code');
+        if (codeEl) codeEl.textContent = savedCode;
+      }
     }
   } catch(err) {}
 }();

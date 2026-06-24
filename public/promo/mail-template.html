@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ваш инвайт-код Edusfera</title>
+    <style>
+        @font-face {
+            font-family: 'Rimma Sans';
+            /* На хостинге шрифт будет грузиться из папки fonts промо-раздела */
+            src: url('./fonts/Rimma_sans-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            background-color: #f6f9fc;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #f6f9fc;
+            padding-bottom: 40px;
+        }
+        .main-table {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(125, 57, 235, 0.05);
+            border: 1px solid #e9e3ff;
+        }
+        .header {
+            background-color: #ffffff;
+            padding: 32px;
+            text-align: center;
+            border-bottom: 1px solid #f3edff;
+        }
+        .logo {
+            font-family: 'Rimma Sans', 'Arial Black', Impact, sans-serif;
+            color: #7D39EB; /* Фиолетовый цвет Edusfera */
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+        .content {
+            padding: 40px 32px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1e1b4b;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #1e1b4b;
+        }
+        .accent-name {
+            color: #7D39EB;
+            font-weight: 700;
+        }
+        .text {
+            font-size: 15px;
+            color: #475569;
+            margin-bottom: 28px;
+        }
+        .code-card {
+            background-color: #f5f3ff; /* Светло-фиолетовый фон */
+            border: 2px dashed #7D39EB; /* Пунктирная фиолетовая рамка */
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .code-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .code-value {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 26px;
+            font-weight: 800;
+            color: #7D39EB;
+            letter-spacing: 1.5px;
+        }
+        .code-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 6px;
+        }
+        .btn-container {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .btn {
+            background-color: #7D39EB; /* Фиолетовая кнопка */
+            color: #ffffff !important;
+            padding: 14px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            display: inline-block;
+            box-shadow: 0 4px 12px rgba(125, 57, 235, 0.15);
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 24px 32px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer-text {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .footer-links {
+            margin-top: 12px;
+        }
+        .footer-link {
+            color: #7D39EB;
+            text-decoration: none;
+            font-size: 12px;
+            margin: 0 8px;
+            font-weight: 600;
+        }
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <center class="wrapper">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+                <td width="100%" align="center" style="padding-top: 40px;">
+                    <table class="main-table" cellpadding="0" cellspacing="0" border="0">
+                        <!-- Header -->
+                        <tr>
+                            <td class="header">
+                                <span class="logo">EDUSFERA</span>
+                            </td>
+                        </tr>
+                        <!-- Content -->
+                        <tr>
+                            <td class="content">
+                                <h1 class="title">Добро пожаловать в список раннего доступа!</h1>
+                                <p class="greeting">Здравствуйте, <span class="accent-name">{{name}}</span>!</p>
+                                <p class="text">
+                                    Вы успешно зарегистрировались в списке раннего доступа (Early Birds) платформы Edusfera.by. Нам очень приятно, что вы с нами с самого старта!
+                                </p>
+                                
+                                <div class="code-card">
+                                    <div class="code-label">Ваш уникальный инвайт-код:</div>
+                                    <div class="code-value">{{inviteCode}}</div>
+                                    <div class="code-sub">Активирует вашу персональную скидку при первом запуске платформы</div>
+                                </div>
+
+                                <p class="text" style="text-align: center; margin-bottom: 32px;">
+                                    Мы обязательно сообщим вам на эту почту, как только откроем доступ к платформе для первых пользователей. Следите за обновлениями!
+                                </p>
+
+                                <div class="btn-container">
+                                    <a href="https://edusfera.by" class="btn" target="_blank">Перейти на сайт</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- Footer -->
+                        <tr>
+                            <td class="footer">
+                                <p class="footer-text">
+                                    Вы получили это письмо, так как оставили заявку на сайте edusfera.by.<br>
+                                    © 2026 Edusfera. Все права защищены.
+                                </p>
+                                <div class="footer-links">
+                                    <a href="https://edusfera.by/privacy-policy" class="footer-link" target="_blank">Политика конфиденциальности</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </center>
+</body>
+</html>
