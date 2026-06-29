@@ -9,6 +9,8 @@ use Filament\Forms\Components\TextInput;
 
 class Login extends \Filament\Pages\Auth\Login
 {
+    protected static string $view = 'filament.admin.pages.auth.login';
+
     public function getHeading(): string
     {
         return 'Панель модерации';
