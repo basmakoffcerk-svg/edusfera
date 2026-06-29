@@ -44,7 +44,7 @@ class NewsArticleResource extends Resource
                         Forms\Components\TextInput::make('slug')
                             ->label('ЧПУ URL (slug)')
                             ->required()
-                            ->unique(table: 'news_articles', column: 'slug', ignoreRecord: true)
+                            ->unique(table: 'news.news_articles', column: 'slug', ignoreRecord: true)
                             ->maxLength(255),
 
                         Forms\Components\RichEditor::make('content')
