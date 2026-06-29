@@ -79,6 +79,10 @@ Route::post('/payments/webhook', PaymentWebhookController::class)
     ->middleware('throttle:60,1')
     ->name('payments.webhook');
 
+// ─── News Portal ───
+Route::get('/news', [\App\Http\Controllers\NewsController::class, 'index'])->name('news.index');
+Route::get('/news/{slug}', [\App\Http\Controllers\NewsController::class, 'show'])->name('news.show');
+
 // ─── Virtual Classroom ───
 Route::middleware('auth')->group(function (): void {
     Route::get('/classroom/{lesson}', [ClassroomController::class, 'show'])
@@ -114,5 +118,5 @@ Route::middleware('auth')->group(function (): void {
 
 // ─── Internal API ───
 Route::post('/api/internal/classroom/{roomId}/whiteboard', [ClassroomController::class, 'saveWhiteboardState'])
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
     ->name('internal.classroom.whiteboard');

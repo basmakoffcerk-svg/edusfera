@@ -181,6 +181,7 @@
             <nav class="hidden md:flex items-center gap-12 font-bold text-xs uppercase tracking-widest text-gray-500">
                 <a href="{{ route('tutors.index') }}" class="hover:text-black transition-colors">Каталог</a>
                 <a href="{{ route('for-tutors') }}" class="hover:text-black transition-colors">Преподавателям</a>
+                <a href="{{ route('news.index') }}" class="hover:text-black transition-colors">Новости</a>
             </nav>
 
             <div class="flex items-center gap-3">
@@ -284,6 +285,10 @@
                     <svg class="w-5 h-5 text-lime-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                     Преподавателям
                 </a>
+                <a href="{{ route('news.index') }}" @click="mobileOpen = false" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-black/5 transition-colors">
+                    <svg class="w-5 h-5 text-violet-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 4a2 2 0 00-2-2v3m2-3V9a2 2 0 00-2-2v3m2-3V5a2 2 0 00-2-2v3m2-3v12a2 2 0 00-2-2H9"></path></svg>
+                    Новости
+                </a>
                 @guest
                 <div class="h-px bg-gray-200/50 my-2 mx-4"></div>
                 <a href="/admin/login" @click="mobileOpen = false" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-black/5 transition-colors">
@@ -352,7 +357,7 @@
             </div>
 
             <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-gray-50 rounded-[2.5rem] p-10 border border-gray-100 hover:border-violet-200 transition-colors">
+                <div class="bg-gray-50 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 border border-gray-100 hover:border-violet-200 transition-colors">
                     <div class="w-14 h-14 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center mb-6">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
@@ -360,7 +365,7 @@
                     <p class="text-gray-500 leading-relaxed">ИИ определяет ваши пробелы до начала занятий, экономя время и деньги на повторении известного.</p>
                 </div>
 
-                <div class="bg-gray-50 rounded-[2.5rem] p-10 border border-gray-100 hover:border-lime-200 transition-colors">
+                <div class="bg-gray-50 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 border border-gray-100 hover:border-lime-200 transition-colors">
                     <div class="w-14 h-14 rounded-2xl bg-lime-100 text-lime-700 flex items-center justify-center mb-6">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     </div>
@@ -368,7 +373,7 @@
                     <p class="text-gray-500 leading-relaxed">Деньги списываются только после того, как урок состоялся. Полная защита от мошенников.</p>
                 </div>
 
-                <div class="bg-gray-50 rounded-[2.5rem] p-10 border border-gray-100 hover:border-blue-200 transition-colors">
+                <div class="bg-gray-50 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 border border-gray-100 hover:border-blue-200 transition-colors">
                     <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-6">
                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                     </div>
@@ -404,7 +409,7 @@
                 </div>
 
                 <!-- Gaussian Curve Visualization -->
-                <div class="glass-panel bg-white/5 border-white/10 p-8 md:p-12 rounded-[3rem] relative">
+                <div class="glass-panel bg-white/5 border-white/10 p-6 sm:p-8 md:p-12 rounded-[2rem] sm:rounded-[3rem] relative">
                     <div class="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
                         <div class="text-sm font-bold text-gray-400 uppercase tracking-widest">Прогноз результата</div>
                         <div class="text-5xl font-rimma font-black text-white">96<span class="text-xl text-gray-500">/100</span></div>
@@ -459,7 +464,7 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Tutor Card 1 -->
-                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-6 rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
+                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-5 sm:p-6 rounded-[1.75rem] sm:rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
                     <div class="relative w-full h-48 rounded-[1.5rem] bg-gray-200 mb-6 overflow-hidden">
                         <img src="https://i.pravatar.cc/300?img=47" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Tutor">
                         <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
@@ -478,7 +483,7 @@
                 </a>
 
                 <!-- Tutor Card 2 -->
-                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-6 rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
+                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-5 sm:p-6 rounded-[1.75rem] sm:rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
                     <div class="relative w-full h-48 rounded-[1.5rem] bg-gray-200 mb-6 overflow-hidden">
                         <img src="https://i.pravatar.cc/300?img=12" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Tutor">
                         <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
@@ -497,7 +502,7 @@
                 </a>
 
                 <!-- Tutor Card 3 -->
-                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-6 rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
+                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-5 sm:p-6 rounded-[1.75rem] sm:rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
                     <div class="relative w-full h-48 rounded-[1.5rem] bg-gray-200 mb-6 overflow-hidden">
                         <img src="https://i.pravatar.cc/300?img=5" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Tutor">
                         <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
@@ -516,7 +521,7 @@
                 </a>
 
                 <!-- Tutor Card 4 -->
-                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-6 rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
+                <a href="/tutors" class="glass-panel bg-white border border-gray-200 p-5 sm:p-6 rounded-[1.75rem] sm:rounded-[2rem] hover:shadow-2xl hover:border-violet-300 transition-all duration-300 group block relative">
                     <div class="relative w-full h-48 rounded-[1.5rem] bg-gray-200 mb-6 overflow-hidden">
                         <img src="https://i.pravatar.cc/300?img=33" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Tutor">
                         <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
@@ -563,7 +568,7 @@
             <div x-ref="slider" class="flex overflow-x-auto gap-6 snap-x snap-mandatory scrollbar-hide pb-8">
                 
                 <!-- Review 1 -->
-                <div class="snap-start shrink-0 w-[85vw] md:w-[400px] bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 flex flex-col justify-between">
+                <div class="snap-start shrink-0 w-[85vw] md:w-[400px] bg-gray-50 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-gray-100 flex flex-col justify-between">
                     <div>
                         <div class="flex gap-1 text-lime-500 mb-4 text-xl">★★★★★</div>
                         <p class="text-gray-700 leading-relaxed mb-6 font-medium">«Платформа невероятно удобная. Никаких сторонних ссылок. Мой репетитор по математике сразу выявил пробелы в тригонометрии с помощью теста. Итог: с 45 баллов на первом РТ до 92 на самом ЦТ.»</p>
@@ -578,7 +583,7 @@
                 </div>
 
                 <!-- Review 2 -->
-                <div class="snap-start shrink-0 w-[85vw] md:w-[400px] bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 flex flex-col justify-between">
+                <div class="snap-start shrink-0 w-[85vw] md:w-[400px] bg-gray-50 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-gray-100 flex flex-col justify-between">
                     <div>
                         <div class="flex gap-1 text-lime-500 mb-4 text-xl">★★★★★</div>
                         <p class="text-gray-700 leading-relaxed mb-6 font-medium">«Больше всего понравилась система безопасной оплаты. Родители были спокойны. Училась у Елены по физике — это просто восторг, материал объясняется на пальцах!»</p>
@@ -593,7 +598,7 @@
                 </div>
 
                 <!-- Review 3 -->
-                <div class="snap-start shrink-0 w-[85vw] md:w-[400px] bg-gray-50 rounded-[2.5rem] p-8 border border-gray-100 flex flex-col justify-between">
+                <div class="snap-start shrink-0 w-[85vw] md:w-[400px] bg-gray-50 rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-8 border border-gray-100 flex flex-col justify-between">
                     <div>
                         <div class="flex gap-1 text-lime-500 mb-4 text-xl">★★★★★</div>
                         <p class="text-gray-700 leading-relaxed mb-6 font-medium">«График прогресса мотивирует лучше любых слов. Ты видишь, как линия ползет вверх каждую неделю. Сдал английский на 98 баллов, хотя в начале года еле дотягивал до 60.»</p>
@@ -618,37 +623,37 @@
             <h2 class="text-[clamp(2rem,4vw,3.5rem)] font-rimma font-black uppercase tracking-tight mb-10 text-center">Остались вопросы?</h2>
             
             <div class="space-y-4" x-data="{ activeAccordion: null }">
-                <div class="border border-gray-200 rounded-[2rem] bg-white overflow-hidden">
-                    <button @click="activeAccordion = activeAccordion === 1 ? null : 1" class="w-full flex items-center justify-between p-6 md:p-8 text-left focus:outline-none hover:bg-gray-50 transition-colors">
+                <div class="border border-gray-200 rounded-[1.5rem] sm:rounded-[2rem] bg-white overflow-hidden">
+                    <button @click="activeAccordion = activeAccordion === 1 ? null : 1" class="w-full flex items-center justify-between p-5 sm:p-6 md:p-8 text-left focus:outline-none hover:bg-gray-50 transition-colors">
                         <span class="font-bold text-lg text-gray-900">Как работает безопасная сделка?</span>
                         <svg class="w-6 h-6 transform transition-transform duration-300 text-violet-600 flex-shrink-0" :class="activeAccordion === 1 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     <div x-show="activeAccordion === 1" x-collapse>
-                        <div class="px-6 md:px-8 pb-8 text-gray-600 leading-relaxed">
+                        <div class="px-5 sm:px-6 md:px-8 pb-6 sm:pb-8 text-gray-600 leading-relaxed">
                             Вы оплачиваете занятие картой на платформе, но деньги не уходят репетитору сразу. Они холдируются. Репетитор получит оплату только после того, как урок фактически состоится в нашем Встроенном классе.
                         </div>
                     </div>
                 </div>
 
-                <div class="border border-gray-200 rounded-[2rem] bg-white overflow-hidden">
-                    <button @click="activeAccordion = activeAccordion === 2 ? null : 2" class="w-full flex items-center justify-between p-6 md:p-8 text-left focus:outline-none hover:bg-gray-50 transition-colors">
+                <div class="border border-gray-200 rounded-[1.5rem] sm:rounded-[2rem] bg-white overflow-hidden">
+                    <button @click="activeAccordion = activeAccordion === 2 ? null : 2" class="w-full flex items-center justify-between p-5 sm:p-6 md:p-8 text-left focus:outline-none hover:bg-gray-50 transition-colors">
                         <span class="font-bold text-lg text-gray-900">Что делать, если репетитор не подошел?</span>
                         <svg class="w-6 h-6 transform transition-transform duration-300 text-violet-600 flex-shrink-0" :class="activeAccordion === 2 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     <div x-show="activeAccordion === 2" x-collapse>
-                        <div class="px-6 md:px-8 pb-8 text-gray-600 leading-relaxed">
+                        <div class="px-5 sm:px-6 md:px-8 pb-6 sm:pb-8 text-gray-600 leading-relaxed">
                             Вы можете отменить или заменить репетитора в любой момент через личный кабинет. Если вы оплатили урок, но отменили его заранее — деньги вернутся на баланс.
                         </div>
                     </div>
                 </div>
 
-                <div class="border border-gray-200 rounded-[2rem] bg-white overflow-hidden">
-                    <button @click="activeAccordion = activeAccordion === 3 ? null : 3" class="w-full flex items-center justify-between p-6 md:p-8 text-left focus:outline-none hover:bg-gray-50 transition-colors">
+                <div class="border border-gray-200 rounded-[1.5rem] sm:rounded-[2rem] bg-white overflow-hidden">
+                    <button @click="activeAccordion = activeAccordion === 3 ? null : 3" class="w-full flex items-center justify-between p-5 sm:p-6 md:p-8 text-left focus:outline-none hover:bg-gray-50 transition-colors">
                         <span class="font-bold text-lg text-gray-900">Нужно ли устанавливать Zoom или Skype?</span>
                         <svg class="w-6 h-6 transform transition-transform duration-300 text-violet-600 flex-shrink-0" :class="activeAccordion === 3 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     <div x-show="activeAccordion === 3" x-collapse>
-                        <div class="px-6 md:px-8 pb-8 text-gray-600 leading-relaxed">
+                        <div class="px-5 sm:px-6 md:px-8 pb-6 sm:pb-8 text-gray-600 leading-relaxed">
                             Нет. В Edusfera встроен собственный интерактивный класс. Занятия проходят прямо в браузере. Вы и преподаватель видите друг друга по видео, вместе рисуете на цифровой доске и решаете тесты в одном окне.
                         </div>
                     </div>
@@ -658,7 +663,7 @@
 
         <!-- FINAL CTA -->
         <div class="max-w-6xl mx-auto px-6">
-            <div class="bg-gray-900 rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
+            <div class="bg-gray-900 rounded-[2rem] sm:rounded-[3rem] p-8 sm:p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
                 <div class="absolute inset-0 z-0">
                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-violet-600 rounded-full blur-[150px] opacity-20"></div>
                 </div>

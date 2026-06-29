@@ -26,6 +26,9 @@
             <a href="{{ route('for-tutors') }}" class="inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-semibold {{ $ghostClass }}">
                 Я — репетитор
             </a>
+            <a href="{{ route('news.index') }}" class="inline-flex min-h-10 items-center rounded-xl border px-4 text-sm font-semibold {{ $ghostClass }}">
+                Новости
+            </a>
 
             @auth
                 <a href="/admin/messages" class="relative inline-flex min-h-10 items-center justify-center rounded-xl border px-4 text-sm font-semibold {{ $ghostClass }}">

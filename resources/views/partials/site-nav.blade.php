@@ -10,6 +10,7 @@
     <div class="ed-nav__links">
         <a href="{{ route('tutors.index') }}" class="ed-nav__link">Каталог</a>
         <a href="{{ route('for-tutors') }}" class="ed-nav__link">Преподавателям</a>
+        <a href="{{ route('news.index') }}" class="ed-nav__link">Новости</a>
         @auth
             <a href="/admin" class="ed-nav__link">Кабинет</a>
             <a href="/admin/messages" class="ed-nav__link">

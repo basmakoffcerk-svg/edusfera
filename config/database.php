@@ -98,6 +98,14 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        'news' => [
+            'driver' => 'sqlite',
+            'url' => env('DB_NEWS_URL'),
+            'database' => env('DB_NEWS_DATABASE', database_path('news.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_NEWS_FOREIGN_KEYS', true),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
