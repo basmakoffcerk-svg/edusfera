@@ -239,7 +239,7 @@
                 </div>
             @elseif($article->featured_image)
                 <!-- Featured Image cover -->
-                <div class="relative w-full aspect-[3/4] md:aspect-auto md:h-[400px] rounded-[2rem] overflow-hidden mb-10 shadow-md border border-gray-200/50 bg-gray-50 flex items-center justify-center">
+                <div class="relative w-full aspect-[4/3] md:aspect-auto md:h-[400px] rounded-[2rem] overflow-hidden mb-10 shadow-md border border-gray-200/50 bg-gray-50 flex items-center justify-center">
                     <img src="{{ asset('storage/' . $article->featured_image) }}" class="w-full h-full object-cover object-center" alt="{{ $article->title }}">
                 </div>
             @endif
