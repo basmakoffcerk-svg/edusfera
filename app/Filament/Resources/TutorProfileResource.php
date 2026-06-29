@@ -63,11 +63,6 @@ class TutorProfileResource extends Resource
             : 'Профили репетиторов';
     }
 
-    public static function canCreate(): bool
-    {
-        return Auth::user()?->role === 'tutor';
-    }
-
     /**
      * @return array<string, string>
      */

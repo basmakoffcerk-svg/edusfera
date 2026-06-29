@@ -14,10 +14,12 @@ use App\Integrations\EventBus\RedisStreamsEventBus;
 use App\Models\ClassroomFile;
 use App\Models\ClassroomNote;
 use App\Models\Lesson;
+use App\Models\TutorProfile;
 use App\Models\User;
 use App\Policies\ClassroomFilePolicy;
 use App\Policies\ClassroomNotePolicy;
 use App\Policies\LessonPolicy;
+use App\Policies\TutorProfilePolicy;
 use App\Services\Lesson\EloquentLessonBooker;
 use App\Services\Lesson\EloquentLessonReader;
 use App\Services\Payment\DisabledPaymentGateway;
@@ -85,6 +87,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Lesson::class, LessonPolicy::class);
         Gate::policy(ClassroomFile::class, ClassroomFilePolicy::class);
         Gate::policy(ClassroomNote::class, ClassroomNotePolicy::class);
+        Gate::policy(TutorProfile::class, TutorProfilePolicy::class);
 
         // Требование 3.1, 3.3: включить grant client_credentials и ограничить TTL токенов 30 мин.
         // В Passport v13 client_credentials grant включён по умолчанию.
