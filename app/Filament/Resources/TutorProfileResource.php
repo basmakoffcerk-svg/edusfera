@@ -44,7 +44,7 @@ class TutorProfileResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return Filament::getCurrentPanel()?->getId() === 'site-admin'
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || Auth::user()?->role === 'admin')
             ? 'Модерация'
             : 'Профиль';
     }
@@ -604,12 +604,7 @@ class TutorProfileResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         $user = Auth::user();
-        $panelId = Filament::getCurrentPanel()?->getId();
 
-        if ($panelId === 'site-admin') {
-            return $user?->role === 'admin';
-        }
-
-        return $user?->role === 'tutor';
+        return $user?->role === 'tutor' || $user?->role === 'admin';
     }
 }

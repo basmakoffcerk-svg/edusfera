@@ -24,8 +24,7 @@ class NewsArticleResource extends Resource
 
     public static function canAccess(): bool
     {
-        $panelId = Filament::getCurrentPanel()?->getId();
-        return $panelId === 'site-admin' && auth()->user()?->role === 'admin';
+        return auth()->user()?->role === 'admin';
     }
 
     public static function form(Form $form): Form
@@ -148,8 +147,7 @@ class NewsArticleResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->user();
-        $panelId = Filament::getCurrentPanel()?->getId();
 
-        return $panelId === 'site-admin' && $user?->role === 'admin';
+        return $user?->role === 'admin';
     }
 }

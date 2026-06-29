@@ -179,14 +179,14 @@ class LessonRequestResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return Filament::getCurrentPanel()?->getId() === 'site-admin'
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->role === 'admin')
             ? 'Заявки на уроки'
             : 'Заявки';
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return Filament::getCurrentPanel()?->getId() === 'site-admin'
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->role === 'admin')
             ? 'Операции'
             : 'Организация';
     }
@@ -204,12 +204,7 @@ class LessonRequestResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->user();
-        $panelId = Filament::getCurrentPanel()?->getId();
 
-        if ($panelId === 'site-admin') {
-            return $user?->role === 'admin';
-        }
-
-        return $user?->role === 'tutor';
+        return in_array($user?->role, ['tutor', 'admin'], true);
     }
 }

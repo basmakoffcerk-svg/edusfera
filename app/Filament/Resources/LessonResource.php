@@ -597,12 +597,13 @@ class LessonResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         $panelId = Filament::getCurrentPanel()?->getId();
+        $user = auth()->user();
 
-        if ($panelId === 'site-admin') {
+        if ($panelId === 'site-admin' || $user?->role === 'admin') {
             return 'Операции';
         }
 
-        return auth()->user()?->role === 'tutor'
+        return $user?->role === 'tutor'
             ? 'Организация'
             : 'Обучение';
     }
@@ -610,12 +611,7 @@ class LessonResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->user();
-        $panelId = Filament::getCurrentPanel()?->getId();
 
-        if ($panelId === 'site-admin') {
-            return $user?->role === 'admin';
-        }
-
-        return in_array($user?->role, ['tutor', 'student', 'parent'], true);
+        return in_array($user?->role, ['tutor', 'student', 'parent', 'admin'], true);
     }
 }
