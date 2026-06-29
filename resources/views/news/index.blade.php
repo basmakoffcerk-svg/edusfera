@@ -162,7 +162,7 @@
                     <span class="w-2 h-2 rounded-full bg-violet-500"></span>
                     <span class="text-xs font-bold tracking-widest uppercase text-violet-600">Новости и блог</span>
                 </div>
-                <h1 class="text-4xl sm:text-5xl md:text-6xl font-rimma font-black uppercase tracking-tight text-gray-900 mb-4">Журнал Edusfera</h1>
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-rimma font-black uppercase tracking-tight text-gray-900 mb-4">Новости Edusfera</h1>
                 <p class="text-lg text-gray-500 font-medium max-w-2xl mx-auto">Полезные советы по подготовке, лайфхаки для ЦТ/ЦЭ и важные обновления нашей платформы.</p>
             </div>
 
