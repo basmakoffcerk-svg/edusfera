@@ -125,7 +125,7 @@ class BookingServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => $slot->utc(),
@@ -294,7 +294,7 @@ class BookingServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => $date->setTime(10, 0)->utc(),
@@ -348,7 +348,7 @@ class BookingServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => $date->subMinutes(30)->utc(),

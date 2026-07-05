@@ -43,6 +43,10 @@ final class MeController
     {
         $role = $user->role ?? null;
 
+        if ($role instanceof \UnitEnum) {
+            return (string) $role->value;
+        }
+
         return is_string($role) ? $role : null;
     }
 

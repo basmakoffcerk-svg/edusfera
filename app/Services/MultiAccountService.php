@@ -123,8 +123,12 @@ class MultiAccountService
     /**
      * Get role label in Russian.
      */
-    public static function roleLabel(string $role): string
+    public static function roleLabel(string|\App\Enums\UserRole $role): string
     {
+        if ($role instanceof \App\Enums\UserRole) {
+            $role = $role->value;
+        }
+
         return match ($role) {
             'admin' => 'Админ',
             'tutor' => 'Репетитор',

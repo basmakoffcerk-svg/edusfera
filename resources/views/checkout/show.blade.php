@@ -454,11 +454,11 @@ SVG;
                 return `${normalized}&nbsp;${bynIconSvg}`;
             };
 
-            const disableWalletForPackage = (selectedPackageCode) => {
+            const disableWalletForPackage = (selectedAmount) => {
                 if (!walletRadio) return;
 
                 const walletLabel = walletRadio.closest('.co-method');
-                const walletAllowed = selectedPackageCode === 'single';
+                const walletAllowed = walletBalance >= selectedAmount;
                 walletRadio.disabled = !walletAllowed;
 
                 if (walletLabel) {
@@ -483,55 +483,50 @@ SVG;
                 const selectedPackageCode = selectedNode.value;
                 const selectedAmount = Number.parseFloat(selectedNode.dataset.totalAmount || '0');
                 const buttonLabel = selectedNode.dataset.buttonLabel ?? defaultButtonLabel;
-                const fullyCoveredByWallet = selectedPackageCode === 'single' && walletBalance >= selectedAmount && Boolean(walletRadio);
-                const canUsePartialWallet = selectedPackageCode === 'single' && walletBalance > 0 && walletBalance < selectedAmount;
+
+                disableWalletForPackage(selectedAmount);
+                totalNode.innerHTML = buttonLabel;
+
+                const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+                const isWalletSelected = selectedMethod === 'wallet';
+
+                const canUsePartialWallet = walletBalance > 0 && walletBalance < selectedAmount;
                 const usePartialWallet = canUsePartialWallet && Boolean(useWalletCheckbox?.checked);
                 const topUpAmount = Math.max(selectedAmount - walletBalance, 0);
 
-                disableWalletForPackage(selectedPackageCode);
-                totalNode.innerHTML = buttonLabel;
+                paymentMethodsBox.style.display = 'block';
 
-                if (fullyCoveredByWallet) {
-                    if (walletRadio) {
-                        walletRadio.checked = true;
-                    }
+                if (isWalletSelected) {
                     if (oneClickCopyNode) {
                         oneClickCopyNode.innerHTML = `К оплате: ${buttonLabel}. На вашем балансе: ${walletBalanceLabel}.`;
                     }
                     oneClickBox.style.display = 'flex';
                     partialBox.style.display = 'none';
-                    paymentMethodsBox.style.display = 'none';
                     rememberCardBox.style.display = 'none';
                     submitNode.innerHTML = `Подтвердить запись за ${buttonLabel}`;
-
-                    return;
-                }
-
-                oneClickBox.style.display = 'none';
-                paymentMethodsBox.style.display = 'block';
-
-                if (canUsePartialWallet) {
-                    partialBox.style.display = 'flex';
-                    if (partialCopyNode) {
-                        partialCopyNode.innerHTML = `Использовать ${formatMoneyHtml(walletBalance)} с баланса. К доплате: ${formatMoneyHtml(topUpAmount)}.`;
-                    }
                 } else {
-                    partialBox.style.display = 'none';
-                    if (useWalletCheckbox) {
-                        useWalletCheckbox.checked = false;
-                    }
-                }
+                    oneClickBox.style.display = 'none';
 
-                if (usePartialWallet) {
-                    if (walletRadio?.checked && cardRadio) {
-                        cardRadio.checked = true;
+                    if (canUsePartialWallet) {
+                        partialBox.style.display = 'flex';
+                        if (partialCopyNode) {
+                            partialCopyNode.innerHTML = `Использовать ${formatMoneyHtml(walletBalance)} с баланса. К доплате: ${formatMoneyHtml(topUpAmount)}.`;
+                        }
+                    } else {
+                        partialBox.style.display = 'none';
+                        if (useWalletCheckbox) {
+                            useWalletCheckbox.checked = false;
+                        }
                     }
-                    submitNode.innerHTML = `Доплатить ${formatMoneyHtml(topUpAmount)}`;
-                } else {
-                    submitNode.innerHTML = `Оплатить ${buttonLabel}`;
-                }
 
-                updateRememberCardVisibility();
+                    if (usePartialWallet) {
+                        submitNode.innerHTML = `Доплатить ${formatMoneyHtml(topUpAmount)}`;
+                    } else {
+                        submitNode.innerHTML = `Оплатить ${buttonLabel}`;
+                    }
+
+                    updateRememberCardVisibility();
+                }
             };
 
             packageNodes.forEach((node) => node.addEventListener('change', syncPackageSummary));

@@ -21,7 +21,7 @@ class StudentUpcomingLessonsWidget extends Widget
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        return $user && in_array($user->role, ['student', 'parent'], true);
+        return $user && in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
     }
 
     protected function getViewData(): array

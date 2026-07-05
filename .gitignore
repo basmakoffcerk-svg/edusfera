@@ -31,3 +31,9 @@ cookies*.txt
 
 # IDE / Env specific
 .kiro/
+
+# Temporary and local test files
+.agent/
+.codegraph/
+scratch/
+test_script.php

@@ -89,7 +89,7 @@ class PackageSettlementInvariantTest extends TestCase
 
         $now = CarbonImmutable::now('UTC');
 
-        $parent = Lesson::query()->create([
+        $parent = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => $now->addDays(2),
@@ -110,7 +110,7 @@ class PackageSettlementInvariantTest extends TestCase
 
         $children = [];
         for ($i = 0; $i < 3; $i++) {
-            $children[] = Lesson::query()->create([
+            $children[] = Lesson::query()->forceCreate([
                 'tutor_id' => $tutor->id,
                 'student_id' => $student->id,
                 'start_time' => $now->addDays(3 + $i),
@@ -381,6 +381,282 @@ class PackageSettlementInvariantTest extends TestCase
             (string) $studentBalance->locked_amount,
             'Сверка холдов должна восстановить locked_amount до 114.00 BYN для 3 оставшихся несыгранных уроков пакета.'
         );
+    }
+
+    private function bootstrapCustomPackage(string $packageCode, int $packageSize, string $pricePerHour): array
+    {
+        static $phoneCounter = 100000;
+        Notification::fake();
+
+        $tutor = User::factory()->create([
+            'role' => 'tutor',
+            'phone' => '+37529' . $phoneCounter++,
+        ]);
+
+        $tutor->tutorProfile()->create([
+            'subjects' => ['Математика'],
+            'audiences' => ['Подготовка к ЦЭ'],
+            'price_per_hour' => $pricePerHour,
+            'experience_years' => 5,
+            'legal_status' => 'self_employed',
+            'bio' => 'Подготовка к экзаменам.',
+            'is_verified' => true,
+            'verification_status' => 'approved',
+            'lesson_formats' => ['individual_online'],
+        ]);
+
+        $student = User::factory()->create([
+            'role' => 'student',
+            'phone' => '+37529' . $phoneCounter++,
+        ]);
+
+        // Calculate package pricing
+        $singlePrice = (float) $pricePerHour;
+        $discountFactor = $packageSize === 4 ? 0.95 : 0.90;
+        $packageTotal = round($singlePrice * $packageSize * $discountFactor, 2);
+        $discount = round(($singlePrice * $packageSize) - $packageTotal, 2);
+        
+        $commissionRate = 0.15;
+        $commission = round($packageTotal * $commissionRate, 2);
+        $netAmount = round($packageTotal - $commission, 2);
+
+        $now = CarbonImmutable::now('UTC');
+
+        $parent = Lesson::query()->forceCreate([
+            'tutor_id' => $tutor->id,
+            'student_id' => $student->id,
+            'start_time' => $now->addDays(2),
+            'end_time' => $now->addDays(2)->addHour(),
+            'duration_minutes' => 60,
+            'price' => number_format($singlePrice, 2, '.', ''),
+            'package_code' => $packageCode,
+            'package_lessons' => $packageSize,
+            'package_lessons_remaining' => $packageSize,
+            'package_total' => number_format($packageTotal, 2, '.', ''),
+            'package_discount' => number_format($discount, 2, '.', ''),
+            'platform_commission' => number_format($commission, 2, '.', ''),
+            'net_amount' => number_format($netAmount, 2, '.', ''),
+            'status' => Lesson::STATUS_PENDING,
+            'payment_status' => Lesson::PAYMENT_UNPAID,
+            'payment_lock_expires_at' => $now->addMinutes(15),
+        ]);
+
+        $children = [];
+        for ($i = 0; $i < $packageSize - 1; $i++) {
+            $children[] = Lesson::query()->forceCreate([
+                'tutor_id' => $tutor->id,
+                'student_id' => $student->id,
+                'start_time' => $now->addDays(3 + $i),
+                'end_time' => $now->addDays(3 + $i)->addHour(),
+                'duration_minutes' => 60,
+                'price' => number_format($singlePrice, 2, '.', ''),
+                'package_code' => $packageCode,
+                'package_lessons' => 1,
+                'package_parent_lesson_id' => $parent->id,
+                'package_discount' => '0.00',
+                'platform_commission' => '0.00',
+                'net_amount' => '0.00',
+                'status' => Lesson::STATUS_PENDING,
+                'payment_status' => Lesson::PAYMENT_UNPAID,
+                'payment_lock_expires_at' => $now->addMinutes(15),
+            ]);
+        }
+
+        $transaction = app(PaymentService::class)->processPayment(
+            lessonId: $parent->id,
+            userId: $student->id,
+            paymentMethod: 'card',
+            rememberPaymentMethod: false,
+            useWalletBalance: false,
+        );
+
+        return [
+            'tutor' => $tutor,
+            'student' => $student,
+            'parent' => $parent->refresh(),
+            'children' => array_map(fn (Lesson $lesson): Lesson => $lesson->refresh(), $children),
+            'transaction' => $transaction,
+        ];
+    }
+
+    /**
+     * Property 5.1 — Invariant: Sum of all net shares and gross shares settled
+     * across N lessons must exactly equal the transaction net_amount and amount.
+     */
+    public function test_sum_invariant_for_random_package_amounts(): void
+    {
+        mt_srand(12345);
+
+        for ($run = 0; $run < 50; $run++) {
+            $packageSize = mt_rand(0, 1) ? 4 : 8;
+            $pricePerHour = (string) mt_rand(10, 200);
+            $packageCode = $packageSize === 4 ? 'pack_4' : 'pack_8';
+
+            // Construct package lessons and transact payment
+            $ctx = $this->bootstrapCustomPackage($packageCode, $packageSize, $pricePerHour);
+            
+            $parent = $ctx['parent'];
+            $children = $ctx['children'];
+            $tx = $ctx['transaction'];
+
+            // Settle all lessons one by one
+            $parent->update(['status' => Lesson::STATUS_COMPLETED]);
+            app(PaymentService::class)->settleCompletedLesson($parent->fresh());
+
+            foreach ($children as $child) {
+                $child->update(['status' => Lesson::STATUS_COMPLETED]);
+                app(PaymentService::class)->settleCompletedLesson($child->fresh());
+            }
+
+            // Verify totals
+            $settlements = \App\Models\LessonSettlement::query()
+                ->where('transaction_id', $tx->id)
+                ->get();
+
+            $sumNet = '0.00';
+            $sumGross = '0.00';
+            foreach ($settlements as $s) {
+                $sumNet = bcadd($sumNet, (string) $s->net_share, 2);
+                $sumGross = bcadd($sumGross, (string) $s->gross_share, 2);
+            }
+
+            $this->assertSame((string) $tx->net_amount, $sumNet, "Run {$run}: Sum of net shares must equal transaction net_amount");
+            $this->assertSame((string) $tx->amount, $sumGross, "Run {$run}: Sum of gross shares must equal transaction amount");
+
+            $balance = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
+            $this->assertSame((string) $tx->net_amount, (string) $balance->available_amount);
+            $this->assertSame('0.00', (string) $balance->pending_amount);
+        }
+    }
+
+    /**
+     * Property 5.2 — Invariant: Individual share credited to tutor must be
+     * within one kopeck (0.01) of the base net share (or residual share on the last lesson).
+     */
+    public function test_individual_share_within_one_kopeck_of_base(): void
+    {
+        mt_srand(12345);
+
+        for ($run = 0; $run < 30; $run++) {
+            $packageSize = mt_rand(0, 1) ? 4 : 8;
+            $pricePerHour = (string) mt_rand(10, 200);
+            $packageCode = $packageSize === 4 ? 'pack_4' : 'pack_8';
+
+            $ctx = $this->bootstrapCustomPackage($packageCode, $packageSize, $pricePerHour);
+            
+            $parent = $ctx['parent'];
+            $children = $ctx['children'];
+            $tx = $ctx['transaction'];
+
+            $baseNetShare = bcdiv((string) $tx->net_amount, (string) $packageSize, 2);
+
+            // Settle parent
+            $parent->update(['status' => Lesson::STATUS_COMPLETED]);
+            app(PaymentService::class)->settleCompletedLesson($parent->fresh());
+            
+            $parentSettlement = $parent->refresh()->settlement;
+            $this->assertNotNull($parentSettlement);
+            
+            // Check that parent net_share is exactly baseNetShare (since it is first)
+            $this->assertSame($baseNetShare, (string) $parentSettlement->net_share);
+
+            // Settle all children except the last one
+            for ($i = 0; $i < $packageSize - 2; $i++) {
+                $child = $children[$i];
+                $child->update(['status' => Lesson::STATUS_COMPLETED]);
+                app(PaymentService::class)->settleCompletedLesson($child->fresh());
+
+                $settlement = $child->refresh()->settlement;
+                $this->assertNotNull($settlement);
+                $this->assertSame($baseNetShare, (string) $settlement->net_share);
+            }
+
+            // Settle last child (should be residual)
+            $lastChild = $children[$packageSize - 2];
+            $lastChild->update(['status' => Lesson::STATUS_COMPLETED]);
+            app(PaymentService::class)->settleCompletedLesson($lastChild->fresh());
+
+            $lastSettlement = $lastChild->refresh()->settlement;
+            $this->assertNotNull($lastSettlement);
+
+            // Difference between residual and base share must be <= (packageSize - 1) kopecks
+            $diff = abs((float) $lastSettlement->net_share - (float) $baseNetShare);
+            $maxAllowedDiff = ($packageSize - 1) * 0.01;
+            $this->assertLessThanOrEqual($maxAllowedDiff + 0.0001, $diff, "Run {$run}: Residual share too far from base");
+        }
+    }
+
+    /**
+     * Property 5.3 — Invariant: Refund of remaining unsettled package lessons
+     * must not modify the available_amount already settled to the tutor.
+     */
+    public function test_refund_remaining_does_not_affect_settled(): void
+    {
+        mt_srand(12345);
+
+        for ($run = 0; $run < 30; $run++) {
+            $packageSize = mt_rand(0, 1) ? 4 : 8;
+            $pricePerHour = (string) mt_rand(10, 200);
+            $packageCode = $packageSize === 4 ? 'pack_4' : 'pack_8';
+
+            $ctx = $this->bootstrapCustomPackage($packageCode, $packageSize, $pricePerHour);
+            
+            $parent = $ctx['parent'];
+            $children = $ctx['children'];
+            $tx = $ctx['transaction'];
+
+            // Settle k lessons (where k in [0, packageSize - 1])
+            $k = mt_rand(0, $packageSize - 1);
+
+            if ($k > 0) {
+                $parent->update(['status' => Lesson::STATUS_COMPLETED]);
+                app(PaymentService::class)->settleCompletedLesson($parent->fresh());
+
+                for ($i = 0; $i < $k - 1; $i++) {
+                    $children[$i]->update(['status' => Lesson::STATUS_COMPLETED]);
+                    app(PaymentService::class)->settleCompletedLesson($children[$i]->fresh());
+                }
+            }
+
+            // Tutor balance before refund
+            $balanceBefore = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
+            $availableBefore = (string) $balanceBefore->available_amount;
+            $pendingBefore = (string) $balanceBefore->pending_amount;
+
+            // Refund one child lesson that has NOT been settled
+            $refundTargetIndex = mt_rand(max(0, $k - 1), $packageSize - 2);
+            $refundTarget = $children[$refundTargetIndex];
+            
+            app(PaymentService::class)->refundLessonPayment($refundTarget->fresh(), 'student_cancelled');
+
+            // Tutor balance after refund
+            $balanceAfter = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
+            $availableAfter = (string) $balanceAfter->available_amount;
+            $pendingAfter = (string) $balanceAfter->pending_amount;
+
+            // available_amount must not change
+            $this->assertSame($availableBefore, $availableAfter, "Run {$run}: available_amount changed after refund");
+
+            // pending_amount must decrease
+            $this->assertLessThan($pendingBefore, $pendingAfter, "Run {$run}: pending_amount did not decrease after refund");
+
+            // Refunded lesson status must be CANCELLED and PAYMENT_REFUNDED
+            $this->assertSame(Lesson::STATUS_CANCELLED, $refundTarget->refresh()->status);
+            $this->assertSame(Lesson::PAYMENT_REFUNDED, $refundTarget->refresh()->payment_status);
+
+            // All other unsettled/settled lessons must keep their status unchanged
+            if ($k > 0) {
+                $this->assertSame(Lesson::STATUS_COMPLETED, $parent->refresh()->status);
+                for ($i = 0; $i < $k - 1; $i++) {
+                    $this->assertSame(Lesson::STATUS_COMPLETED, $children[$i]->refresh()->status);
+                }
+            }
+            for ($i = $k; $i < $packageSize - 1; $i++) {
+                if ($i !== $refundTargetIndex) {
+                    $this->assertSame(Lesson::STATUS_CONFIRMED, $children[$i]->refresh()->status);
+                }
+            }
+        }
     }
 }
 

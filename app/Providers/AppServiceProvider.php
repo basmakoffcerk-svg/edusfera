@@ -152,7 +152,7 @@ class AppServiceProvider extends ServiceProvider
             $admin = User::query()->firstOrNew(['email' => $email]);
 
             $admin->name = $name !== '' ? $name : 'Технический администратор';
-            $admin->role = 'admin';
+            $admin->role = 'admin'; // Raw string needed before cast hydration
             $admin->is_verified = true;
 
             if (! $admin->exists || ! Hash::check($password, (string) $admin->password)) {

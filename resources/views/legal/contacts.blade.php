@@ -8,7 +8,7 @@
     <p>Если у вас вопрос по бронированию, оплате, возврату, доступу к кабинету или работе платформы, используйте контакты ниже.</p>
 
     <h2>Поддержка пользователей</h2>
-    <p>Email: <a href="mailto:{{ config('mail.from.address', 'support@edusfera.by') }}">{{ config('mail.from.address', 'support@edusfera.by') }}</a></p>
+    <p>Email: <a href="mailto:{{ config('mail.from.address', 'edusferaby@gmail.com') }}">{{ config('mail.from.address', 'edusferaby@gmail.com') }}</a></p>
 
     <h2>По каким вопросам писать</h2>
     <ul>

@@ -31,19 +31,17 @@ class ClassroomIntegrationTest extends TestCase
         $this->tutor = User::factory()->create(['role' => 'tutor']);
         $this->student = User::factory()->create(['role' => 'student']);
 
-        $this->lesson = Lesson::create([
+        $this->lesson = Lesson::forceCreate([
             'tutor_id' => $this->tutor->id,
             'student_id' => $this->student->id,
             'status' => Lesson::STATUS_CONFIRMED,
             'payment_status' => Lesson::PAYMENT_PAID,
             'start_time' => now()->subMinutes(10),
             'end_time' => now()->addMinutes(50),
-            'subject' => 'Math',
             'duration_minutes' => 60,
             'price' => 1000,
             'platform_commission' => 200,
             'net_amount' => 800,
-            'tutor_earning' => 800,
         ]);
 
         $this->session = ClassroomSession::create([
@@ -176,7 +174,7 @@ class ClassroomIntegrationTest extends TestCase
             ['action' => 'clear', 'data' => []],
         ];
 
-        $token = config('classroom.jwt_secret');
+        $token = config('classroom.internal_secret');
 
         $response = $this->postJson(
             route('internal.classroom.whiteboard', ['roomId' => $this->session->room_id]),
@@ -188,5 +186,19 @@ class ClassroomIntegrationTest extends TestCase
 
         $this->session->refresh();
         $this->assertEquals($payload, $this->session->whiteboard_state);
+    }
+
+    public function test_participant_can_chat_with_ai()
+    {
+        $response = $this->actingAs($this->student)->postJson(route('classroom.ai-chat', $this->lesson), [
+            'message' => 'добавь колонку Физика',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'reply',
+        ]);
+
+        $this->assertStringContainsString('Физика', $response->json('reply'));
     }
 }

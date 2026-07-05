@@ -43,4 +43,6 @@ return [
         'username' => env('TURN_SERVER_USERNAME'),
         'credential' => env('TURN_SERVER_CREDENTIAL'),
     ],
+    'workspace_internal_url' => env('WORKSPACE_INTERNAL_URL', 'http://localhost:8083'),
+    'workspace_internal_secret' => env('WORKSPACE_INTERNAL_SECRET'),
 ];

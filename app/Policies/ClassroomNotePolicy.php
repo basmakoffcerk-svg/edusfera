@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\UserRole;
 use App\Models\ClassroomNote;
 use App\Models\User;
 
@@ -11,7 +12,7 @@ class ClassroomNotePolicy
 {
     public function view(User $user, ClassroomNote $note): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return true;
         }
 
@@ -36,7 +37,7 @@ class ClassroomNotePolicy
 
     public function create(User $user, ClassroomNote $note): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return true;
         }
 
@@ -53,11 +54,14 @@ class ClassroomNotePolicy
 
     public function delete(User $user, ClassroomNote $note): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return true;
         }
 
+        $session = $note->classroomSession;
+        $tutorId = $session?->lesson?->tutor_id;
+
         // Author can delete their own notes; tutor can delete any
-        return $note->author_id === $user->id;
+        return $note->author_id === $user->id || ($tutorId !== null && $tutorId === $user->id);
     }
 }

@@ -44,8 +44,20 @@
                 <h4 class="font-bold {{ $dark ? 'text-white' : 'text-gray-900' }} mb-3 text-xs uppercase tracking-wider">Связь</h4>
                 <ul class="space-y-2 text-sm font-medium">
                     <li><a href="{{ route('contacts') }}" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">Контакты</a></li>
-                    <li><a href="mailto:support@edusfera.by" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">support@edusfera.by</a></li>
+                    <li><a href="mailto:edusferaby@gmail.com" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">edusferaby@gmail.com</a></li>
                 </ul>
+            </div>
+        </div>
+
+        {{-- Legal Info --}}
+        <div class="py-6 border-t {{ $dark ? 'border-white/5' : 'border-gray-100' }} text-[11px] font-medium {{ $dark ? 'text-gray-500' : 'text-gray-400' }} grid grid-cols-1 md:grid-cols-2 gap-4 leading-relaxed">
+            <div>
+                <strong>Общество с ограниченной ответственностью «Эдусфера»</strong><br>
+                УНП 192854899 · Юридический адрес: Республика Беларусь, г. Минск, 220100, ул. Веры Хоружей, д. 6А, пом. 29
+            </div>
+            <div class="md:text-right">
+                <strong>Банковские реквизиты:</strong><br>
+                р/с IBAN BY64UNBS30121685100000001933 в ЗАО «БСБ Банк», БИК UNBSBY2X
             </div>
         </div>
 

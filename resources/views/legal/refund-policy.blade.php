@@ -26,5 +26,5 @@
     <p>Для пакетов занятий платформа учитывает количество уже использованных уроков, оставшийся баланс и статус конкретного бронирования.</p>
 
     <h2>7. Поддержка</h2>
-    <p>Если у вас спор по возврату, напишите на <a href="mailto:{{ config('mail.from.address', 'support@edusfera.by') }}">{{ config('mail.from.address', 'support@edusfera.by') }}</a> или перейдите в <a href="{{ route('contacts') }}">контакты</a>.</p>
+    <p>Если у вас спор по возврату, напишите на <a href="mailto:{{ config('mail.from.address', 'edusferaby@gmail.com') }}">{{ config('mail.from.address', 'edusferaby@gmail.com') }}</a> или перейдите в <a href="{{ route('contacts') }}">контакты</a>.</p>
 @endsection

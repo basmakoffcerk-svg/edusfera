@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Api\V1\Controllers\ClassroomTokenController;
 use App\Http\Api\V1\Controllers\JwksController;
 use App\Http\Api\V1\Controllers\MeController;
+use App\Http\Controllers\PromoLeadController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,6 +24,9 @@ use Illuminate\Support\Facades\Route;
 | EnforceServiceScope → EnforceIdempotency → ThrottleApi) подключается
 | в последующих задачах фазы 1 (см. tasks.md, задачи 2–4).
 */
+
+// Публичный роут для приема заявок с промо-лендинга
+Route::post('/promo/leads', [PromoLeadController::class, 'store'])->name('promo.leads.store');
 
 Route::prefix('v1')
     ->name('api.v1.')

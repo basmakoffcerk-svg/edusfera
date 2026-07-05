@@ -41,7 +41,7 @@ class ReconcileLessonsWithAiTest extends TestCase
      */
     private function makeCompletedLesson(User $tutor, User $student, string $packageCode = 'pack_4'): Lesson
     {
-        return Lesson::query()->create([
+        return Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => Carbon::now('UTC')->subHours(2),

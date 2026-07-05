@@ -1,2 +1,12 @@
 User-agent: *
-Disallow:
+Allow: /
+
+# Закрываем от индексации служебные и приватные разделы платформы
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /livewire/
+
+Sitemap: https://edusfera.by/sitemap.xml
+Host: https://edusfera.by

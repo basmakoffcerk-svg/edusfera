@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Брендовый логотип Edusfera: фиолетовый фон + лаймовый ромб -->
+  <rect width="64" height="64" rx="14" fill="#7D39EB"/>
+  <path d="M32 10L54 32L32 54L10 32L32 10Z" fill="none" stroke="#C6FF33" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M32 22L42 32L32 42L22 32L32 22Z" fill="#C6FF33"/>
+</svg>

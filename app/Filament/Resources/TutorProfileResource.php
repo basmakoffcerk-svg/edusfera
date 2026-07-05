@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\TutorProfileResource\Pages;
 use App\Models\TutorProfile;
 use App\Support\BynMoneyFormatter;
@@ -44,7 +45,7 @@ class TutorProfileResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || Auth::user()?->role === 'admin')
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || Auth::user()?->role === UserRole::Admin)
             ? 'Модерация'
             : 'Профиль';
     }
@@ -124,7 +125,7 @@ class TutorProfileResource extends Resource
 
     private static function isAdminContext(): bool
     {
-        return Auth::user()?->role === 'admin';
+        return Auth::user()?->role === UserRole::Admin;
     }
 
     /**
@@ -304,7 +305,7 @@ class TutorProfileResource extends Resource
             ])->submitAction(new HtmlString('<button type="submit" class="fi-btn relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-custom fi-btn-color-primary fi-size-md fi-btn-size-md gap-1.5 px-3 py-2 text-sm inline-grid shadow-sm bg-custom-600 text-white hover:bg-custom-500 dark:bg-custom-500 dark:hover:bg-custom-400 focus-visible:ring-custom-500/50 dark:focus-visible:ring-custom-400/50 fi-ac-btn-action" style="--c-400:var(--primary-400);--c-500:var(--primary-500);--c-600:var(--primary-600);"><span class="fi-btn-label">Сохранить</span></button>'))->columnSpanFull(),
 
             Forms\Components\Section::make('Модерация (Только для Админов)')
-                ->visible(fn () => Auth::user()?->role === 'admin')
+                ->visible(fn () => Auth::user()?->role === UserRole::Admin)
                 ->schema([
                     Forms\Components\Toggle::make('is_verified')
                         ->label('Верифицирован'),

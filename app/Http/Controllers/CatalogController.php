@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\TutorAvailability;
 use App\Models\TutorProfile;
 use App\Services\BookingService;
@@ -17,7 +18,6 @@ class CatalogController extends Controller
 
     public function index(Request $request)
     {
-        $baseQuery = TutorProfile::query()->where('is_verified', true);
         $query = TutorProfile::with('user')->where('is_verified', true);
 
         $query->orderByRaw(
@@ -84,6 +84,7 @@ class CatalogController extends Controller
             'История', 'Информатика',
         ];
 
+        $baseQuery = TutorProfile::query()->where('is_verified', true);
         $ratedBaseQuery = (clone $baseQuery)->where('rating_avg', '>', 0);
         $hasRealRating = $ratedBaseQuery->exists();
         $availabilityHints = $this->buildAvailabilityHints($tutors->getCollection()->pluck('user_id')->all());
@@ -124,7 +125,7 @@ class CatalogController extends Controller
         $selectedDate = $selectedDate->startOfDay();
         $slots = $this->bookingService->getAvailableSlots($tutor, $selectedDate);
 
-        $canStartConversation = auth()->check() && in_array(auth()->user()->role, ['student', 'parent'], true);
+        $canStartConversation = auth()->check() && auth()->user()->role?->canBook();
 
         return view('catalog.show', compact('tutor', 'selectedDate', 'slots', 'canStartConversation'));
     }
@@ -209,15 +210,15 @@ class CatalogController extends Controller
     {
         if ($context['subject'] !== null) {
             $query->orderByRaw(
-                'CASE WHEN JSON_CONTAINS(subjects, ?) THEN 0 ELSE 1 END ASC',
-                [json_encode($context['subject'])]
+                "CASE WHEN subjects @> ?::jsonb THEN 0 ELSE 1 END ASC",
+                [json_encode([$context['subject']])]
             );
         }
 
         if ($context['exam_type'] !== null) {
             $query->orderByRaw(
-                'CASE WHEN JSON_CONTAINS(exam_specializations, ?) THEN 0 ELSE 1 END ASC',
-                [json_encode($context['exam_type'])]
+                "CASE WHEN exam_specializations @> ?::jsonb THEN 0 ELSE 1 END ASC",
+                [json_encode([$context['exam_type']])]
             );
         }
 

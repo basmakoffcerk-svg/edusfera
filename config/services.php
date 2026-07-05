@@ -41,4 +41,9 @@ return [
         'webhook_secret' => env('AI_WEBHOOK_SECRET'),
     ],
 
+    'ledger' => [
+        'url' => env('LEDGER_URL', 'http://ledger:8080'),
+        'enabled' => env('LEDGER_ENABLED', true),
+    ],
+
 ];

@@ -62,7 +62,7 @@ class MessagesPage extends Page
 
     public function mount(?int $conversation = null): void
     {
-        abort_unless(in_array(auth()->user()?->role, ['admin', 'tutor', 'student', 'parent'], true), 403);
+        abort_unless(in_array(auth()->user()?->role, [\App\Enums\UserRole::Admin, \App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true), 403);
 
         $requestedConversationId = $conversation ?? $this->conversationId;
 
@@ -266,7 +266,7 @@ class MessagesPage extends Page
             return $user?->role === 'admin';
         }
 
-        return in_array($user?->role, ['tutor', 'student', 'parent'], true);
+        return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
     }
 
     public static function getNavigationGroup(): ?string
@@ -452,7 +452,7 @@ class MessagesPage extends Page
             return null;
         }
 
-        if (in_array($user->role, ['student', 'parent'], true)) {
+        if (in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
             if ($conversation->lesson && $conversation->lesson->payment_status !== \App\Models\Lesson::PAYMENT_PAID) {
                 return [
                     'label' => 'Забронировать',

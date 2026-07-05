@@ -35,7 +35,7 @@ class LessonContractsTest extends TestCase
     {
         [$tutor, $student] = $this->makeTutorAndStudent();
 
-        $lesson = Lesson::query()->create([
+        $lesson = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => CarbonImmutable::now('UTC')->addDay(),
@@ -72,7 +72,7 @@ class LessonContractsTest extends TestCase
         [$tutor, $student] = $this->makeTutorAndStudent();
         $parent = User::factory()->create(['role' => 'parent', 'phone' => '+375298300003']);
 
-        $own = Lesson::query()->create([
+        $own = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'parent_id' => $parent->id,
@@ -89,7 +89,7 @@ class LessonContractsTest extends TestCase
         ]);
 
         $other = User::factory()->create(['role' => 'student', 'phone' => '+375298300004']);
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $other->id,
             'start_time' => CarbonImmutable::now('UTC')->addDays(2),
@@ -140,7 +140,7 @@ class LessonContractsTest extends TestCase
 
         [$tutor, $student] = $this->makeTutorAndStudent();
 
-        $lesson = Lesson::query()->create([
+        $lesson = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => CarbonImmutable::now('UTC')->addDays(3),

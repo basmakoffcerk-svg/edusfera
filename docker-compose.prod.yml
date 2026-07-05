@@ -113,7 +113,7 @@ services:
       - edusfera
 
   coturn:
-    image: coturn/coturn:latest
+    image: coturn/coturn:4.6.2
     container_name: edusfera-coturn
     restart: unless-stopped
     ports:
@@ -127,6 +127,58 @@ services:
       DETECT_RELAY_IP: "yes"
     volumes:
       - ./coturn/turnserver.conf:/etc/turnserver.conf:ro
+    networks:
+      - edusfera
+
+  ledger:
+    build:
+      context: ./edusfera-ledger
+      dockerfile: Dockerfile
+    container_name: edusfera-ledger
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      PORT: "8080"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_DATABASE: "${DB_DATABASE}"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - edusfera
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  workspace:
+    build:
+      context: ./edusfera-workspace
+      dockerfile: Dockerfile
+    container_name: edusfera-workspace
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      PORT: "8080"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_DATABASE: "${DB_DATABASE}"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      INTERNAL_SECRET: "${WORKSPACE_INTERNAL_SECRET}"
+      JWT_SECRET: "${CLASSROOM_JWT_SECRET}"
+      LOG_LEVEL: "info"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - edusfera
 

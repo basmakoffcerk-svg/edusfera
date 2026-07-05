@@ -62,7 +62,7 @@ class PostLessonReportServiceTest extends TestCase
             'last_detected_at' => now('UTC'),
         ]);
 
-        $lesson = Lesson::query()->create([
+        $lesson = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => CarbonImmutable::now('UTC')->subHours(2),

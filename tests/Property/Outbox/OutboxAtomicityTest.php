@@ -97,7 +97,7 @@ final class OutboxAtomicityTest extends TestCase
                     &$lessonId,
                     &$eventId,
                 ): void {
-                    $lesson = Lesson::create($attributes);
+                    $lesson = Lesson::forceCreate($attributes);
                     $envelope = $this->makeEnvelope($factory, $lesson);
                     $repository->append($envelope);
 
@@ -115,7 +115,7 @@ final class OutboxAtomicityTest extends TestCase
                         &$lessonId,
                         &$eventId,
                     ): void {
-                        $lesson = Lesson::create($attributes);
+                        $lesson = Lesson::forceCreate($attributes);
                         $envelope = $this->makeEnvelope($factory, $lesson);
                         $repository->append($envelope);
 

@@ -5,7 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $article->title }} — Блог Edusfera</title>
-    <meta name="description" content="{{ Str::limit(strip_tags($article->content), 150) }}">
+    <meta name="description" content="{{ Str::limit(preg_replace('/\s+/', ' ', strip_tags(str_replace(['</p>', '</div>', '<br>', '<br />', '</h1>', '</h2>', '</h3>', '</h4>', '</h5>', '</h6>'], ' ', $article->content))), 150) }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

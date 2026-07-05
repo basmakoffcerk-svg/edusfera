@@ -80,7 +80,7 @@ class ListLessons extends ListRecords
                 ->icon('heroicon-o-magnifying-glass')
                 ->color('primary')
                 ->url('/tutors')
-                ->visible(fn (): bool => in_array($role, ['student', 'parent'], true)),
+                ->visible(fn (): bool => in_array($role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)),
             Actions\Action::make('availability')
                 ->label('Открыть расписание')
                 ->icon('heroicon-o-calendar')
@@ -90,7 +90,7 @@ class ListLessons extends ListRecords
                 ->label($role === 'tutor' ? 'Финансы' : 'Оплаты')
                 ->icon('heroicon-o-banknotes')
                 ->url('/admin/transactions')
-                ->visible(fn (): bool => in_array($role, ['tutor', 'student', 'parent'], true)),
+                ->visible(fn (): bool => in_array($role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)),
         ];
     }
 }

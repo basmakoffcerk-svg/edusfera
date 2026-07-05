@@ -32,6 +32,11 @@ class PaymentService
         private readonly OutboxRepository $outbox,
     ) {}
 
+    public function verifyPayment(string $transactionId): bool
+    {
+        return $this->gateway->verifyPayment($transactionId);
+    }
+
     public function processPayment(
         int $lessonId,
         int $userId,
@@ -674,6 +679,10 @@ class PaymentService
             $existing = $settlements->firstWhere('lesson_id', $lesson->id);
 
             if ($existing !== null && ($existing->settled_at !== null || $existing->refunded_at !== null)) {
+                return;
+            }
+
+            if (($tx->gateway_response['settled'] ?? false) === true) {
                 return;
             }
 

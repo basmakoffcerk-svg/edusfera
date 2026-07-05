@@ -187,19 +187,17 @@ class JwksEndpointTest extends TestCase
         // Выпускаем реальный classroom-токен для тестового урока/пользователя.
         $tutor = User::factory()->create(['role' => 'tutor']);
         $student = User::factory()->create(['role' => 'student']);
-        $lesson = Lesson::create([
+        $lesson = Lesson::forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'status' => Lesson::STATUS_CONFIRMED,
             'payment_status' => Lesson::PAYMENT_PAID,
             'start_time' => now()->subMinutes(10),
             'end_time' => now()->addHour(),
-            'subject' => 'Math',
             'duration_minutes' => 60,
             'price' => 1000,
             'platform_commission' => 200,
             'net_amount' => 800,
-            'tutor_earning' => 800,
         ]);
 
         $token = app(ClassroomTokenIssuer::class)->issue($lesson, $tutor);

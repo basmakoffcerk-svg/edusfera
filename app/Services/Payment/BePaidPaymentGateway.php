@@ -12,18 +12,39 @@ class BePaidPaymentGateway implements PaymentGatewayInterface
     private string $shopId;
     private string $secretKey;
     private bool $testMode;
+    private string $checkoutUrl;
+    private string $gatewayUrl;
+    private int $timeoutSeconds;
 
     public function __construct()
     {
         $this->shopId = (string) config('payments.bepaid.shop_id', '');
         $this->secretKey = (string) config('payments.bepaid.secret_key', '');
         $this->testMode = (bool) config('payments.bepaid.test_mode', true);
+        $this->checkoutUrl = (string) config('payments.bepaid.checkout_url', 'https://checkout.bepaid.by/ctp/api/checkouts');
+        $this->gatewayUrl = (string) config('payments.bepaid.gateway_url', 'https://gateway.bepaid.by');
+        $this->timeoutSeconds = (int) config('payments.bepaid.timeout_seconds', 30);
     }
 
     public function createPayment(array $data): array
     {
         // bePaid expects amount in cents/kopecks
         $amountInCents = (int) round((float) $data['amount'] * 100);
+
+        $isWalletTopUp = isset($data['wallet_topup']) && $data['wallet_topup'] === true;
+
+        if ($isWalletTopUp) {
+            $successUrl = route('filament.admin.pages.wallet');
+            $cancelUrl = route('filament.admin.pages.wallet');
+            $description = 'Пополнение кошелька на Edusfera (Пользователь #' . $data['user_id'] . ')';
+            $trackingId = 'wallet_topup_user_' . $data['user_id'] . '_' . time();
+        } else {
+            $lessonId = $data['lesson_id'];
+            $successUrl = route('checkout.success', ['lesson' => $lessonId]);
+            $cancelUrl = route('checkout.show', ['lesson' => $lessonId]);
+            $description = 'Оплата занятия на Edusfera (Урок #' . $lessonId . ')';
+            $trackingId = 'lesson_' . $lessonId . '_user_' . $data['user_id'] . '_' . time();
+        }
 
         $payload = [
             'checkout' => [
@@ -32,29 +53,35 @@ class BePaidPaymentGateway implements PaymentGatewayInterface
                 'transaction_type' => 'payment',
                 'attempts' => 3,
                 'settings' => [
-                    'success_url' => route('checkout.success', ['lesson' => $data['lesson_id']]),
-                    'decline_url' => route('checkout.show', ['lesson' => $data['lesson_id']]),
-                    'fail_url' => route('checkout.show', ['lesson' => $data['lesson_id']]),
-                    'cancel_url' => route('checkout.show', ['lesson' => $data['lesson_id']]),
+                    'success_url' => $successUrl,
+                    'decline_url' => $cancelUrl,
+                    'fail_url' => $cancelUrl,
+                    'cancel_url' => $cancelUrl,
                     'notification_url' => $this->getCallbackUrl(),
                     'language' => 'ru',
                 ],
                 'order' => [
                     'amount' => $amountInCents,
                     'currency' => $data['currency'],
-                    'description' => 'Оплата занятия на Edusfera (Урок #' . $data['lesson_id'] . ')',
-                    'tracking_id' => 'lesson_' . $data['lesson_id'] . '_user_' . $data['user_id'] . '_' . time(),
+                    'description' => $description,
+                    'tracking_id' => $trackingId,
                 ],
             ]
         ];
 
         try {
             $response = Http::withBasicAuth($this->shopId, $this->secretKey)
-                ->post('https://checkout.bepaid.by/ctp/api/checkouts', $payload);
+                ->timeout($this->timeoutSeconds)
+                ->retry(2, 200)
+                ->post($this->checkoutUrl, $payload);
 
             if ($response->successful() && isset($response['checkout']['redirect_url'])) {
                 $token = $response['checkout']['token'] ?? '';
-                Log::channel('payments')->info('bePaid checkout created', ['token' => $token, 'lesson_id' => $data['lesson_id']]);
+                Log::channel('payments')->info('bePaid checkout created', [
+                    'token' => $token,
+                    'lesson_id' => $isWalletTopUp ? null : $data['lesson_id'],
+                    'wallet_topup' => $isWalletTopUp,
+                ]);
 
                 return [
                     'success' => true,
@@ -76,11 +103,28 @@ class BePaidPaymentGateway implements PaymentGatewayInterface
         ];
     }
 
+
     public function verifyPayment(string $transactionId): bool
     {
-        // This validates the transaction status directly via bePaid API if needed.
-        // For webhook-based processing, verification is usually done by checking the webhook signature.
-        return true; 
+        try {
+            $response = Http::withBasicAuth($this->shopId, $this->secretKey)
+                ->timeout($this->timeoutSeconds)
+                ->retry(2, 200)
+                ->get($this->checkoutUrl . '/' . $transactionId);
+
+            if ($response->successful() && isset($response['checkout']['status'])) {
+                $status = $response['checkout']['status'];
+                Log::channel('payments')->info('bePaid verify check', ['transaction_id' => $transactionId, 'status' => $status]);
+
+                return $status === 'successful';
+            }
+
+            Log::channel('payments')->error('bePaid verify failed', ['transaction_id' => $transactionId, 'response' => $response->body()]);
+        } catch (\Exception $e) {
+            Log::channel('payments')->error('bePaid verify exception', ['transaction_id' => $transactionId, 'message' => $e->getMessage()]);
+        }
+
+        return false;
     }
 
     public function refundPayment(string $transactionId, float $amount): bool
@@ -97,7 +141,9 @@ class BePaidPaymentGateway implements PaymentGatewayInterface
 
         try {
             $response = Http::withBasicAuth($this->shopId, $this->secretKey)
-                ->post('https://gateway.bepaid.by/transactions/refunds', $payload);
+                ->timeout($this->timeoutSeconds)
+                ->retry(2, 200)
+                ->post($this->gatewayUrl . '/transactions/refunds', $payload);
 
             if ($response->successful() && isset($response['transaction']['status']) && $response['transaction']['status'] === 'successful') {
                 return true;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\UserRole;
 use App\Models\TutorProfile;
 use App\Models\User;
 
@@ -14,7 +15,7 @@ class TutorProfilePolicy
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, ['tutor', 'admin'], true);
+        return in_array($user->role, [UserRole::Tutor, UserRole::Admin], true);
     }
 
     /**
@@ -22,11 +23,11 @@ class TutorProfilePolicy
      */
     public function view(User $user, TutorProfile $tutorProfile): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return true;
         }
 
-        return $user->role === 'tutor' && $tutorProfile->user_id === $user->id;
+        return $user->role === UserRole::Tutor && $tutorProfile->user_id === $user->id;
     }
 
     /**
@@ -34,11 +35,11 @@ class TutorProfilePolicy
      */
     public function create(User $user): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return true;
         }
 
-        return $user->role === 'tutor' && ! $user->tutorProfile()->exists();
+        return $user->role === UserRole::Tutor && ! $user->tutorProfile()->exists();
     }
 
     /**
@@ -46,11 +47,11 @@ class TutorProfilePolicy
      */
     public function update(User $user, TutorProfile $tutorProfile): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return true;
         }
 
-        return $user->role === 'tutor' && $tutorProfile->user_id === $user->id;
+        return $user->role === UserRole::Tutor && $tutorProfile->user_id === $user->id;
     }
 
     /**
@@ -58,6 +59,6 @@ class TutorProfilePolicy
      */
     public function delete(User $user, TutorProfile $tutorProfile): bool
     {
-        return $user->role === 'admin';
+        return $user->role === UserRole::Admin;
     }
 }

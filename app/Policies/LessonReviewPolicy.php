@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\UserRole;
 use App\Models\Lesson;
 use App\Models\LessonReview;
 use App\Models\User;
@@ -45,6 +46,6 @@ class LessonReviewPolicy
      */
     public function delete(User $user, LessonReview $review): bool
     {
-        return $user->role === 'admin';
+        return $user->role === UserRole::Admin;
     }
 }

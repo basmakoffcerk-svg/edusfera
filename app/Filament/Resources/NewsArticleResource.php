@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\NewsArticleResource\Pages;
 use App\Models\NewsArticle;
 use Filament\Facades\Filament;
@@ -24,7 +25,7 @@ class NewsArticleResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->role === 'admin';
+        return auth()->user()?->role === UserRole::Admin;
     }
 
     public static function form(Form $form): Form
@@ -148,6 +149,6 @@ class NewsArticleResource extends Resource
     {
         $user = auth()->user();
 
-        return $user?->role === 'admin';
+        return $user?->role === UserRole::Admin;
     }
 }

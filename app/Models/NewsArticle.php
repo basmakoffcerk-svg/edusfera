@@ -31,7 +31,7 @@ class NewsArticle extends Model
     {
         static::saving(function (NewsArticle $article) {
             if (empty($article->slug)) {
-                $article->slug = Str::slug($article->title);
+                $article->slug = Str::slug(Str::ascii($article->title));
             }
         });
     }

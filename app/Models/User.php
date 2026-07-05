@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\UserRole;
+
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -54,6 +56,7 @@ class User extends Authenticatable implements FilamentUser
             'offer_accepted_at' => 'datetime',
             'password' => 'hashed',
             'is_verified' => 'boolean',
+            'role' => UserRole::class,
         ];
     }
 
@@ -63,13 +66,13 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
-            return in_array($this->role, ['admin', 'tutor', 'student', 'parent'], true);
+            return in_array($this->role, UserRole::allPanelRoles(), true);
         }
 
         if ($panel->getId() === 'site-admin') {
             $technicalEmail = mb_strtolower((string) config('site_admin.email', ''));
 
-            return $this->role === 'admin'
+            return $this->role === UserRole::Admin
                 && $technicalEmail !== ''
                 && mb_strtolower($this->email) === $technicalEmail;
         }

@@ -26,18 +26,20 @@ class WalletPage extends Page
 
     protected static ?int $navigationSort = 41;
 
-    public ?int $selectedTopUpAmount = 152;
+    public const PRESET_AMOUNTS = [40, 152, 288];
+
+    public float|int|null $selectedTopUpAmount = 152;
 
     public ?string $customTopUpAmount = null;
 
     public static function shouldRegisterNavigation(): bool
     {
-        return in_array(auth()->user()?->role, ['student', 'parent'], true);
+        return in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
     }
 
     public static function canAccess(): bool
     {
-        return in_array(auth()->user()?->role, ['student', 'parent'], true);
+        return in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
     }
 
     public static function getNavigationGroup(): ?string
@@ -49,7 +51,7 @@ class WalletPage extends Page
     {
         $user = auth()->user();
 
-        if (! $user || ! in_array($user->role, ['student', 'parent'], true)) {
+        if (! $user || ! in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
             return null;
         }
 
@@ -59,16 +61,17 @@ class WalletPage extends Page
         return number_format($amount, 2, '.', ' ');
     }
 
-    public function choosePresetAmount(int $amount): void
+    public function choosePresetAmount(float|int $amount): void
     {
-        if (! in_array($amount, [40, 152, 288], true)) {
+        if (! in_array((int) $amount, self::PRESET_AMOUNTS, true)) {
             return;
         }
 
         $this->selectedTopUpAmount = $amount;
+        $this->customTopUpAmount = null;
     }
 
-    public function getTopUpAmountProperty(): int
+    public function getTopUpAmountProperty(): float
     {
         return $this->resolveTopUpAmount();
     }
@@ -82,13 +85,13 @@ class WalletPage extends Page
     {
         $user = auth()->user();
 
-        if (! $user || ! in_array($user->role, ['student', 'parent'], true)) {
+        if (! $user || ! in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
             abort(403);
         }
 
         $amount = $this->resolveTopUpAmount();
 
-        if ($amount < 10 || $amount > 5000) {
+        if ($amount < 10.0 || $amount > 5000.0) {
             Notification::make()
                 ->title('Сумма пополнения должна быть от 10 до 5000 BYN')
                 ->danger()
@@ -114,16 +117,43 @@ class WalletPage extends Page
             return;
         }
 
-        app(StudentBalanceService::class)->credit(
-            balance: app(StudentBalanceService::class)->getOrCreate($user->id),
-            amount: number_format($amount, 2, '.', ''),
-            currency: 'BYN',
-            type: StudentBalanceLedgerEntry::TYPE_TOPUP,
-            meta: [
-                'source' => 'wallet_page',
+        if (($response['status'] ?? '') === 'pending' && isset($response['redirect_url'])) {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $amount, $response) {
+                \App\Models\WalletTopup::query()->create([
+                    'user_id' => $user->id,
+                    'amount' => $amount,
+                    'currency' => 'BYN',
+                    'status' => 'pending',
+                    'gateway_transaction_id' => $response['gateway_transaction_id'] ?? null,
+                    'gateway_response' => $response,
+                ]);
+            });
+
+            $this->redirect($response['redirect_url']);
+            return;
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user, $amount, $response) {
+            \App\Models\WalletTopup::query()->create([
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'currency' => 'BYN',
+                'status' => 'success',
                 'gateway_transaction_id' => $response['gateway_transaction_id'] ?? null,
-            ],
-        );
+                'gateway_response' => $response,
+            ]);
+
+            app(StudentBalanceService::class)->credit(
+                balance: app(StudentBalanceService::class)->getOrCreate($user->id),
+                amount: number_format($amount, 2, '.', ''),
+                currency: 'BYN',
+                type: StudentBalanceLedgerEntry::TYPE_TOPUP,
+                meta: [
+                    'source' => 'wallet_page',
+                    'gateway_transaction_id' => $response['gateway_transaction_id'] ?? null,
+                ],
+            );
+        });
 
         $this->customTopUpAmount = null;
 
@@ -137,18 +167,9 @@ class WalletPage extends Page
     public function getViewData(): array
     {
         $user = auth()->user();
-        abort_unless($user && in_array($user->role, ['student', 'parent'], true), 403);
+        abort_unless($user && in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true), 403);
 
-        $balance = StudentBalance::query()->firstOrCreate(
-            ['user_id' => $user->id],
-            [
-                'available_amount' => '0.00',
-                'locked_amount' => '0.00',
-                'total_topped_up' => '0.00',
-                'total_spent' => '0.00',
-                'total_refunded' => '0.00',
-            ],
-        );
+        $balance = app(StudentBalanceService::class)->getOrCreate($user->id);
 
         $entries = StudentBalanceLedgerEntry::query()
             ->with(['lesson.tutor'])
@@ -161,19 +182,19 @@ class WalletPage extends Page
             'availableHtml' => BynMoneyFormatter::format((string) $balance->available_amount)->toHtml(),
             'lockedHtml' => BynMoneyFormatter::format((string) $balance->locked_amount)->toHtml(),
             'entries' => $entries,
-            'presetAmounts' => [40, 152, 288],
+            'presetAmounts' => self::PRESET_AMOUNTS,
             'selectedTopUpAmount' => $this->selectedTopUpAmount,
         ];
     }
 
-    private function resolveTopUpAmount(): int
+    private function resolveTopUpAmount(): float
     {
         $custom = trim((string) $this->customTopUpAmount);
 
         if ($custom !== '' && is_numeric($custom)) {
-            return (int) round((float) $custom);
+            return round((float) $custom, 2);
         }
 
-        return (int) ($this->selectedTopUpAmount ?? 0);
+        return (float) ($this->selectedTopUpAmount ?? 0.0);
     }
 }

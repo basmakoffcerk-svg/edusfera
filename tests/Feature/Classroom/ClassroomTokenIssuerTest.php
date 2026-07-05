@@ -40,19 +40,17 @@ class ClassroomTokenIssuerTest extends TestCase
 
     private function makeLesson(\DateTimeInterface|string $endTime): Lesson
     {
-        return Lesson::create([
+        return Lesson::forceCreate([
             'tutor_id' => $this->tutor->id,
             'student_id' => $this->student->id,
             'status' => Lesson::STATUS_CONFIRMED,
             'payment_status' => Lesson::PAYMENT_PAID,
             'start_time' => now()->subMinutes(10),
             'end_time' => $endTime,
-            'subject' => 'Math',
             'duration_minutes' => 60,
             'price' => 1000,
             'platform_commission' => 200,
             'net_amount' => 800,
-            'tutor_earning' => 800,
         ]);
     }
 

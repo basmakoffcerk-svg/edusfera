@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\StudentGoal;
 use App\Services\DiagnosticService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -46,7 +48,7 @@ class DiagnosticController extends Controller
     {
         $validated = $request->validate([
             'step' => ['required', 'integer', 'min:1', 'max:3'],
-            'subject' => ['required_with:step', 'string', 'array'],
+            'subject' => ['required_with:step', 'array'],
             'subject.*' => ['string', 'max:64'],
             'examType' => ['required_with:step', 'string', 'max:32'],
             'currentScore' => ['nullable', 'integer', 'min:0', 'max:100'],
@@ -83,7 +85,7 @@ class DiagnosticController extends Controller
         return response()->json(['success' => true, 'nextStep' => $data['step'] ?? $step]);
     }
 
-    public function finish(Request $request): View
+    public function finish(Request $request): View|RedirectResponse
     {
         $data = $request->session()->get(self::SESSION_KEY, []);
 
@@ -93,7 +95,7 @@ class DiagnosticController extends Controller
 
         $user = $request->user();
 
-        if ($user && in_array($user->role, ['student', 'parent'], true)) {
+        if ($user && $user->role === UserRole::Student) {
             $this->saveForUser($user, $data);
         }
 

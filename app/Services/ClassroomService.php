@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\Classroom\ClassroomTokenIssuer;
 use App\Models\ClassroomSession;
 use App\Models\Lesson;
 use App\Models\User;
@@ -12,6 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 class ClassroomService
 {
+    public function __construct(
+        private readonly ClassroomTokenIssuer $tokenIssuer
+    ) {}
+
     public function openClassroom(Lesson $lesson, User $user): ClassroomSession
     {
         if (! $this->canAccess($lesson, $user)) {
@@ -39,32 +44,9 @@ class ClassroomService
 
     public function generateMediaToken(ClassroomSession $session, User $user): string
     {
-        $secret = (string) config('classroom.jwt_secret');
-        $ttl = (int) config('classroom.jwt_ttl', 3600);
-
         $session->loadMissing('lesson');
 
-        $role = $user->id === $session->lesson->tutor_id ? 'tutor' : 'student';
-
-        $header = $this->base64UrlEncode(json_encode([
-            'alg' => 'HS256',
-            'typ' => 'JWT',
-        ], JSON_THROW_ON_ERROR));
-
-        $payload = $this->base64UrlEncode(json_encode([
-            'sub' => $user->id,
-            'room' => $session->room_id,
-            'role' => $role,
-            'name' => $user->name,
-            'iat' => time(),
-            'exp' => time() + $ttl,
-        ], JSON_THROW_ON_ERROR));
-
-        $signature = $this->base64UrlEncode(
-            hash_hmac('sha256', "{$header}.{$payload}", $secret, true),
-        );
-
-        return "{$header}.{$payload}.{$signature}";
+        return $this->tokenIssuer->issue($session->lesson, $user);
     }
 
     public function canAccess(Lesson $lesson, User $user): bool

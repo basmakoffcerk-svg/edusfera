@@ -46,6 +46,26 @@
         </div>
 
         <div class="cr-header-right">
+            <button class="cr-theme-toggle" @click="toggleTheme()" title="Переключить тему" x-cloak>
+                <template x-if="isLightTheme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </template>
+                <template x-if="!isLightTheme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </template>
+            </button>
             <div class="cr-timer" x-text="timerDisplay"></div>
         </div>
     </header>
@@ -65,60 +85,132 @@
                 </div>
             </template>
 
-            <!-- Video Grid -->
+            <!-- Video Grid Wrapper -->
             <div x-show="!isConnecting && !isWhiteboardFullscreen"
-                 class="cr-video-grid"
-                 :data-participants="participantCount">
+                 class="cr-video-wrapper"
+                 :style="(isWhiteboardActive || isWorkspaceActive) ? 'height: ' + videoHeight + 'px; flex: none;' : 'flex: 1; min-height: 100px;'">
+                
+                <div class="cr-video-grid"
+                     data-participants="2"
+                     style="height: 100%;">
 
-                <!-- Local Video -->
-                <div class="cr-video-tile" :class="{ 'cr-speaking': localSpeaking }">
-                    <template x-if="isCameraOn">
-                        <video x-ref="localVideo" autoplay muted playsinline></video>
-                    </template>
-                    <template x-if="!isCameraOn">
-                        <div class="cr-video-avatar">
-                            <div class="cr-video-avatar-circle">
-                                <span x-text="config.userName?.charAt(0)?.toUpperCase() || 'U'"></span>
+                    <!-- Tutor Video Tile -->
+                    <div class="cr-video-tile" :class="{ 'cr-speaking': tutorPeer ? tutorPeer.speaking : false }">
+                        <template x-if="tutorPeer">
+                            <div style="width: 100%; height: 100%; position: relative;">
+                                <template x-if="tutorPeer.isLocal">
+                                    <div style="width: 100%; height: 100%;">
+                                        <template x-if="isCameraOn">
+                                            <video x-ref="localVideo" autoplay muted playsinline></video>
+                                        </template>
+                                        <template x-if="!isCameraOn">
+                                            <div class="cr-video-avatar">
+                                                <div class="cr-video-avatar-circle">
+                                                    <span x-text="config.userName?.charAt(0)?.toUpperCase() || 'Р'"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template x-if="!tutorPeer.isLocal">
+                                    <div style="width: 100%; height: 100%;">
+                                        <template x-if="tutorPeer.video !== false">
+                                            <video :id="'video-' + tutorPeer.id" autoplay playsinline x-init="$el.srcObject = peerStreams[tutorPeer.id]"></video>
+                                        </template>
+                                        <template x-if="tutorPeer.video === false">
+                                            <div class="cr-video-avatar">
+                                                <div class="cr-video-avatar-circle">
+                                                    <span x-text="tutorPeer.name?.charAt(0)?.toUpperCase() || 'Р'"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <span class="cr-video-name" x-text="tutorPeer.isLocal ? 'Вы (Преподаватель)' : (tutorPeer.name || 'Преподаватель')"></span>
+                                <span class="cr-video-mic" x-show="tutorPeer.isLocal ? !isMicOn : tutorPeer.audio === false" x-cloak>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+                                        <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17"></path>
+                                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                                    </svg>
+                                </span>
                             </div>
-                        </div>
-                    </template>
-                    <span class="cr-video-name">Вы</span>
-                    <span class="cr-video-mic" x-show="!isMicOn" x-cloak>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="1" y1="1" x2="23" y2="23"></line>
-                            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
-                            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17"></path>
-                            <line x1="12" y1="19" x2="12" y2="23"></line>
-                            <line x1="8" y1="23" x2="16" y2="23"></line>
-                        </svg>
-                    </span>
-                </div>
-
-                <!-- Remote Videos -->
-                <template x-for="peer in Object.values(peers)" :key="peer.id">
-                    <div class="cr-video-tile" :class="{ 'cr-speaking': peer.speaking }">
-                        <template x-if="peer.video !== false">
-                            <video :id="'video-' + peer.id" autoplay playsinline></video>
                         </template>
-                        <template x-if="peer.video === false">
-                            <div class="cr-video-avatar">
+                        <template x-if="!tutorPeer">
+                            <div class="cr-video-avatar cr-avatar-waiting">
                                 <div class="cr-video-avatar-circle">
-                                    <span x-text="peer.name?.charAt(0)?.toUpperCase() || '?'"></span>
+                                    <span>Р</span>
                                 </div>
+                                <span class="cr-video-name">Преподаватель (ожидание...)</span>
                             </div>
                         </template>
-                        <span class="cr-video-name" x-text="peer.name || 'Участник'"></span>
-                        <span class="cr-video-mic" x-show="peer.audio === false" x-cloak>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="1" y1="1" x2="23" y2="23"></line>
-                                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
-                                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17"></path>
-                                <line x1="12" y1="19" x2="12" y2="23"></line>
-                                <line x1="8" y1="23" x2="16" y2="23"></line>
-                            </svg>
-                        </span>
                     </div>
-                </template>
+
+                    <!-- Student Video Tile -->
+                    <div class="cr-video-tile" :class="{ 'cr-speaking': studentPeer ? studentPeer.speaking : false }">
+                        <template x-if="studentPeer">
+                            <div style="width: 100%; height: 100%; position: relative;">
+                                <template x-if="studentPeer.isLocal">
+                                    <div style="width: 100%; height: 100%;">
+                                        <template x-if="isCameraOn">
+                                            <video x-ref="localVideo" autoplay muted playsinline></video>
+                                        </template>
+                                        <template x-if="!isCameraOn">
+                                            <div class="cr-video-avatar">
+                                                <div class="cr-video-avatar-circle">
+                                                    <span x-text="config.userName?.charAt(0)?.toUpperCase() || 'У'"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template x-if="!studentPeer.isLocal">
+                                    <div style="width: 100%; height: 100%;">
+                                        <template x-if="studentPeer.video !== false">
+                                            <video :id="'video-' + studentPeer.id" autoplay playsinline x-init="$el.srcObject = peerStreams[studentPeer.id]"></video>
+                                        </template>
+                                        <template x-if="studentPeer.video === false">
+                                            <div class="cr-video-avatar">
+                                                <div class="cr-video-avatar-circle">
+                                                    <span x-text="studentPeer.name?.charAt(0)?.toUpperCase() || 'У'"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <span class="cr-video-name" x-text="studentPeer.isLocal ? 'Вы (Ученик)' : (studentPeer.name || 'Ученик')"></span>
+                                <span class="cr-video-mic" x-show="studentPeer.isLocal ? !isMicOn : studentPeer.audio === false" x-cloak>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                        <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+                                        <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2c0 .76-.13 1.49-.35 2.17"></path>
+                                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                                    </svg>
+                                </span>
+                            </div>
+                        </template>
+                        <template x-if="!studentPeer">
+                            <div class="cr-video-avatar cr-avatar-waiting">
+                                <div class="cr-video-avatar-circle">
+                                    <span>У</span>
+                                </div>
+                                <span class="cr-video-name">Ученик (ожидание...)</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resizer Handle -->
+            <div class="cr-resizer"
+                 x-show="!isConnecting && !isWhiteboardFullscreen && (isWhiteboardActive || isWorkspaceActive)"
+                 @mousedown="startResize($event)"
+                 :class="{ 'cr-resizing': isResizing }"
+                 x-cloak>
+                <div class="cr-resizer-line"></div>
             </div>
 
             <!-- Whiteboard -->
@@ -127,7 +219,8 @@
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0"
                  x-transition:enter-end="opacity-100"
-                 class="cr-whiteboard-container">
+                 class="cr-whiteboard-container"
+                 style="flex: 1; min-height: 0;">
 
                 <!-- Whiteboard Toolbar -->
                 <div class="cr-whiteboard-tools">
@@ -221,6 +314,163 @@
 
                 <canvas x-ref="whiteboard" class="cr-whiteboard"></canvas>
             </div>
+
+            <!-- Interactive Workspace (Kanban Board) -->
+            <div x-show="isWorkspaceActive"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 class="cr-workspace-container"
+                 style="flex: 1; min-height: 0;">
+                 
+                 <div class="cr-workspace-header">
+                     <div class="cr-workspace-title-row">
+                         <svg class="cr-workspace-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                             <rect x="3" y="3" width="6" height="18" rx="1"></rect>
+                             <rect x="15" y="3" width="6" height="18" rx="1"></rect>
+                             <rect x="9" y="3" width="6" height="18" rx="1"></rect>
+                         </svg>
+                         <h3 class="cr-workspace-title">Интерактивное рабочее пространство</h3>
+                     </div>
+                 </div>
+
+                 <!-- Kanban Board -->
+                 <div class="cr-board" id="workspace-board">
+                     <!-- Columns -->
+                     <template x-for="(column, colIdx) in workspaceBoard.columns" :key="column.id">
+                         <div class="cr-board-column" 
+                              :data-column-id="column.id"
+                              draggable="true"
+                              @dragstart="handleColDragStart($event, column.id)"
+                              @dragover.prevent
+                              @drop="handleColDrop($event, column.id)">
+                              
+                             <div class="cr-column-header">
+                                 <span class="cr-column-title-input" x-text="column.title"></span>
+                                 <button class="cr-column-btn" @click="deleteColumn(column.id)" title="Удалить колонку">
+                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                         <polyline points="3 6 5 6 21 6"></polyline>
+                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                     </svg>
+                                 </button>
+                             </div>
+
+                             <!-- Cards List -->
+                             <div class="cr-column-cards"
+                                  :data-column-id="column.id"
+                                  @dragover.prevent="handleCardDragOver($event)"
+                                  @dragleave="handleCardDragLeave($event)"
+                                  @drop="handleCardDrop($event, column.id)">
+                                  
+                                 <template x-for="(card, cardIdx) in column.cards" :key="card.id">
+                                     <div class="cr-card" 
+                                          :data-card-id="card.id"
+                                          :data-column-id="column.id"
+                                          draggable="true"
+                                          @dragstart="handleCardDragStart($event, card.id, column.id)">
+                                          
+                                         <div class="cr-card-header">
+                                             <span class="cr-card-badge" :class="'cr-card-badge--' + card.type" x-text="getCardTypeName(card.type)"></span>
+                                             <div class="cr-card-actions">
+                                                 <button class="cr-column-btn" @click="deleteCard(column.id, card.id)" title="Удалить карточку">
+                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                         <polyline points="3 6 5 6 21 6"></polyline>
+                                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                     </svg>
+                                                 </button>
+                                             </div>
+                                         </div>
+
+                                         <div style="margin-bottom: 8px;">
+                                             <input type="text" 
+                                                    class="cr-card-title-input" 
+                                                    :value="card.title"
+                                                    @change="updateCardTitle(card.id, $event.target.value)"
+                                                    placeholder="Заголовок карточки">
+                                         </div>
+
+                                         <!-- Card Type Specific Layouts -->
+                                         
+                                         <!-- Note / Code Type -->
+                                         <template x-if="card.type === 'note' || card.type === 'code'">
+                                             <textarea class="cr-card-textarea" 
+                                                       rows="4"
+                                                       :value="card.content || ''"
+                                                       @change="updateCardContent(card.id, $event.target.value)"
+                                                       :placeholder="card.type === 'code' ? 'Вставьте код...' : 'Текст заметки...'"></textarea>
+                                         </template>
+
+                                         <!-- Checklist Type -->
+                                         <template x-if="card.type === 'checklist'">
+                                             <div class="cr-card-checklist">
+                                                 <template x-for="(item, itemIdx) in (card.items || [])" :key="item.id">
+                                                     <div class="cr-checklist-item">
+                                                         <input type="checkbox" 
+                                                                class="cr-checklist-checkbox" 
+                                                                :checked="item.completed"
+                                                                @change="toggleChecklistItem(card.id, item.id, $event.target.checked)">
+                                                         <input type="text" 
+                                                                class="cr-checklist-text"
+                                                                :class="{ 'completed': item.completed }"
+                                                                :value="item.text"
+                                                                @change="updateChecklistItemText(card.id, item.id, $event.target.value)">
+                                                         <button class="cr-checklist-btn-delete" @click="deleteChecklistItem(card.id, item.id)">
+                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                 <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                                 <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                             </svg>
+                                                         </button>
+                                                     </div>
+                                                 </template>
+                                                 
+                                                 <!-- Add Checklist Item -->
+                                                 <div class="cr-checklist-add-row" x-data="{ newItemText: '' }">
+                                                     <input type="text" 
+                                                            class="cr-checklist-add-input" 
+                                                            placeholder="Новый пункт..." 
+                                                            x-model="newItemText"
+                                                            @keydown.enter="if(newItemText.trim()) { addChecklistItem(card.id, newItemText); newItemText = ''; }">
+                                                     <button class="cr-checklist-add-btn" 
+                                                             @click="if(newItemText.trim()) { addChecklistItem(card.id, newItemText); newItemText = ''; }">+</button>
+                                                 </div>
+                                             </div>
+                                         </template>
+
+                                         <!-- Timer Type -->
+                                         <template x-if="card.type === 'timer'">
+                                             <div class="cr-card-timer" x-data="cardTimer(card)">
+                                                 <div class="cr-timer-digits" x-text="formatTime()"></div>
+                                                 <div class="cr-timer-controls">
+                                                     <button class="cr-timer-btn" @click="toggleTimer()" x-text="running ? 'Пауза' : 'Старт'"></button>
+                                                     <button class="cr-timer-btn" @click="resetTimer()">Сброс</button>
+                                                 </div>
+                                             </div>
+                                         </template>
+
+                                     </div>
+                                 </template>
+                             </div>
+
+                             <!-- Add Card Action Menu -->
+                             <div class="cr-card-add-menu">
+                                 <button class="cr-card-add-type-btn" @click="addCard(column.id, 'note')">+ Заметка</button>
+                                 <button class="cr-card-add-type-btn" @click="addCard(column.id, 'checklist')">+ Список</button>
+                                 <button class="cr-card-add-type-btn" @click="addCard(column.id, 'timer')">+ Таймер</button>
+                             </div>
+                         </div>
+                     </template>
+
+                     <!-- Add Column Button -->
+                     <button class="cr-column-add-btn" @click="addColumn()">
+                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                             <line x1="12" y1="5" x2="12" y2="19"></line>
+                             <line x1="5" y1="12" x2="19" y2="12"></line>
+                         </svg>
+                         <span>Добавить колонку</span>
+                     </button>
+                 </div>
+            </div>
         </main>
 
         <!-- ─── Sidebar ─────────────────────── -->
@@ -260,6 +510,17 @@
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
                     <span>Файлы</span>
+                </button>
+                <button class="cr-sidebar-tab" :class="{ 'active': activeSidebarTab === 'ai' }"
+                        @click="activeSidebarTab = 'ai'">
+                    <svg class="cr-sidebar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+                        <circle cx="12" cy="5" r="2"></circle>
+                        <path d="M12 7v4"></path>
+                        <line x1="8" y1="16" x2="8" y2="16"></line>
+                        <line x1="16" y1="16" x2="16" y2="16"></line>
+                    </svg>
+                    <span>ИИ</span>
                 </button>
                 @if(auth()->id() === $lesson->tutor_id)
                     <button class="cr-sidebar-tab" :class="{ 'active': activeSidebarTab === 'profile' }"
@@ -387,6 +648,52 @@
                     <div x-show="files.length === 0 && !isUploading" class="cr-profile-empty">
                         Файлов пока нет
                     </div>
+                </div>
+            </div>
+
+            <!-- ── AI Tab ────────────────────── -->
+            <div x-show="activeSidebarTab === 'ai'" class="cr-sidebar-content" x-cloak>
+                <h4 class="cr-sidebar-title">ИИ-Ассистент</h4>
+                <div class="cr-chat-messages" x-ref="aiMessages" style="flex: 1; overflow-y: auto; margin-bottom: 8px;">
+                    <template x-for="msg in aiMessages" :key="msg.id">
+                        <div class="cr-chat-message" :class="{ 'mine': msg.role === 'user' }">
+                            <div class="cr-chat-avatar" :style="msg.role === 'assistant' ? 'background: linear-gradient(135deg, #7D39EB, #C6FF33); color: #fff;' : ''" x-text="msg.role === 'user' ? 'Вы' : 'ИИ'"></div>
+                            <div class="cr-chat-body">
+                                <div class="cr-chat-sender" x-text="msg.role === 'user' ? 'Вы' : 'Ассистент'"></div>
+                                <div class="cr-chat-bubble" x-text="msg.text"></div>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="aiMessages.length === 0" class="cr-profile-empty">
+                        Спросите ИИ о теме урока или попросите изменить интерактивную доску.
+                    </div>
+                </div>
+                
+                <!-- Quick Prompts -->
+                <div class="cr-ai-prompts" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-bottom: 8px;">
+                    <button class="cr-checklist-add-btn" style="font-size: 11px; padding: 4px 8px; height: auto;" @click="sendAiPrompt('Добавь чек-лист подготовки к экзамену')">📝 Список подготовки</button>
+                    <button class="cr-checklist-add-btn" style="font-size: 11px; padding: 4px 8px; height: auto;" @click="sendAiPrompt('Создай колонку План урока')">📊 Создать колонку</button>
+                    <button class="cr-checklist-add-btn" style="font-size: 11px; padding: 4px 8px; height: auto;" @click="sendAiPrompt('Добавь таймер на 5 минут')">⏱️ Таймер 5 мин</button>
+                </div>
+
+                <div class="cr-chat-input" x-data="{ isSending: false }">
+                    <input type="text"
+                           x-model="newAiMessage"
+                           @keydown.enter.prevent="if(!isSending && newAiMessage.trim()) { isSending = true; sendAiChat().finally(() => isSending = false); }"
+                           placeholder="Спросить ИИ..."
+                           :disabled="isSending"
+                           id="ai-chat-input">
+                    <button class="cr-chat-send" @click="if(!isSending && newAiMessage.trim()) { isSending = true; sendAiChat().finally(() => isSending = false); }" :disabled="isSending" title="Отправить">
+                        <template x-if="!isSending">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </template>
+                        <template x-if="isSending">
+                            <span class="cr-status-dot cr-status-dot--waiting" style="display: inline-block;"></span>
+                        </template>
+                    </button>
                 </div>
             </div>
 
@@ -584,6 +891,21 @@
                 </span>
                 <span>Доска</span>
             </button>
+
+            <!-- Workspace -->
+            <button class="cr-toolbar-btn"
+                    :class="{ 'cr-toolbar-btn--active': isWorkspaceActive }"
+                    @click="toggleWorkspace()"
+                    id="btn-workspace">
+                <span class="cr-toolbar-btn-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="6" height="18" rx="1"></rect>
+                        <rect x="15" y="3" width="6" height="18" rx="1"></rect>
+                        <rect x="9" y="3" width="6" height="18" rx="1"></rect>
+                    </svg>
+                </span>
+                <span>Workspace</span>
+            </button>
         </div>
 
         <div class="cr-toolbar-center">
@@ -667,7 +989,7 @@
     window.__classroom = {
         lessonId: {{ $lesson->id }},
         roomId: '{{ $session->room_id }}',
-        mediaToken: '{{ $mediaToken }}',
+        mediaToken: '{{ $token }}',
         mediaServerUrl: '{{ $mediaServerUrl }}',
         iceServers: @json($iceServers),
         userId: {{ auth()->id() }},
@@ -691,9 +1013,13 @@
             showEndModal: false,
             timerDisplay: '00:00:00',
             localSpeaking: false,
+            videoHeight: 180,
+            isResizing: false,
+            isLightTheme: false,
 
             // ─── Data ───────────────────────
             peers: {},
+            peerStreams: {},
             chatMessages: [],
             newMessage: '',
             notes: [],
@@ -701,6 +1027,8 @@
             files: [],
             uploadProgress: 0,
             isUploading: false,
+            aiMessages: [],
+            newAiMessage: '',
 
             // ─── Tutor-only ─────────────────
             studentProfile: null,
@@ -713,6 +1041,14 @@
             wbColor: '#7D39EB',
             wbColors: ['#7D39EB', '#C6FF33', '#ff4d6a', '#33d17a', '#ffffff', '#ffb800'],
             wbLineWidth: 3,
+
+            // ─── Workspace (Kanban) ──────────
+            isWorkspaceActive: false,
+            workspaceBoard: { columns: [] },
+            wsWorkspace: null,
+            draggedCardId: null,
+            draggedCardColId: null,
+            draggedColId: null,
 
             // ─── Modules ────────────────────
             wsManager: null,
@@ -729,30 +1065,65 @@
                 return Object.keys(this.peers).length + 1;
             },
 
+            get tutorPeer() {
+                if (this.config.userRole === 'tutor') {
+                    return {
+                        id: 'local',
+                        name: 'Вы (Репетитор)',
+                        isLocal: true,
+                        video: this.isCameraOn,
+                        audio: this.isMicOn,
+                        speaking: this.localSpeaking,
+                        role: 'tutor'
+                    };
+                }
+                return Object.values(this.peers).find(p => p.role === 'tutor') || null;
+            },
+
+            get studentPeer() {
+                if (this.config.userRole === 'student') {
+                    return {
+                        id: 'local',
+                        name: 'Вы (Ученик)',
+                        isLocal: true,
+                        video: this.isCameraOn,
+                        audio: this.isMicOn,
+                        speaking: this.localSpeaking,
+                        role: 'student'
+                    };
+                }
+                return Object.values(this.peers).find(p => p.role === 'student') || null;
+            },
+
             // ═══ Init ═══════════════════════
             async init() {
+                window.classroomApp = this;
                 // Wait for modules to be available
                 await this._waitForModules();
+
+                this.isLightTheme = localStorage.getItem('cr-theme') === 'light';
+                this.applyTheme();
 
                 const { WebSocketManager, WebRTCManager, WhiteboardEngine, SessionTimer, FileUploader }
                     = window.ClassroomModules;
 
                 // ─── WebSocket ──────────────
                 const wsUrl = this.config.mediaServerUrl.replace(/^http/, 'ws')
-                    + '/ws?room=' + this.config.roomId
-                    + '&token=' + this.config.mediaToken
+                    + '/ws/' + this.config.roomId
+                    + '?token=' + this.config.mediaToken
                     + '&userId=' + this.config.userId
                     + '&userName=' + encodeURIComponent(this.config.userName);
 
                 this.wsManager = new WebSocketManager(wsUrl);
 
-                this.wsManager.on('user-joined', (data) => this.handleUserJoined(data));
-                this.wsManager.on('user-left', (data) => this.handleUserLeft(data));
+                this.wsManager.on('joined', (data) => this.handleJoined(data));
+                this.wsManager.on('peer-joined', (data) => this.handlePeerJoined(data));
+                this.wsManager.on('peer-left', (data) => this.handlePeerLeft(data));
                 this.wsManager.on('offer', (data) => this.rtcManager.handleOffer(data.fromId, data.sdp, data.role, data.name));
                 this.wsManager.on('answer', (data) => this.rtcManager.handleAnswer(data.fromId, data.sdp));
                 this.wsManager.on('ice-candidate', (data) => this.rtcManager.handleIceCandidate(data.fromId, data.candidate));
                 this.wsManager.on('chat', (data) => this.handleChatMessage(data));
-                this.wsManager.on('whiteboard', (data) => this.whiteboard?.applyRemoteAction(data));
+                this.wsManager.on('wb', (data) => this.whiteboard?.applyRemoteAction(data));
                 this.wsManager.on('wb-history', (data) => {
                     if (data.events && this.whiteboard) {
                         data.events.forEach(evt => this.whiteboard.applyRemoteAction(evt));
@@ -764,6 +1135,7 @@
                     }
                 });
                 this.wsManager.on('media-state', (data) => this.handleMediaState(data));
+                this.wsManager.on('speaking', (data) => this.handleSpeakingState(data));
                 this.wsManager.on('session-ended', () => this.handleSessionEnded());
 
                 this.wsManager.connect();
@@ -780,6 +1152,8 @@
                 };
 
                 this.rtcManager.onTrack = (peerId, stream) => {
+                    console.log('[Classroom] Remote stream obtained for peer:', peerId);
+                    this.peerStreams[peerId] = stream;
                     this.$nextTick(() => {
                         const el = document.getElementById('video-' + peerId);
                         if (el) el.srcObject = stream;
@@ -844,6 +1218,43 @@
                 if (!window.ClassroomModules) {
                     throw new Error('[Classroom] Modules failed to load');
                 }
+            },
+
+            startResize(e) {
+                this.isResizing = true;
+                const startY = e.clientY;
+                const startHeight = this.videoHeight;
+                
+                const doResize = (moveEvent) => {
+                    const deltaY = moveEvent.clientY - startY;
+                    this.videoHeight = Math.max(100, Math.min(500, startHeight + deltaY));
+                    if (this.whiteboard) {
+                        this.whiteboard.resize();
+                    }
+                };
+                
+                const stopResize = () => {
+                    this.isResizing = false;
+                    window.removeEventListener('mousemove', doResize);
+                    window.removeEventListener('mouseup', stopResize);
+                };
+                
+                window.addEventListener('mousemove', doResize);
+                window.addEventListener('mouseup', stopResize);
+            },
+
+            applyTheme() {
+                if (this.isLightTheme) {
+                    document.body.classList.add('theme-light');
+                } else {
+                    document.body.classList.remove('theme-light');
+                }
+            },
+
+            toggleTheme() {
+                this.isLightTheme = !this.isLightTheme;
+                localStorage.setItem('cr-theme', this.isLightTheme ? 'light' : 'dark');
+                this.applyTheme();
             },
 
             // ═══ Media Controls ═════════════
@@ -916,6 +1327,277 @@
                 this.whiteboard?.clear();
             },
 
+            // ═══ Workspace (Kanban Board) ═══
+            toggleWorkspace() {
+                this.isWorkspaceActive = !this.isWorkspaceActive;
+                if (this.isWorkspaceActive) {
+                    this.isWhiteboardActive = false;
+                    this.connectWorkspaceWS();
+                }
+            },
+
+            connectWorkspaceWS() {
+                if (this.wsWorkspace && (this.wsWorkspace.readyState === WebSocket.OPEN || this.wsWorkspace.readyState === WebSocket.CONNECTING)) {
+                    return;
+                }
+
+                // WebSocket endpoint via Nginx proxy
+                const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+                const wsUrl = protocol + window.location.host + '/ws/workspace/' + this.config.roomId
+                    + '?token=' + this.config.mediaToken;
+
+                console.log('[Workspace] Connecting WebSocket:', wsUrl);
+                this.wsWorkspace = new WebSocket(wsUrl);
+
+                this.wsWorkspace.onopen = () => {
+                    console.log('[Workspace] WebSocket connected');
+                };
+
+                this.wsWorkspace.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        if (msg.event === 'workspace.sync') {
+                            this.workspaceBoard = msg.payload || { columns: [] };
+                        } else if (msg.event === 'workspace.error') {
+                            console.error('[Workspace] Error from server:', msg.payload);
+                        }
+                    } catch (e) {
+                        console.error('[Workspace] Failed to parse message:', e);
+                    }
+                };
+
+                this.wsWorkspace.onerror = (err) => {
+                    console.error('[Workspace] WebSocket error:', err);
+                };
+
+                this.wsWorkspace.onclose = (event) => {
+                    console.log('[Workspace] WebSocket closed:', event.code, event.reason);
+                    // Reconnect if workspace is still active
+                    if (this.isWorkspaceActive) {
+                        setTimeout(() => this.connectWorkspaceWS(), 3000);
+                    }
+                };
+            },
+
+            sendWorkspaceMsg(event, payload) {
+                if (this.wsWorkspace && this.wsWorkspace.readyState === WebSocket.OPEN) {
+                    this.wsWorkspace.send(JSON.stringify({ event, payload }));
+                } else {
+                    console.warn('[Workspace] WebSocket not connected, cannot send:', event);
+                }
+            },
+
+            getCardTypeName(type) {
+                const names = {
+                    'note': 'Заметка',
+                    'checklist': 'Список',
+                    'code': 'Код',
+                    'timer': 'Таймер'
+                };
+                return names[type] || type;
+            },
+
+            generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            },
+
+            addColumn() {
+                const title = prompt('Введите название новой колонки:');
+                if (!title || !title.trim()) return;
+
+                const columnId = 'col-' + this.generateUUID();
+                this.sendWorkspaceMsg('column.add', {
+                    columnId: columnId,
+                    title: title.trim()
+                });
+            },
+
+            deleteColumn(columnId) {
+                if (!confirm('Вы уверены, что хотите удалить эту колонку и все её карточки?')) return;
+                this.sendWorkspaceMsg('column.delete', { columnId });
+            },
+
+            addCard(columnId, type) {
+                const title = prompt('Введите название карточки:');
+                if (!title || !title.trim()) return;
+
+                const cardId = 'card-' + this.generateUUID();
+                const card = {
+                    id: cardId,
+                    type: type,
+                    title: title.trim(),
+                    content: '',
+                    items: []
+                };
+
+                if (type === 'timer') {
+                    card.meta = { seconds: 300, running: false, lastUpdated: 0 };
+                }
+
+                this.sendWorkspaceMsg('card.add', {
+                    columnId: columnId,
+                    card: card
+                });
+            },
+
+            deleteCard(columnId, cardId) {
+                if (!confirm('Удалить эту карточку?')) return;
+                this.sendWorkspaceMsg('card.delete', { cardId, columnId });
+            },
+
+            updateCardTitle(cardId, title) {
+                this.sendWorkspaceMsg('card.update', {
+                    cardId,
+                    data: { title: title.trim() }
+                });
+            },
+
+            updateCardContent(cardId, content) {
+                this.sendWorkspaceMsg('card.update', {
+                    cardId,
+                    data: { content: content }
+                });
+            },
+
+            // --- Checklist Specific Operations ---
+            addChecklistItem(cardId, text) {
+                const card = this.findCard(cardId);
+                if (!card) return;
+
+                const items = card.items ? [...card.items] : [];
+                items.push({
+                    id: 'item-' + this.generateUUID(),
+                    text: text.trim(),
+                    completed: false
+                });
+
+                this.sendWorkspaceMsg('card.update', {
+                    cardId,
+                    data: { items }
+                });
+            },
+
+            toggleChecklistItem(cardId, itemId, completed) {
+                const card = this.findCard(cardId);
+                if (!card) return;
+
+                const items = card.items.map(item => {
+                    if (item.id === itemId) {
+                        return { ...item, completed };
+                    }
+                    return item;
+                });
+
+                this.sendWorkspaceMsg('card.update', {
+                    cardId,
+                    data: { items }
+                });
+            },
+
+            updateChecklistItemText(cardId, itemId, text) {
+                const card = this.findCard(cardId);
+                if (!card) return;
+
+                const items = card.items.map(item => {
+                    if (item.id === itemId) {
+                        return { ...item, text: text.trim() };
+                    }
+                    return item;
+                });
+
+                this.sendWorkspaceMsg('card.update', {
+                    cardId,
+                    data: { items }
+                });
+            },
+
+            deleteChecklistItem(cardId, itemId) {
+                const card = this.findCard(cardId);
+                if (!card) return;
+
+                const items = card.items.filter(item => item.id !== itemId);
+                this.sendWorkspaceMsg('card.update', {
+                    cardId,
+                    data: { items }
+                });
+            },
+
+            findCard(cardId) {
+                for (const col of this.workspaceBoard.columns) {
+                    for (const card of col.cards) {
+                        if (card.id === cardId) return card;
+                    }
+                }
+                return null;
+            },
+
+            // --- Drag & Drop Operations ---
+            handleColDragStart(event, columnId) {
+                this.draggedColId = columnId;
+                event.dataTransfer.effectAllowed = 'move';
+            },
+
+            handleColDrop(event, targetColumnId) {
+                if (!this.draggedColId || this.draggedColId === targetColumnId) return;
+
+                const colIdx = this.workspaceBoard.columns.findIndex(c => c.id === targetColumnId);
+                if (colIdx !== -1) {
+                    this.sendWorkspaceMsg('column.move', {
+                        columnId: this.draggedColId,
+                        index: colIdx
+                    });
+                }
+                this.draggedColId = null;
+            },
+
+            handleCardDragStart(event, cardId, columnId) {
+                this.draggedCardId = cardId;
+                this.draggedCardColId = columnId;
+                event.dataTransfer.effectAllowed = 'move';
+                event.target.classList.add('dragging');
+            },
+
+            handleCardDragOver(event) {
+                event.currentTarget.classList.add('dragover');
+            },
+
+            handleCardDragLeave(event) {
+                event.currentTarget.classList.remove('dragover');
+            },
+
+            handleCardDrop(event, targetColId) {
+                event.currentTarget.classList.remove('dragover');
+                document.querySelectorAll('.cr-card.dragging').forEach(el => el.classList.remove('dragging'));
+
+                if (!this.draggedCardId) return;
+
+                // Find card position (index) in target column
+                let targetIndex = 0;
+                const targetCardsContainer = event.currentTarget;
+                const targetCards = Array.from(targetCardsContainer.querySelectorAll('.cr-card:not(.dragging)'));
+                
+                for (let i = 0; i < targetCards.length; i++) {
+                    const rect = targetCards[i].getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    if (event.clientY > midY) {
+                        targetIndex = i + 1;
+                    }
+                }
+
+                this.sendWorkspaceMsg('card.move', {
+                    cardId: this.draggedCardId,
+                    fromColumnId: this.draggedCardColId,
+                    toColumnId: targetColId,
+                    index: targetIndex
+                });
+
+                this.draggedCardId = null;
+                this.draggedCardColId = null;
+            },
+
             // ═══ Chat ═══════════════════════
             async sendMessage() {
                 const text = this.newMessage.trim();
@@ -970,7 +1652,7 @@
                 };
 
                 try {
-                    await this.fetchApi(`/api/classroom/${this.config.lessonId}/notes`, {
+                    await this.fetchApi(`/classroom/${this.config.lessonId}/notes`, {
                         method: 'POST',
                         body: JSON.stringify({ text }),
                     });
@@ -984,7 +1666,7 @@
 
             async loadNotes() {
                 try {
-                    const data = await this.fetchApi(`/api/classroom/${this.config.lessonId}/notes`);
+                    const data = await this.fetchApi(`/classroom/${this.config.lessonId}/notes`);
                     if (Array.isArray(data)) this.notes = data;
                 } catch (e) {
                     console.log('[Classroom] Notes not available');
@@ -1105,6 +1787,7 @@
             // ═══ WebRTC Events ══════════════
             async handleJoined(data) {
                 console.log('[Classroom] Joined room:', data);
+                this.selfId = data.selfId;
                 // Заполняем уже существующих участников
                 if (data.participants) {
                     for (const p of data.participants) {
@@ -1134,6 +1817,17 @@
                 }
             },
 
+            handleSpeakingState(data) {
+                if (data.peerId === this.selfId) {
+                    this.localSpeaking = data.speaking;
+                } else {
+                    const peer = this.peers[data.peerId];
+                    if (peer) {
+                        peer.speaking = data.speaking;
+                    }
+                }
+            },
+
             handleSessionEnded() {
                 this.isSessionActive = false;
                 this.timer?.stop();
@@ -1150,7 +1844,7 @@
                 this.timer?.stop();
 
                 try {
-                    await this.fetchApi(`/api/classroom/${this.config.lessonId}/end`, {
+                    await this.fetchApi(`/classroom/${this.config.lessonId}/end`, {
                         method: 'POST',
                     });
                 } catch (e) {
@@ -1169,6 +1863,56 @@
                 this.rtcManager?.close();
                 this.wsManager?.close();
                 window.location.href = '/admin';
+            },
+
+            // ═══ AI Assistant ═══════════════
+            sendAiPrompt(promptText) {
+                this.newAiMessage = promptText;
+                this.sendAiChat();
+            },
+
+            async sendAiChat() {
+                const text = this.newAiMessage.trim();
+                if (!text) return;
+
+                this.aiMessages.push({
+                    id: Date.now(),
+                    role: 'user',
+                    text: text
+                });
+                this.newAiMessage = '';
+                this.scrollAiChatToBottom();
+
+                try {
+                    const result = await this.fetchApi(`/classroom/${this.config.lessonId}/ai-chat`, {
+                        method: 'POST',
+                        body: JSON.stringify({ message: text })
+                    });
+
+                    if (result && result.reply) {
+                        this.aiMessages.push({
+                            id: Date.now() + 1,
+                            role: 'assistant',
+                            text: result.reply
+                        });
+                        this.scrollAiChatToBottom();
+                    }
+                } catch (e) {
+                    console.error('[AI] Chat request failed:', e);
+                    this.aiMessages.push({
+                        id: Date.now() + 1,
+                        role: 'assistant',
+                        text: 'Извините, произошла ошибка соединения с сервером ИИ.'
+                    });
+                    this.scrollAiChatToBottom();
+                }
+            },
+
+            scrollAiChatToBottom() {
+                this.$nextTick(() => {
+                    const el = this.$refs.aiMessages;
+                    if (el) el.scrollTop = el.scrollHeight;
+                });
             },
 
             // ═══ API Helper ═════════════════
@@ -1192,12 +1936,104 @@
             },
         };
     }
-</script>
 
-</body>
-</html>
-N.parse(text) : null;
+    function cardTimer(card) {
+        return {
+            cardId: card.id,
+            seconds: 300,
+            running: false,
+            interval: null,
+
+            init() {
+                try {
+                    const meta = typeof card.meta === 'string' ? JSON.parse(card.meta) : card.meta;
+                    if (meta) {
+                        this.seconds = meta.seconds !== undefined ? meta.seconds : 300;
+                        this.running = !!meta.running;
+                        
+                        if (this.running && meta.lastUpdated) {
+                            const elapsed = Math.floor((Date.now() - meta.lastUpdated) / 1000);
+                            this.seconds = Math.max(0, this.seconds - elapsed);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to parse timer meta', e);
+                }
+
+                if (this.running) {
+                    this.startInterval();
+                }
+
+                this.$watch('workspaceBoard', () => {
+                    const updatedCard = window.classroomApp.findCard(this.cardId);
+                    if (updatedCard) {
+                        try {
+                            const meta = typeof updatedCard.meta === 'string' ? JSON.parse(updatedCard.meta) : updatedCard.meta;
+                            if (meta) {
+                                if (meta.running !== this.running || Math.abs((meta.seconds || 300) - this.seconds) > 5) {
+                                    this.seconds = meta.seconds || 300;
+                                    this.running = meta.running;
+                                    
+                                    clearInterval(this.interval);
+                                    if (this.running) {
+                                        this.startInterval();
+                                    }
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                });
             },
+
+            formatTime() {
+                const mins = Math.floor(this.seconds / 60);
+                const secs = this.seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            },
+
+            startInterval() {
+                this.interval = setInterval(() => {
+                    if (this.seconds > 0) {
+                        this.seconds--;
+                    } else {
+                        this.running = false;
+                        clearInterval(this.interval);
+                    }
+                }, 1000);
+            },
+
+            toggleTimer() {
+                this.running = !this.running;
+                if (this.running) {
+                    this.startInterval();
+                } else {
+                    clearInterval(this.interval);
+                }
+
+                this.syncTimer();
+            },
+
+            resetTimer() {
+                this.running = false;
+                clearInterval(this.interval);
+                this.seconds = 300;
+                this.syncTimer();
+            },
+
+            syncTimer() {
+                const meta = {
+                    seconds: this.seconds,
+                    running: this.running,
+                    lastUpdated: Date.now()
+                };
+
+                window.classroomApp.sendWorkspaceMsg('card.update', {
+                    cardId: this.cardId,
+                    data: {
+                        meta: meta
+                    }
+                });
+            }
         };
     }
 </script>

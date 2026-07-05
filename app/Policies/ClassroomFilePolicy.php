@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\UserRole;
 use App\Models\ClassroomFile;
 use App\Models\User;
 
@@ -11,7 +12,7 @@ class ClassroomFilePolicy
 {
     public function view(User $user, ClassroomFile $file): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return true;
         }
 
@@ -35,7 +36,7 @@ class ClassroomFilePolicy
 
     public function upload(User $user, ClassroomFile $file): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return true;
         }
 
@@ -52,11 +53,14 @@ class ClassroomFilePolicy
 
     public function delete(User $user, ClassroomFile $file): bool
     {
-        if ($user->role === 'admin') {
+        if ($user->role === UserRole::Admin) {
             return true;
         }
 
+        $session = $file->classroomSession;
+        $tutorId = $session?->lesson?->tutor_id;
+
         // Only the uploader or tutor can delete
-        return $file->uploaded_by === $user->id;
+        return $file->uploaded_by === $user->id || ($tutorId !== null && $tutorId === $user->id);
     }
 }

@@ -28,7 +28,7 @@ class LessonListPageTest extends TestCase
             'phone' => '+375298200002',
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => now('UTC')->addDay(),

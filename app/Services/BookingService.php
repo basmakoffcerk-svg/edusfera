@@ -88,7 +88,7 @@ class BookingService
             $commission = round($payableAmount * (float) config('payments.commission_rate', 0.15), 2);
             $netAmount = round($payableAmount - $commission, 2);
 
-            $lesson = Lesson::query()->create([
+            $lesson = Lesson::query()->forceCreate([
                 'tutor_id' => $tutorProfile->user_id,
                 'student_id' => $booker->id,
                 'parent_id' => $booker->role === 'parent' ? $booker->id : null,
@@ -243,7 +243,7 @@ class BookingService
             $checkoutStartedAt = now('UTC');
             $firstStart = $starts->first();
 
-            $parentLesson = Lesson::query()->create([
+            $parentLesson = Lesson::query()->forceCreate([
                 'tutor_id' => $tutorProfile->user_id,
                 'student_id' => $booker->id,
                 'parent_id' => $booker->role === 'parent' ? $booker->id : null,
@@ -266,7 +266,7 @@ class BookingService
             ]);
 
             $starts->skip(1)->each(function (CarbonImmutable $startLocal) use ($booker, $duration, $package, $parentLesson, $paymentLockExpiresAt, $price, $tutorProfile): void {
-                Lesson::query()->create([
+                Lesson::query()->forceCreate([
                     'tutor_id' => $tutorProfile->user_id,
                     'student_id' => $booker->id,
                     'parent_id' => $booker->role === 'parent' ? $booker->id : null,
@@ -397,7 +397,7 @@ class BookingService
 
     private function ensureBookerCanBook(User $booker, TutorProfile $tutorProfile): void
     {
-        if (! in_array($booker->role, ['student', 'parent'], true)) {
+        if (! in_array($booker->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
             throw ValidationException::withMessages([
                 'slot' => 'Запись доступна только ученикам и родителям.',
             ]);

@@ -223,8 +223,8 @@
                     <h2 class="text-base font-bold text-gray-900 mb-1">Нужна помощь?</h2>
                     <p class="text-sm text-gray-500">
                         Напишите на
-                        <a class="font-bold text-violet-600 hover:text-violet-800 transition-colors" href="mailto:{{ config('mail.from.address', 'support@edusfera.by') }}">
-                            {{ config('mail.from.address', 'support@edusfera.by') }}
+                        <a class="font-bold text-violet-600 hover:text-violet-800 transition-colors" href="mailto:{{ config('mail.from.address', 'edusferaby@gmail.com') }}">
+                            {{ config('mail.from.address', 'edusferaby@gmail.com') }}
                         </a>
                         или перейдите на страницу
                         <a class="font-bold text-violet-600 hover:text-violet-800 transition-colors" href="{{ route('contacts') }}">контактов</a>.

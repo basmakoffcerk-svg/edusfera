@@ -184,7 +184,7 @@ class ClassroomTokenExpiryTest extends TestCase
      */
     private function makeLesson(Carbon $endTime, string $status): Lesson
     {
-        return Lesson::create([
+        return Lesson::forceCreate([
             'tutor_id' => $this->tutor->id,
             'student_id' => $this->student->id,
             'status' => $status,

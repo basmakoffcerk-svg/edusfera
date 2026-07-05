@@ -1055,7 +1055,8 @@
             <div class="org-name">ООО «Эдусфера»</div>
             <div class="org-details">
                 УНП 192854899<br>
-                г. Минск, ул. Веры Хоружей, д. 6А, пом. 29<br>
+                Юридический адрес: Республика Беларусь, г. Минск, 220100, ул. Веры Хоружей, д. 6А, пом. 29<br>
+                Реквизиты банка: р/с IBAN BY64UNBS30121685100000001933 в ЗАО «БСБ Банк», БИК UNBSBY2X<br>
                 E-mail: <a href="mailto:edusferaby@gmail.com" class="text-violet-600 font-medium">edusferaby@gmail.com</a> &nbsp;|&nbsp; Сайт: <a href="https://edusfera.by" class="text-violet-600 font-medium">https://edusfera.by</a>
             </div>
             

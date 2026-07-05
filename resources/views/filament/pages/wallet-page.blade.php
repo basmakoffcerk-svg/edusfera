@@ -58,8 +58,8 @@
                 <input
                     type="number"
                     min="10"
-                    step="1"
-                    wire:model.defer="customTopUpAmount"
+                    step="0.01"
+                    wire:model.live="customTopUpAmount"
                     class="rounded-xl border border-stone-200 px-4 py-3 text-sm font-medium text-stone-900"
                     placeholder="Другая сумма, BYN"
                 >

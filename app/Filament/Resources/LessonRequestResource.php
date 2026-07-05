@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\LessonRequestResource\Pages;
 use App\Models\Lesson;
 use App\Notifications\LessonCancelledNotification;
@@ -170,7 +171,7 @@ class LessonRequestResource extends Resource
         $query = parent::getEloquentQuery()->with(['student', 'tutor']);
         $user = auth()->user();
 
-        if ($user?->role === 'admin') {
+        if ($user?->role === UserRole::Admin) {
             return $query;
         }
 
@@ -179,14 +180,14 @@ class LessonRequestResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->role === 'admin')
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->role === UserRole::Admin)
             ? 'Заявки на уроки'
             : 'Заявки';
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->role === 'admin')
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->role === UserRole::Admin)
             ? 'Операции'
             : 'Организация';
     }
@@ -205,6 +206,6 @@ class LessonRequestResource extends Resource
     {
         $user = auth()->user();
 
-        return in_array($user?->role, ['tutor', 'admin'], true);
+        return in_array($user?->role, [UserRole::Tutor, UserRole::Admin], true);
     }
 }

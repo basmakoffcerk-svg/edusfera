@@ -8,6 +8,7 @@ use App\Models\ClassroomFile;
 use App\Models\ClassroomNote;
 use App\Models\DiagnosticAttempt;
 use App\Models\HomeworkAssignment;
+use App\Support\Formatters;
 use App\Models\Lesson;
 use App\Models\ProgressSnapshot;
 use App\Models\SkillGap;
@@ -284,7 +285,7 @@ class ClassroomController extends Controller
             ->map(fn ($file) => [
                 'id' => $file->id,
                 'name' => $file->original_name,
-                'size' => $this->formatBytes($file->size_bytes),
+                'size' => Formatters::formatBytes($file->size_bytes),
                 'url' => route('classroom.files.download', ['lesson' => $lesson->id, 'file' => $file->id]),
             ]);
 
@@ -369,17 +370,7 @@ class ClassroomController extends Controller
         return response()->json($homework);
     }
 
-    private function formatBytes(int $bytes): string
-    {
-        if ($bytes === 0) {
-            return '0 Б';
-        }
-        $units = ['Б', 'КБ', 'МБ', 'ГБ'];
-        $k = 1024;
-        $i = (int) floor(log($bytes) / log($k));
 
-        return round($bytes / pow($k, $i), 1).' '.$units[$i];
-    }
 
     public function assignHomework(Lesson $lesson, Request $request): JsonResponse
     {
@@ -490,5 +481,27 @@ class ClassroomController extends Controller
         $this->classroomService->saveWhiteboardState($session, $state);
 
         return response()->json(['success' => true]);
+    }
+
+    public function chatAi(Lesson $lesson, Request $request, \App\Services\Classroom\AiService $aiService): JsonResponse
+    {
+        if (! $this->classroomService->canAccess($lesson, $request->user())) {
+            abort(403);
+        }
+
+        $session = $lesson->activeClassroom;
+        if (! $session) {
+            return response()->json(['error' => 'No active session'], 400);
+        }
+
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $reply = $aiService->chat($validated['message'], $session->room_id);
+
+        return response()->json([
+            'reply' => $reply,
+        ]);
     }
 }

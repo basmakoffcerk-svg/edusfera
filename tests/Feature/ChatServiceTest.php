@@ -127,7 +127,7 @@ class ChatServiceTest extends TestCase
             'last_message_at' => now(),
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => now()->addDay(),
@@ -170,7 +170,7 @@ class ChatServiceTest extends TestCase
             'last_message_at' => now(),
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => now()->addDay(),

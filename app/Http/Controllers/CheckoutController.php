@@ -48,7 +48,7 @@ class CheckoutController extends Controller
             'google_pay' => 'Google Pay',
         ];
 
-        if ($walletBalance && (float) $walletBalance->available_amount >= (float) $lesson->price) {
+        if ($walletBalance && (float) $walletBalance->available_amount > 0) {
             $paymentMethods = ['wallet' => 'Внутренний баланс Edusfera'] + $paymentMethods;
         }
 
@@ -81,9 +81,7 @@ class CheckoutController extends Controller
 
         $useWalletBalance = (bool) ($validated['use_wallet_balance'] ?? false);
 
-        $packageCode = ($validated['payment_method'] === 'wallet' || $useWalletBalance)
-            ? 'single'
-            : $validated['package_code'];
+        $packageCode = $validated['package_code'];
 
         $this->applyPackageSelection($lesson, $packageCode, app(PackageService::class));
 
@@ -104,11 +102,25 @@ class CheckoutController extends Controller
             ->with('checkout_success', 'Оплата прошла успешно. Урок подтвержден.');
     }
 
-    public function success(Lesson $lesson): View|RedirectResponse
+    public function success(Lesson $lesson, PaymentService $paymentService): View|RedirectResponse
     {
         abort_unless($this->canAccessLesson($lesson), 403);
 
         $lesson->loadMissing('tutor.tutorProfile', 'student', 'conversation');
+
+        if ($lesson->payment_status !== Lesson::PAYMENT_PAID) {
+            $pendingTransaction = \App\Models\Transaction::query()
+                ->where('lesson_id', $lesson->id)
+                ->where('status', \App\Models\Transaction::STATUS_PENDING)
+                ->first();
+
+            if ($pendingTransaction && $pendingTransaction->gateway_transaction_id) {
+                if ($paymentService->verifyPayment($pendingTransaction->gateway_transaction_id)) {
+                    $paymentService->capturePendingPayment($pendingTransaction);
+                    $lesson->refresh();
+                }
+            }
+        }
 
         if ($lesson->payment_status !== Lesson::PAYMENT_PAID) {
             return redirect()->route('checkout.show', $lesson);

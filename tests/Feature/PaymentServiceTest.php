@@ -41,7 +41,7 @@ class PaymentServiceTest extends TestCase
             'phone' => '+375292222222',
         ]);
 
-        $lesson = Lesson::query()->create([
+        $lesson = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => CarbonImmutable::now('UTC')->addDay(),
@@ -113,7 +113,7 @@ class PaymentServiceTest extends TestCase
             'phone' => '+375294444444',
         ]);
 
-        $lesson = Lesson::query()->create([
+        $lesson = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => CarbonImmutable::now('UTC')->subHours(2),
@@ -171,7 +171,7 @@ class PaymentServiceTest extends TestCase
             'phone' => '+375296666666',
         ]);
 
-        $lesson = Lesson::query()->create([
+        $lesson = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => CarbonImmutable::now('UTC')->addDay(),
@@ -212,7 +212,7 @@ class PaymentServiceTest extends TestCase
             'phone' => '+375296777772',
         ]);
 
-        $parentLesson = Lesson::query()->create([
+        $parentLesson = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => CarbonImmutable::now('UTC')->addDays(2),
@@ -231,7 +231,7 @@ class PaymentServiceTest extends TestCase
             'payment_lock_expires_at' => CarbonImmutable::now('UTC')->addMinutes(15),
         ]);
 
-        $childLesson = Lesson::query()->create([
+        $childLesson = Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => CarbonImmutable::now('UTC')->addDays(3),

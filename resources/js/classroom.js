@@ -474,10 +474,10 @@ class WhiteboardEngine {
         // Bound event handlers
         this._onMouseDown = this._handleStart.bind(this);
         this._onMouseMove = this._handleMove.bind(this);
-        this._onMouseUp = this._handleEnd.bind(this);
+        this._onMouseUp = (e) => this._handleEnd(e);
         this._onTouchStart = this._handleTouchStart.bind(this);
         this._onTouchMove = this._handleTouchMove.bind(this);
-        this._onTouchEnd = this._handleEnd.bind(this);
+        this._onTouchEnd = (e) => this._handleEnd(e);
     }
 
     /**
@@ -498,7 +498,7 @@ class WhiteboardEngine {
         this.canvas.addEventListener('touchend', this._onTouchEnd);
 
         // Remote sync
-        this.ws.on('whiteboard', (action) => this.applyRemoteAction(action));
+        this.ws.on('wb', (action) => this.applyRemoteAction(action));
 
         // Save initial state
         this._saveState();
@@ -525,11 +525,9 @@ class WhiteboardEngine {
      */
     _getCoords(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
         return {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
         };
     }
 
@@ -545,6 +543,16 @@ class WhiteboardEngine {
         e.preventDefault();
         const touch = e.touches[0];
         this._handleMove({ clientX: touch.clientX, clientY: touch.clientY });
+    }
+
+    /** @private */
+    _handleTouchEnd(e) {
+        if (e.changedTouches && e.changedTouches.length > 0) {
+            const touch = e.changedTouches[0];
+            this._handleEnd({ clientX: touch.clientX, clientY: touch.clientY });
+        } else {
+            this._handleEnd(null);
+        }
     }
 
     /** @private */
@@ -586,6 +594,10 @@ class WhiteboardEngine {
         const coords = this._getCoords(e);
 
         if (this.tool === 'pen' || this.tool === 'eraser') {
+            // Draw only the new segment to prevent line thickening
+            const prev = this.currentPath[this.currentPath.length - 1];
+            this.ctx.beginPath();
+            this.ctx.moveTo(prev.x, prev.y);
             this.ctx.lineTo(coords.x, coords.y);
             this.ctx.stroke();
             this.currentPath.push(coords);
@@ -605,13 +617,12 @@ class WhiteboardEngine {
     }
 
     /** @private */
-    _handleEnd() {
+    _handleEnd(e) {
         if (!this.isDrawing) return;
         this.isDrawing = false;
         this.ctx.globalCompositeOperation = 'source-over';
 
         if (this.tool === 'pen' || this.tool === 'eraser') {
-            this.ctx.closePath();
             this.syncToRemote({
                 type: this.tool === 'eraser' ? 'erase' : 'stroke',
                 data: {
@@ -622,7 +633,14 @@ class WhiteboardEngine {
             });
             this.currentPath = [];
         } else if (this.startPoint) {
-            const endPoint = this._getCoords(event || {});
+            // Use last known coordinates if event is missing (e.g. mouseleave)
+            let endPoint;
+            if (e && e.clientX !== undefined) {
+                endPoint = this._getCoords(e);
+            } else {
+                endPoint = this.startPoint;
+            }
+            this._drawShape(this.tool, this.startPoint, endPoint);
             this.syncToRemote({
                 type: 'shape',
                 data: {
@@ -717,7 +735,7 @@ class WhiteboardEngine {
      * @param {Object} action
      */
     syncToRemote(action) {
-        this.ws.send('whiteboard', action);
+        this.ws.send('wb', action);
     }
 
     /**

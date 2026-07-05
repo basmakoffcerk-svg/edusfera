@@ -61,7 +61,7 @@ Route::get('/checkout/{lesson}', [CheckoutController::class, 'show'])
     ->middleware('auth')
     ->name('checkout.show');
 Route::post('/checkout/{lesson}/pay', [CheckoutController::class, 'pay'])
-    ->middleware(['auth', 'throttle:5,1'])
+    ->middleware(['auth', 'throttle:checkout.pay'])
     ->name('checkout.pay');
 Route::get('/checkout/{lesson}/success', [CheckoutController::class, 'success'])
     ->middleware('auth')
@@ -114,6 +114,9 @@ Route::middleware('auth')->group(function (): void {
         ->name('classroom.homework');
     Route::get('/classroom/{lesson}/student-profile', [ClassroomController::class, 'studentProfile'])
         ->name('classroom.student-profile');
+    Route::post('/classroom/{lesson}/ai-chat', [ClassroomController::class, 'chatAi'])
+        ->middleware('throttle:15,1')
+        ->name('classroom.ai-chat');
 });
 
 // ─── Internal API ───

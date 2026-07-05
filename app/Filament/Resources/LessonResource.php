@@ -332,7 +332,7 @@ class LessonResource extends Resource
                     ->label('Оплатить урок')
                     ->icon('heroicon-o-credit-card')
                     ->color('success')
-                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, ['student', 'parent'], true) && $record->payment_status === Lesson::PAYMENT_UNPAID)
+                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true) && $record->payment_status === Lesson::PAYMENT_UNPAID)
                     ->url(fn (Lesson $record): string => route('checkout.show', $record)),
                 Tables\Actions\Action::make('meeting_link')
                     ->label('Ссылка на встречу')
@@ -410,7 +410,7 @@ class LessonResource extends Resource
                     ->label('Оценить')
                     ->icon('heroicon-o-star')
                     ->color('warning')
-                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, ['student', 'parent'], true)
+                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)
                         && $record->status === Lesson::STATUS_COMPLETED
                         && $record->payment_status === Lesson::PAYMENT_PAID
                         && $record->review === null)
@@ -456,7 +456,7 @@ class LessonResource extends Resource
                             return in_array($record->status, [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED], true);
                         }
 
-                        if (in_array($user?->role, ['student', 'parent'], true)) {
+                        if (in_array($user?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
                             return in_array($record->status, [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED], true)
                                 && $record->start_time->isAfter(now('UTC')->addDay());
                         }
@@ -482,7 +482,7 @@ class LessonResource extends Resource
                 Tables\Actions\Action::make('reschedule')
                     ->label('Перенести')
                     ->icon('heroicon-o-arrow-path')
-                    ->visible(fn (): bool => in_array(auth()->user()?->role, ['student', 'parent'], true))
+                    ->visible(fn (): bool => in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true))
                     ->requiresConfirmation()
                     ->modalDescription('Функция переноса появится в следующей итерации MVP.')
                     ->action(fn (): null => null),
@@ -588,8 +588,8 @@ class LessonResource extends Resource
         }
 
         return match (auth()->user()?->role) {
-            'tutor' => 'Моё расписание',
-            'student', 'parent' => 'Мои уроки',
+            \App\Enums\UserRole::Tutor => 'Моё расписание',
+            \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent => 'Мои уроки',
             default => 'Уроки',
         };
     }
@@ -612,6 +612,6 @@ class LessonResource extends Resource
     {
         $user = auth()->user();
 
-        return in_array($user?->role, ['tutor', 'student', 'parent', 'admin'], true);
+        return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent, \App\Enums\UserRole::Admin], true);
     }
 }

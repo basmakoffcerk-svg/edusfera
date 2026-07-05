@@ -11,6 +11,7 @@ class TutorBalance extends Model
 {
     protected $fillable = [
         'user_id',
+        'ledger_wallet_id',
         'available_amount',
         'pending_amount',
         'total_earned',

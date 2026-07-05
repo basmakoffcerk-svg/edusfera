@@ -123,8 +123,8 @@ class TransactionResource extends Resource
         }
 
         return match (auth()->user()?->role) {
-            'tutor' => 'Транзакции',
-            'student', 'parent' => 'Мои оплаты',
+            \App\Enums\UserRole::Tutor => 'Транзакции',
+            \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent => 'Мои оплаты',
             default => 'Транзакции',
         };
     }
@@ -138,6 +138,6 @@ class TransactionResource extends Resource
     {
         $user = auth()->user();
 
-        return in_array($user?->role, ['tutor', 'student', 'parent', 'admin'], true);
+        return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent, \App\Enums\UserRole::Admin], true);
     }
 }

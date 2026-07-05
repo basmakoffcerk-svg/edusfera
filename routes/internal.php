@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Api\Internal\Controllers\InternalAuthController;
 use App\Http\Api\Internal\Controllers\InternalHealthController;
 use App\Http\Api\Internal\Controllers\InternalLessonController;
 use App\Http\Api\Internal\Controllers\InternalOutboxController;
@@ -27,9 +28,12 @@ use Illuminate\Support\Facades\Route;
 | простой проверки доступности ядра из Docker/Kubernetes.
 */
 
-// ─── Liveness (без auth) ─────────────────────────────────────────────
+// ─── Liveness & Auth verification (без auth) ─────────────────────────
 Route::get('/health', [InternalHealthController::class, 'liveness'])
     ->name('health');
+
+Route::get('/auth/verify', [InternalAuthController::class, 'verify'])
+    ->name('auth.verify');
 
 // ─── Authenticated S2S routes ────────────────────────────────────────
 Route::middleware('auth:api')->group(function (): void {

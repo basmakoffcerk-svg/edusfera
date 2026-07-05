@@ -31,10 +31,13 @@ final class RouteServiceProvider extends ServiceProvider
 
     public const WEB_AUTH_LIMITER = 'web.auth';
 
+    public const CHECKOUT_PAY_LIMITER = 'checkout.pay';
+
     public function boot(): void
     {
         $this->configureApiV1RateLimiter();
         $this->configureWebAuthRateLimiter();
+        $this->configureCheckoutPayRateLimiter();
     }
 
     /**
@@ -143,6 +146,15 @@ final class RouteServiceProvider extends ServiceProvider
         }
 
         return null;
+    }
+
+    private function configureCheckoutPayRateLimiter(): void
+    {
+        RateLimiter::for(self::CHECKOUT_PAY_LIMITER, function (Request $request): Limit {
+            $limit = $this->app->environment('local', 'testing') ? 100 : 5;
+
+            return Limit::perMinute($limit)->by($request->user()?->id ?: $request->ip());
+        });
     }
 
     private function configureWebAuthRateLimiter(): void

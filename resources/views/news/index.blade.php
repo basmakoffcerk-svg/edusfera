@@ -209,7 +209,7 @@
 
                                 <!-- Excerpt -->
                                 <p class="text-gray-500 text-sm leading-relaxed mb-6 line-clamp-3">
-                                    {{ Str::limit(strip_tags($article->content), 130) }}
+                                    {{ Str::limit(preg_replace('/\s+/', ' ', strip_tags(str_replace(['</p>', '</div>', '<br>', '<br />', '</h1>', '</h2>', '</h3>', '</h4>', '</h5>', '</h6>'], ' ', $article->content))), 130) }}
                                 </p>
                             </div>
 
