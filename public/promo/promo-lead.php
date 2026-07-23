@@ -43,7 +43,7 @@ $smtpHost = getenv('MAIL_HOST') ?: 'smtp.gmail.com';
 $smtpPort = getenv('MAIL_PORT') ?: 465;
 $smtpSecure = getenv('MAIL_ENCRYPTION') ?: 'ssl';
 $smtpUser = getenv('MAIL_USERNAME') ?: 'edusferaby@gmail.com';
-$smtpPass = getenv('MAIL_PASSWORD') ?: 'ttvkqdwzfqawfqas';
+$smtpPass = getenv('MAIL_PASSWORD') ?: '';
 $smtpFromEmail = getenv('MAIL_FROM_ADDRESS') ?: 'edusferaby@gmail.com';
 $smtpFromName = getenv('MAIL_FROM_NAME') ?: 'Edusfera';
 // -------------------------------------------------------------

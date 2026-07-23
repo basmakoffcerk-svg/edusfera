@@ -2,77 +2,104 @@
     $dark = ($variant ?? '') === 'dark';
 @endphp
 
-<footer class="{{ $dark ? 'bg-[#09090b] border-white/5' : 'bg-white border-gray-100' }} border-t relative overflow-hidden">
-    {{-- Decorative background --}}
-    @if($dark)
-        <div class="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(125,57,235,0.04)_0%,transparent_70%)] pointer-events-none translate-x-1/3 -translate-y-1/2"></div>
-    @else
-        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(125,57,235,0.02)_0%,transparent_70%)] pointer-events-none translate-x-1/3 -translate-y-1/2"></div>
-    @endif
+<footer class="{{ $dark ? 'bg-[#09090b] border-white/10' : 'bg-[#0f1115] border-gray-800' }} text-gray-400 border-t relative overflow-hidden font-sans">
+    {{-- Decorative background glow --}}
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(125,57,235,0.06)_0%,transparent_70%)] pointer-events-none translate-x-1/3 -translate-y-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(198,255,51,0.04)_0%,transparent_70%)] pointer-events-none -translate-x-1/3 translate-y-1/2"></div>
 
-    <div class="max-w-7xl mx-auto px-6 relative z-10">
+    <div class="max-w-7xl mx-auto px-6 py-12 md:py-16 relative z-10">
 
-        {{-- Links grid --}}
-        <div class="py-10 md:py-12 grid grid-cols-2 sm:grid-cols-4 gap-6 lg:gap-10">
-            {{-- Brand --}}
-            <div>
-                <a href="{{ route('home') }}" class="font-rimma font-black text-lg tracking-tighter {{ $dark ? 'text-white' : 'text-gray-900' }} mb-3 block">EDUSFERA.</a>
-                <p class="text-xs {{ $dark ? 'text-gray-500' : 'text-gray-400' }} leading-relaxed max-w-xs">
-                    Платформа для легального поиска репетиторов и безопасной оплаты занятий.
+        {{-- Top Grid --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 mb-12">
+            
+            {{-- Brand Column (lg:col-span-4) --}}
+            <div class="lg:col-span-4">
+                <a href="{{ route('home') }}" class="font-rimma font-black text-2xl tracking-tighter text-white mb-4 flex items-center gap-2 group">
+                    EDUSFERA.
+                    <span class="inline-block w-2 h-2 rounded-full bg-lime-400 group-hover:scale-125 transition-transform"></span>
+                </a>
+                <p class="text-sm text-gray-400 leading-relaxed mb-6 max-w-sm">
+                    Первая белорусская платформа для легального преподавания, подбора проверенных репетиторов из госреестра и безопасной оплаты через ЕРИП и безналичные платежи.
                 </p>
-            </div>
-
-            <div>
-                <h4 class="font-bold {{ $dark ? 'text-white' : 'text-gray-900' }} mb-3 text-xs uppercase tracking-wider">Обучение</h4>
-                <ul class="space-y-2 text-sm font-medium">
-                    <li><a href="{{ route('tutors.index') }}" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">Каталог репетиторов</a></li>
-                    <li><a href="{{ route('for-tutors') }}" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">Преподавателям</a></li>
-                    <li><a href="{{ route('home') }}#how-it-works" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">Как это работает</a></li>
-                </ul>
-            </div>
-
-            <div>
-                <h4 class="font-bold {{ $dark ? 'text-white' : 'text-gray-900' }} mb-3 text-xs uppercase tracking-wider">Документы</h4>
-                <ul class="space-y-2 text-sm font-medium">
-                    <li><a href="{{ route('legal.offer') }}" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">Публичная оферта</a></li>
-                    <li><a href="{{ route('legal.refund') }}" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">Правила возврата</a></li>
-                    <li><a href="{{ route('legal.privacy') }}" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">Конфиденциальность</a></li>
-                </ul>
-            </div>
-
-            <div>
-                <h4 class="font-bold {{ $dark ? 'text-white' : 'text-gray-900' }} mb-3 text-xs uppercase tracking-wider">Связь</h4>
-                <ul class="space-y-2 text-sm font-medium">
-                    <li><a href="{{ route('contacts') }}" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">Контакты</a></li>
-                    <li><a href="mailto:edusferaby@gmail.com" class="{{ $dark ? 'text-gray-400 hover:text-lime-400' : 'text-gray-500 hover:text-violet-600' }} transition-colors">edusferaby@gmail.com</a></li>
-                </ul>
-            </div>
-        </div>
-
-        {{-- Legal Info --}}
-        <div class="py-6 border-t {{ $dark ? 'border-white/5' : 'border-gray-100' }} text-[11px] font-medium {{ $dark ? 'text-gray-500' : 'text-gray-400' }} grid grid-cols-1 md:grid-cols-2 gap-4 leading-relaxed">
-            <div>
-                <strong>Общество с ограниченной ответственностью «Эдусфера»</strong><br>
-                УНП 192854899 · Юридический адрес: Республика Беларусь, г. Минск, 220100, ул. Веры Хоружей, д. 6А, пом. 29
-            </div>
-            <div class="md:text-right">
-                <strong>Банковские реквизиты:</strong><br>
-                р/с IBAN BY64UNBS30121685100000001933 в ЗАО «БСБ Банк», БИК UNBSBY2X
-            </div>
-        </div>
-
-        {{-- Copyright --}}
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-2 py-5 border-t {{ $dark ? 'border-white/5' : 'border-gray-100' }} text-xs font-medium {{ $dark ? 'text-gray-500' : 'text-gray-400' }}">
-            <p>© {{ date('Y') }} Edusfera.by. Все права защищены.</p>
-            <div class="flex items-center gap-3 flex-wrap justify-center">
-                <span>Минск, Беларусь</span>
-                <span class="flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-lime-400 relative inline-block">
-                        <span class="animate-ping absolute inset-0 rounded-full bg-lime-400 opacity-75"></span>
+                <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-lime-400">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-lime-400"></span>
                     </span>
-                    Система работает стабильно
-                </span>
+                    Платформа на стадии активного роста
+                </div>
+            </div>
+
+            {{-- Navigation Column (lg:col-span-2) --}}
+            <div class="lg:col-span-2">
+                <h4 class="font-bold text-white text-xs uppercase tracking-widest mb-4">Платформа</h4>
+                <ul class="space-y-2.5 text-sm font-medium">
+                    <li><a href="{{ route('tutors.index') }}" class="text-gray-400 hover:text-lime-400 transition-colors">Каталог репетиторов</a></li>
+                    <li><a href="{{ route('for-tutors') }}" class="text-gray-400 hover:text-lime-400 transition-colors">Преподавателям</a></li>
+                    <li><a href="{{ route('diagnostic.show') }}" class="text-gray-400 hover:text-lime-400 transition-colors">ИИ-Диагностика РИКЗ</a></li>
+                    <li><a href="{{ route('news.index') }}" class="text-gray-400 hover:text-lime-400 transition-colors">Новости и статьи</a></li>
+                </ul>
+            </div>
+
+            {{-- Legal Documents Column (lg:col-span-3) --}}
+            <div class="lg:col-span-3">
+                <h4 class="font-bold text-white text-xs uppercase tracking-widest mb-4">Документы (bePaid & БСБ)</h4>
+                <ul class="space-y-2.5 text-sm font-medium">
+                    <li><a href="{{ route('legal.offer') }}" class="text-gray-400 hover:text-lime-400 transition-colors">Публичная оферта и тарифы</a></li>
+                    <li><a href="{{ route('legal.privacy') }}" class="text-gray-400 hover:text-lime-400 transition-colors">Конфиденциальность (Закон 99-З)</a></li>
+                    <li><a href="{{ route('legal.payment-security') }}" class="text-gray-400 hover:text-lime-400 transition-colors">Правила оплаты и безопасность</a></li>
+                    <li><a href="{{ route('legal.refund') }}" class="text-gray-400 hover:text-lime-400 transition-colors">Правила возврата и отмены</a></li>
+                </ul>
+            </div>
+
+            {{-- Contacts Column (lg:col-span-3) --}}
+            <div class="lg:col-span-3">
+                <h4 class="font-bold text-white text-xs uppercase tracking-widest mb-4">Контакты и режим работы</h4>
+                <ul class="space-y-2.5 text-sm font-medium mb-3">
+                    <li><a href="{{ route('contacts') }}" class="text-gray-400 hover:text-lime-400 transition-colors">Контакты ООО «Эдусфера»</a></li>
+                    <li><a href="mailto:edusferaby@gmail.com" class="text-gray-400 hover:text-lime-400 transition-colors font-semibold">edusferaby@gmail.com</a></li>
+                    <li><a href="tel:+375295190821" class="text-gray-400 hover:text-lime-400 transition-colors font-semibold">+375 (29) 519-08-21</a></li>
+                </ul>
+                <div class="text-xs text-gray-500 leading-normal pt-1">
+                    Режим работы: Пн-Пт 09:00 – 18:00<br>(Сб-Вс: выходной)
+                </div>
+            </div>
+
+        </div>
+
+        {{-- Payment Logos Banner --}}
+        <div class="border-t border-white/10 pt-6 pb-6 my-6">
+            <img src="{{ asset('promo/payment-logos-full.svg') }}" 
+                 alt="bePaid, БЕЛКАРТ, Visa, Mastercard, Samsung Pay, Google Pay" 
+                 class="w-full max-w-full h-auto object-contain block opacity-85 hover:opacity-100 transition-opacity" 
+                 loading="lazy">
+        </div>
+
+        {{-- Legal Info & Bank Details Grid --}}
+        <div class="border-t border-white/10 pt-6 my-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-gray-400 leading-relaxed">
+            <div>
+                <strong class="text-white block mb-1 font-bold">Юридическая информация</strong>
+                Наименование: Общество с ограниченной ответственностью «Эдусфера»<br>
+                Гос. регистрация: Зарегистрировано Минским горисполкомом 25.10.2023 г., УНП 192854899<br>
+                Юридический адрес: Республика Беларусь, 220100, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29
+            </div>
+            <div>
+                <strong class="text-white block mb-1 font-bold">Банковские реквизиты</strong>
+                Расчетный счет (IBAN): BY64UNBS30121685100000001933<br>
+                Банк: ЗАО «БСБ Банк»<br>
+                БИК банка: UNBSBY2X
             </div>
         </div>
+
+        {{-- Bottom Copyright --}}
+        <div class="border-t border-white/10 pt-6 mt-6 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-gray-400">
+            <div>© <span id="site-footer-year">{{ date('Y') }}</span> ООО «Эдусфера». Все права защищены.</div>
+            <div class="flex items-center gap-4 text-gray-400">
+                <span>Минск, Беларусь</span>
+                <span>·</span>
+                <span>Сделано для преподавателей и абитуриентов</span>
+            </div>
+        </div>
+
     </div>
 </footer>

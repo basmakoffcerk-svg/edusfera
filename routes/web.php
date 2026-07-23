@@ -33,6 +33,7 @@ Route::get('/diagnostic/result', [DiagnosticController::class, 'finish'])
 Route::view('/offer', 'legal.offer')->name('legal.offer');
 Route::view('/refund-policy', 'legal.refund-policy')->name('legal.refund');
 Route::view('/privacy-policy', 'legal.privacy-policy')->name('legal.privacy');
+Route::view('/payment-security', 'legal.payment-security')->name('legal.payment-security');
 Route::view('/contacts', 'legal.contacts')->name('contacts');
 
 Route::post('/logout', function (Request $request) {

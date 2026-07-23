@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Правила оплаты и безопасность платежей | Edusfera</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --ed-violet: #7D39EB;
+            --ed-violet-hover: #6827d6;
+            --ed-violet-soft: #f3edff;
+            --ed-lime: #C6FF33;
+            --ed-bg: #f6f6f9;
+            --ed-surface: #ffffff;
+            --dark-bg: #09090b;
+            --text-main: #0f1115;
+            --text-muted: #6b7280;
+            --text-dim: #9ca3af;
+            --border: #e5e7eb;
+            --maxw: 960px;
+            --shadow-md: 0 4px 12px rgba(17, 24, 39, .06);
+        }
+
+        @font-face {
+            font-family: 'Rimma Sans';
+            src: url('./fonts/Rimma_sans-Bold.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--text-main);
+            background-color: var(--ed-bg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            padding-top: 110px;
+            padding-bottom: 60px;
+        }
+
+        .wrap {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .hdr {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 0;
+            background: rgba(246, 246, 249, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            transition: all .3s ease;
+        }
+
+        .hdr.scrolled {
+            padding: 12px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            background: rgba(246, 246, 249, 0.95);
+        }
+
+        .hdr .wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Rimma Sans', 'Unbounded', 'Inter', sans-serif !important;
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -.04em;
+            text-transform: uppercase;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .logo svg {
+            width: 24px;
+            height: 24px;
+            color: var(--ed-lime);
+            transition: transform .7s ease;
+        }
+
+        .logo:hover svg {
+            transform: rotate(180deg);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color .2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+        }
+
+        .hdr-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--ed-violet);
+            text-decoration: none;
+            padding: 8px 16px;
+            background: var(--ed-violet-soft);
+            border-radius: 9999px;
+            transition: all .2s ease;
+        }
+
+        .btn-back:hover {
+            background: var(--ed-violet);
+            color: #fff;
+        }
+
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+        }
+
+        .doc-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            margin-top: 24px;
+        }
+
+        .doc-h1 {
+            font-family: 'Rimma Sans', sans-serif;
+            font-size: clamp(1.8rem, 3vw, 2.4rem);
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .doc-sub {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .doc-section {
+            margin-bottom: 32px;
+        }
+
+        .doc-section h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .doc-section p, .doc-section ul {
+            font-size: 0.95rem;
+            color: #374151;
+            margin-bottom: 12px;
+        }
+
+        .doc-section ul {
+            padding-left: 20px;
+        }
+
+        .doc-section li {
+            margin-bottom: 8px;
+        }
+
+        .badge-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .pay-badge {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: #0F1115;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .receipt-box {
+            background: #F8FAFC;
+            border: 1px dashed #CBD5E1;
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 16px;
+            font-family: monospace;
+            font-size: 0.88rem;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .receipt-header {
+            font-weight: bold;
+            border-bottom: 1px solid #E2E8F0;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .ftr-mini {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+    
+        /* ═══ FOOTER ═══ */
+.ftr{background:#1e1f24;color:var(--text-dim);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,0.08)}
+.ftr-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr;gap:40px;margin-bottom:48px}
+@media(max-width:860px){.ftr-grid{grid-template-columns:1fr 1fr;gap:32px}}
+@media(max-width:560px){.ftr-grid{grid-template-columns:1fr}}
+.ftr-brand .logo{color:#fff;margin-bottom:16px}
+.ftr-brand p{font-size:.9rem;line-height:1.7;margin-bottom:16px;max-width:340px}
+.status-pill{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;color:var(--ed-lime)}
+.status-pill .d{width:8px;height:8px;border-radius:50%;background:var(--ed-lime);position:relative}
+.status-pill .d::after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--ed-lime);animation:ping 2s cubic-bezier(0,0,.2,1) infinite}
+@keyframes ping{75%,100%{transform:scale(2.2);opacity:0}}
+.ftr-col h4{color:#fff;font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;margin-bottom:18px}
+.ftr-col a{display:block;font-size:.9rem;padding:5px 0;color:var(--text-dim);transition:color .2s}
+.ftr-col a:hover{color:var(--ed-lime)}
+.ftr-bottom{border-top:1px solid var(--dark-border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:.82rem}
+.ftr-bottom a{color:var(--text-dim)}
+.ftr-bottom a:hover{color:var(--ed-lime)}
+
+
+    </style>
+</head>
+<body>
+
+<header class="hdr" id="hdr">
+    <div class="wrap">
+        <a href="index.html#top" class="logo" aria-label="Edusfera — на главную">
+            EDUSFERA
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M12 2L22 12L12 22L2 12L12 2Z"/></svg>
+        </a>
+        <nav class="nav-links" aria-label="Основная навигация">
+            <a href="index.html#why">Выгоды</a>
+            <a href="index.html#tutors">Репетиторам</a>
+            <a href="index.html#calc">Калькулятор</a>
+            <a href="index.html#faq">Вопросы</a>
+        </nav>
+        <div class="hdr-actions">
+            <a href="index.html" class="btn-back">← На главную</a>
+            <a href="index.html#beta" class="btn btn-lime btn-sm magnetic" style="background:#C6FF33;color:#0f1115;padding:8px 18px;border-radius:9999px;font-weight:800;font-size:0.75rem;text-decoration:none;letter-spacing:0.05em;display:inline-flex;align-items:center;">БЕТА-ТЕСТ ➔</a>
+        </div>
+    </div>
+</header>
+
+<main class="wrap">
+    <div class="doc-card">
+        <h1 class="doc-h1">Правила оплаты и безопасность платежей</h1>
+        <p class="doc-sub">Регламент приёма онлайн-платежей, гарантии безопасности и шифрование данных для пользователей платформы Edusfera (ООО «Эдусфера»).</p>
+
+        <div class="doc-section">
+            <h2>💳 1. Способы оплаты и валюта расчётов</h2>
+            <p>Оплата услуг электронной платформы Edusfera осуществляется по подписке или за разовые занятия в <strong>белорусских рублях (BYN)</strong>.</p>
+            <p>К оплате принимаются банковские карты и платёжные сервисы bePaid, БЕЛКАРТ, Visa, Mastercard, ЕРИП, Apple Pay:</p>
+            <div style="margin: 16px 0; width: 100%;">
+                <img src="payment-logos-full.svg" alt="Официальные логотипы bePaid, БЕЛКАРТ, Visa, Mastercard, Samsung Pay, Google Pay" style="width: 100%; max-width: 100%; height: auto; object-fit: contain; display: block;" />
+            </div>
+        </div>
+
+        <div class="doc-section">
+            <h2>🔒 2. Безопасность платежей и протокол шифрования</h2>
+            <p>Безопасность проводимых платежей обеспечивается провайдером электронных платежей <strong>bePaid (ООО «ИКомЧардж»)</strong>, работающим по международному стандарту безопасности <strong>PCI DSS Level 1</strong>.</p>
+            <ul>
+                <li><strong>Передача данных:</strong> Все данные передаются по защищённому протоколу с использованием криптографического шифрования TLS / SSL (256-bit).</li>
+                <li><strong>Конфиденциальность:</strong> Данные вашей банковской карты (номер, CVC/CVV код, срок действия) вводятся на защищённой странице авторизации безналичного платежа bePaid и не хранятся на серверах ООО «Эдусфера».</li>
+                <li><strong>Безопасность 3D-Secure:</strong> Для подтверждения операции может потребоваться ввод одноразового пароля (SMS/Push), отправленного вашим банком-эмитентом.</li>
+            </ul>
+        </div>
+
+        <div class="doc-section">
+            <h2>⚙️ 3. Порядок проведения онлайн-оплаты</h2>
+            <ul>
+                <li>После выбора тарифного плана или занятия нажмите кнопку <strong>«Оплатить»</strong> или <strong>«Оформить подписку»</strong>.</li>
+                <li>Вы будете автоматически перенаправлены на защищённую платёжную страницу bePaid.</li>
+                <li>Введя данные карты или выбрав оплату через ЕРИП / Apple Pay, подтвердите платёж.</li>
+                <li>После успешной проведения транзакции вы мгновенно получите доступ к выбранному сервису и электронное подтверждение (чек) на указанную почту.</li>
+            </ul>
+        </div>
+
+        <div class="doc-section">
+            <h2>📄 4. Образец электронного чека (подтверждения оплаты)</h2>
+            <p>Ниже представлен пример электронного чека/кассового подтверждения, отправляемого пользователю сразу после проведения оплаты:</p>
+
+            <div class="receipt-box">
+                <div class="receipt-header">
+                    ООО «ЭДУСФЕРА»<br>
+                    УНП 192854899 · Минск, ул. В. Хоружей, 6А-29<br>
+                    ЭЛЕКТРОННЫЙ ЧЕК КЛИЕНТА
+                </div>
+                <div>Заказ №: EDUSFERA-2026-8942</div>
+                <div>Дата и время: 23.07.2026 14:30:15</div>
+                <div>Услуга: Доступ к образовательной платформе Edusfera (Подписка)</div>
+                <div>Сумма оплаты: 120.00 BYN</div>
+                <div>Статус платежа: ОПЛАЧЕНО 100% (bePaid / БСБ Банк)</div>
+                <div>Платёжная система: БЕЛКАРТ / VISA / ЕРИП</div>
+                <div style="margin-top:8px; border-top:1px dashed #CBD5E1; padding-top:8px; text-align:center; font-size:0.78rem; color:#64748B;">
+                    Спасибо за оплату! Чек действителен в электронной форме.
+                </div>
+            </div>
+        </div>
+
+        <div class="doc-section">
+            <h2>🏛️ 5. Реквизиты организации</h2>
+            <p><strong>Наименование:</strong> Общество с ограниченной ответственностью «Эдусфера» (ООО «Эдусфера»)</p>
+            <p><strong>Свидетельство о гос. регистрации:</strong> Зарегистрировано Минским горисполкомом 25.10.2023 г., УНП 192854899</p>
+            <p><strong>Юридический адрес:</strong> 220100, Республика Беларусь, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29</p>
+            <p><strong>Контакты:</strong> Email: edusferaby@gmail.com | Тел: +375 (29) 519-08-21</p>
+            <p><strong>Режим работы:</strong> Пн-Пт: 09:00 – 18:00, Сб-Вс: выходной</p>
+        </div>
+    </div>
+</main>
+
+<!-- FOOTER (Единый подвал сайта) -->
+<footer class="ftr">
+  <div class="wrap">
+    <div class="ftr-grid">
+      <div class="ftr-brand">
+        <a href="#top" class="logo">EDUSFERA.</a>
+        <p>Первая белорусская платформа для преподавания, запуска онлайн-курсов и приема платежей через ЕРИП.</p>
+        <span class="status-pill"><span class="d"></span> Платформа на стадии запуска</span>
+      </div>
+      <div class="ftr-col">
+        <h4>Платформа</h4>
+        <a href="#why">Выгоды</a>
+        <a href="#comparison">Сравнение</a>
+        <a href="#tutors">Репетиторам</a>
+        <a href="#calc">Калькулятор</a>
+        <a href="#beta">Ранний доступ</a>
+      </div>
+      <div class="ftr-col">
+        <h4>Документы (bePaid & БСБ)</h4>
+        <a href="offer.html">Публичная оферта и тарифы</a>
+        <a href="privacy-policy.html">Конфиденциальность (Закон 99-З)</a>
+        <a href="payment-security.html">Правила оплаты и безопасность</a>
+        <a href="refund-policy.html">Правила возврата и отмены</a>
+      </div>
+      <div class="ftr-col">
+        <h4>Контакты и режим работы</h4>
+        <a href="contacts.html">Контакты</a>
+        <a href="mailto:edusferaby@gmail.com">edusferaby@gmail.com</a>
+        <a href="tel:+375295190821">+375 (29) 519-08-21</a>
+        <span style="font-size:0.78rem;color:var(--text-dim);margin-top:4px;display:block;">Режим работы: Пн-Пт 09:00 – 18:00 (Сб-Вс: выходной)</span>
+      </div>
+    </div>
+
+    <!-- Полноширинная плашка цветных оригинальных логотипов из файлов bePaid -->
+    <div style="border-top:1px solid rgba(255,255,255,0.08);padding:24px 0 16px;margin-top:28px;width:100%;">
+      <img src="payment-logos-full.svg" alt="bePaid, БЕЛКАРТ, Visa, Mastercard, Samsung Pay, Google Pay" style="width:100%;max-width:100%;height:auto;object-fit:contain;display:block;" />
+    </div>
+
+    <div class="ftr-info" style="border-top: 1px solid var(--dark-border); padding-top: 24px; margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; font-size: 0.82rem; line-height: 1.6; color: var(--text-dim);">
+      <div>
+        <strong style="color: #fff; display: block; margin-bottom: 6px;">Юридическая информация</strong>
+        Наименование: Общество с ограниченной ответственностью «Эдусфера»<br>
+        Гос. регистрация: Зарегистрировано Минским горисполкомом 25.10.2023 г., УНП 192854899<br>
+        Юридический адрес: Республика Беларусь, 220100, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29
+      </div>
+      <div>
+        <strong style="color: #fff; display: block; margin-bottom: 6px;">Банковские реквизиты</strong>
+        Расчетный счет (IBAN): BY64UNBS30121685100000001933<br>
+        Банк: ЗАО «БСБ Банк»<br>
+        БИК банка: UNBSBY2X
+      </div>
+    </div>
+    <div class="ftr-bottom" style="margin-top: 16px;">
+      <div>© <span id="year">2026</span> ООО «Эдусфера». Все права защищены.</div>
+      <div>Минск, Беларусь · Сделано для преподавателей и абитуриентов</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('scroll', function() {
+    var hdr = document.getElementById('hdr');
+    if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 20);
+});
+</script>
+</body>
+</html>

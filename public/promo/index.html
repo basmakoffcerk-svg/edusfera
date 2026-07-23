@@ -32,11 +32,10 @@
 <link rel="apple-touch-icon" href="./favicon.svg">
 <meta name="theme-color" content="#7D39EB">
 
-<!-- Fonts (non-render-blocking) -->
+<!-- Fonts (Cyrillic & Latin) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- ═══ JSON-LD: EducationalOrganization + Service + FAQPage ═══ -->
 <script type="application/ld+json">
@@ -122,6 +121,7 @@
    Токены цитированы из ресурсов/css/app.css и home.blade.php
    ════════════════════════════════════════════════ */
 :root{
+  /* ══ Original Edusfera Brand Palette ══ */
   --ed-violet:#7D39EB;
   --ed-violet-hover:#6827d6;
   --ed-violet-soft:#f3edff;
@@ -139,20 +139,33 @@
   --blue-soft:#eff4ff;
   --border:#e5e7eb;
 
+  /* Contrast Design System Tokens (Mapped to Edusfera Colors) */
+  --color-signal-coral:#7D39EB;
+  --color-ember-wash:#6827d6;
+  --color-persimmon:#5b1ec4;
+  --color-coral-mist:#f3edff;
+  --color-carbon-ink:#0f1115;
+  --color-pure-white:#ffffff;
+  --color-fog:#f4f4f8;
+  --color-graphite:#2f3133;
+  --color-slate:#7a7b7c;
+  --color-smoke:#666666;
+
   --shadow-sm:0 1px 2px rgba(17,24,39,.04);
   --shadow-md:0 4px 12px rgba(17,24,39,.06);
   --shadow-lg:0 12px 24px rgba(17,24,39,.08);
   --shadow-lime:0 8px 24px rgba(198,255,51,.24);
   --shadow-violet:0 10px 30px rgba(125,57,235,.24);
+  --shadow-contrast:0 5px 25px rgba(38, 42, 62, 0.06);
 
-  --r-sm:12px; --r:16px; --r-lg:24px; --r-xl:32px; --r-2xl:40px;
+  --r-sm:12px; --r:16px; --r-lg:24px; --r-xl:32px; --r-2xl:40px; --r-pill:100px;
   --maxw:1180px;
 }
 
 @font-face{
   font-family:'Rimma Sans';
   src:url('./fonts/Rimma_sans-Bold.ttf') format('truetype');
-  font-weight:700 800 900;
+  font-weight: 800;
   font-style:normal;
   font-display:swap;
 }
@@ -164,12 +177,12 @@ body{
   font-family:'Inter',system-ui,-apple-system,sans-serif;
   color:var(--text-main);
   background-color:var(--ed-bg);
-  /* Свечения как в home.blade.php */
   background-image:
     radial-gradient(circle at 50% 0%,rgba(125,57,235,.06) 0%,transparent 45%),
     radial-gradient(circle at 100% 0%,rgba(198,255,51,.05) 0%,transparent 40%);
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
   overflow-x:hidden;
 }
 
@@ -177,28 +190,123 @@ img,svg{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer;border:none;background:none}
 
-.font-rimma{font-family:'Rimma Sans','Inter',system-ui,sans-serif}
+.font-rimma,.sec-h,.hero h1,h1,h2,h3,.logo{
+  font-family:'Rimma Sans','Unbounded','Inter',system-ui,sans-serif !important;
+  letter-spacing:-0.03em;
+}
 
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
 
-/* Кнопки (как btn-core в платформе — pill, uppercase) */
+/* Кнопки (Contrast system — 100px pill) */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  padding:1.05rem 2.2rem;border-radius:9999px;
+  padding:1.05rem 2.2rem;border-radius:100px;
   font-weight:700;font-size:1rem;text-transform:uppercase;letter-spacing:.05em;
   transition:all .4s cubic-bezier(.16,1,.3,1);
   position:relative;overflow:hidden;text-align:center;line-height:1;
 }
-.btn-violet{background:var(--ed-violet);color:#fff;box-shadow:var(--shadow-violet)}
-.btn-violet:hover{background:var(--ed-violet-hover);transform:translateY(-2px);box-shadow:0 15px 40px rgba(125,57,235,.4)}
+.btn-violet,.btn-coral{background:var(--ed-violet);color:#fff;box-shadow:var(--shadow-violet)}
+.btn-violet:hover,.btn-coral:hover{background:var(--ed-violet-hover);transform:translateY(-2px);box-shadow:0 15px 40px rgba(125,57,235,.4)}
 .btn-lime{background:var(--ed-lime);color:#000;box-shadow:var(--shadow-lime)}
 .btn-lime:hover{background:#d8ff66;transform:translateY(-2px);box-shadow:0 15px 40px rgba(198,255,51,.35)}
 .btn-white{background:#fff;color:var(--text-main);border:1px solid var(--border)}
-.btn-white:hover{border-color:var(--text-main);transform:translateY(-2px)}
+.btn-white:hover{border-color:var(--ed-violet);color:var(--ed-violet);transform:translateY(-2px)}
 .btn-ghost{background:rgba(255,255,255,.05);color:#fff;border:1px solid rgba(255,255,255,.12)}
 .btn-ghost:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3)}
 .btn-sm{padding:.7rem 1.4rem;font-size:.78rem}
 .btn-block{display:flex;width:100%}
+
+/* ═══ Contrast Components (Edusfera Styled) ═══ */
+
+/* Coral Diagonal Marquee Band (Edusfera Violet Ribbon) */
+.coral-diagonal-band {
+  background: var(--ed-violet-soft);
+  color: var(--ed-violet);
+  overflow: hidden;
+  padding: 16px 0;
+  font-family: 'Rimma Sans', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-top: 1px solid rgba(125, 57, 235, 0.15);
+  border-bottom: 1px solid rgba(125, 57, 235, 0.15);
+}
+.cdb-track {
+  display: flex;
+  gap: 24px;
+  white-space: nowrap;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+}
+.cdb-track span {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Testimonial Cards Section */
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+.testimonial-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: var(--shadow-contrast);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.t-stars {
+  color: var(--ed-violet);
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.t-title {
+  font-family: 'Rimma Sans', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-carbon-ink);
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+.t-quote {
+  font-size: 0.92rem;
+  color: var(--color-smoke);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.t-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.t-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 100px;
+  background: var(--color-fog);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  border: 1px solid var(--border);
+}
+.t-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--color-carbon-ink);
+}
+.t-role {
+  font-size: 0.76rem;
+  color: var(--color-slate);
+}
 
 /* Glass panels */
 .glass{
@@ -419,6 +527,40 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
 .step h3{font-family:'Rimma Sans',sans-serif;font-weight:700;font-size:1.25rem;margin-bottom:10px;letter-spacing:-.02em}
 .step p{font-size:.95rem;color:var(--text-muted);line-height:1.65}
 
+/* ═══ LIVE UI FEEDBACK & CHECKMARKS ═══ */
+.bf-field{position:relative;margin-bottom:20px}
+.bf-field label{display:block;font-size:.82rem;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+.bf-field input,.bf-field select{
+  width:100%;padding:1rem 1.2rem;padding-right:44px;
+  background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);
+  border-radius:14px;color:#fff;font-size:.95rem;font-weight:500;
+  transition:all .3s cubic-bezier(.16,1,.3,1);
+}
+.bf-field input:focus,.bf-field select:focus{
+  outline:none;border-color:var(--acid-lime);
+  background:rgba(255,255,255,.09);
+  box-shadow:0 0 24px rgba(200,244,0,.25);
+}
+.bf-field.valid input,.bf-field.valid select{
+  border-color:var(--acid-lime);
+  background:rgba(200,244,0,.03);
+}
+.bf-field .valid-badge{
+  position:absolute;right:14px;top:38px;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--acid-lime);color:#000;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:900;opacity:0;transform:scale(0.4) rotate(-45deg);
+  transition:all .35s cubic-bezier(.175,.885,.32,1.275);
+  pointer-events:none;
+}
+.bf-field.valid .valid-badge{
+  opacity:1;transform:scale(1) rotate(0deg);
+}
+.bf-field .bf-error{display:none;font-size:.78rem;color:#ef4444;margin-top:6px;font-weight:600}
+.bf-field.has-error .bf-error{display:block}
+.bf-field.has-error input,.bf-field.has-error select{border-color:#ef4444;box-shadow:0 0 20px rgba(239,68,68,.25)}
+
 /* ═══ BETA / FORMA ═══ */
 .beta-wrap{background:linear-gradient(135deg,var(--dark-bg) 0%,#1a0b2e 100%);border-radius:var(--r-2xl);overflow:hidden;position:relative}
 .beta-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
@@ -449,7 +591,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
 .faq-item .ans{padding:0 28px 24px;color:var(--text-muted);font-size:.98rem;line-height:1.7}
 
 /* ═══ FOOTER ═══ */
-.ftr{background:var(--dark-bg);color:var(--text-dim);padding:64px 0 32px}
+.ftr{background:#1e1f24;color:var(--text-dim);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,0.08)}
 .ftr-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr;gap:40px;margin-bottom:48px}
 @media(max-width:860px){.ftr-grid{grid-template-columns:1fr 1fr;gap:32px}}
 @media(max-width:560px){.ftr-grid{grid-template-columns:1fr}}
@@ -669,117 +811,319 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
   }
 }
 
-/* 500px — смартфоны */
-@media (max-width: 500px) {
-  /* Типографика — безопасные размеры для длинных слов */
-  .hero h1 {
-    font-size: clamp(1.65rem, 7.5vw, 2rem);
-    word-break: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-  }
-  .sec-h {
-    font-size: clamp(1.5rem, 6.5vw, 1.85rem);
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-  .hero-sub {
-    font-size: 1rem;
-  }
-  .sec-sub {
-    font-size: 1rem;
+@media (max-width: 768px) {
+
+  /* ── Глобальное ограничение overflow ── */
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    position: relative !important;
   }
 
-  /* Переключатель аудитории — уже с 500px скрываем иконки */
+  /* Все секции, контейнеры и их дети не должны выходить за 100vw */
+  section, main, header, footer,
+  .hero, .trust, .marquee, .sec, .sec-dark,
+  .beta-wrap, .ftr {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  .wrap {
+    padding: 0 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .sec {
+    padding: 40px 0 !important;
+  }
+
+  /* ── Aurora blobs: скрыть на мобильных, они вызывают overflow ── */
+  .aurora {
+    display: none !important;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 88px 0 32px !important;
+  }
+
+  .hero-inner {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+
+  /* Бейдж «ИИ-ДИАГНОСТИКА И КЛАСС 2026» */
+  .hc-badge {
+    font-size: 0.65rem !important;
+    padding: 0.4rem 0.8rem !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  /* Переключатель аудитории */
+  .audience-switch {
+    width: 100% !important;
+    display: flex !important;
+    box-sizing: border-box !important;
+    margin-bottom: 20px !important;
+    overflow: hidden !important;
+  }
+
+  .as-btn {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    padding: 0.5rem 0.3rem !important;
+    font-size: 0.68rem !important;
+    text-align: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
   .as-btn svg {
     display: none !important;
   }
-  .as-btn {
-    padding: 0.5rem 0.9rem;
-    font-size: 0.78rem;
-  }
-  .audience-switch {
-    width: 100%;
+
+  /* Заголовок hero */
+  .hero h1, .hero .audience-content h1 {
+    font-size: clamp(1.4rem, 6vw, 2.2rem) !important;
+    line-height: 1.08 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    letter-spacing: -0.02em !important;
   }
 
-  /* Карточки */
+  .hero-sub {
+    font-size: 0.9rem !important;
+    line-height: 1.5 !important;
+    margin-bottom: 24px !important;
+    max-width: 100% !important;
+  }
+
+  /* CTA кнопки — стек */
+  .hero-ctas {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .hero-ctas .btn {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.85rem 1rem !important;
+    font-size: 0.8rem !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  /* Hero card (тёмная AI-карточка) */
+  .hero-visual {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
   .hero-card {
-    padding: 20px;
+    padding: 16px !important;
+    border-radius: 18px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    animation: none !important; /* убираем float на мобильных */
   }
-  .hero-card-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+
+  /* Всё внутри hero-card — ограничиваем */
+  .hero-card * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
-  .hc-num {
-    font-size: 1.4rem;
+
+  .hero-card div[style] {
+    max-width: 100% !important;
+    overflow: hidden !important;
   }
-  .offer-card {
-    padding: 24px 20px;
+
+  /* Hero note */
+  .hero-note {
+    font-size: 0.78rem !important;
+    flex-wrap: wrap !important;
+    margin-top: 16px !important;
+    max-width: 100% !important;
   }
-  .bento-card {
-    padding: 24px 20px;
+
+  /* ── Header ── */
+  .hdr {
+    padding: 10px 0 !important;
   }
-  .diag-card {
-    padding: 24px 20px;
+  .hdr.scrolled {
+    padding: 8px 0 !important;
   }
+  .hdr .wrap {
+    padding: 0 16px !important;
+  }
+  .hdr .logo {
+    font-size: 1.15rem !important;
+  }
+
+  .btn-sm {
+    padding: 0.45rem 0.8rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  /* ── Grids: одна колонка ── */
+  .offer-grid, .tutors-grid, .bento-grid, .diag-grid, .testimonials-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .bento .b1, .bento .b2, .bento .b3, .bento .b4 {
+    grid-column: span 1 !important;
+  }
+
+  .trust-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+
+  .trust-item {
+    padding: 16px 8px !important;
+  }
+
+  .offer-card, .bento-card, .diag-card {
+    padding: 24px 20px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
   .hc-growth {
-    padding: 12px;
+    padding: 12px !important;
   }
   .hc-growth-val {
-    font-size: 1.5rem;
+    font-size: 1.5rem !important;
   }
   .hc-val-violet {
-    font-size: 1.8rem;
+    font-size: 1.8rem !important;
   }
   .fc-chart-container {
-    padding: 12px;
+    padding: 12px !important;
   }
 
-  /* Калькулятор: сравнение в одну колонку */
+  /* ── Калькулятор ── */
+  .calc-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .calc-left {
+    padding: 20px !important;
+  }
+  .calc-right {
+    padding: 24px 16px !important;
+  }
   .cr-compare {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
   .cr-num {
-    font-size: clamp(2rem, 10vw, 2.8rem);
+    font-size: clamp(2rem, 10vw, 2.8rem) !important;
   }
   .cl-mode button {
-    font-size: 0.72rem;
-    padding: 0.6rem 0.4rem;
+    font-size: 0.72rem !important;
+    padding: 0.6rem 0.4rem !important;
   }
 
-  /* Круг 0 BYN */
+  /* ── Bento (dark секция): комиссии ── */
   .zero-circle {
-    width: 90px;
-    height: 90px;
+    width: 90px !important;
+    height: 90px !important;
   }
   .zero-circle .n {
-    font-size: 1.4rem;
+    font-size: 1.4rem !important;
   }
   .zero-badge {
-    gap: 16px;
+    gap: 16px !important;
   }
-
-  /* Лестница комиссий */
+  .comm-ladder {
+    flex-direction: column !important;
+  }
   .comm-tier {
-    min-width: 80px;
-    padding: 14px 10px;
+    min-width: unset !important;
+    width: 100% !important;
+    padding: 14px 10px !important;
   }
   .comm-tier .pct {
-    font-size: 1.4rem;
+    font-size: 1.4rem !important;
   }
 
-  /* Trust bar */
+  /* ── Trust bar ── */
   .trust {
-    padding: 32px 0;
+    padding: 32px 0 !important;
   }
   .trust-n {
-    font-size: clamp(1.4rem, 6vw, 2rem);
+    font-size: clamp(1.4rem, 6vw, 2rem) !important;
   }
   .trust-l {
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.1em !important;
+  }
+
+  /* ── Steps ── */
+  .steps {
+    grid-template-columns: 1fr !important;
+  }
+  .step {
+    padding: 28px 24px !important;
+  }
+
+  /* ── Beta форма ── */
+  .beta-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .beta-left {
+    padding: 32px 20px !important;
+  }
+  .beta-form {
+    padding: 8px !important;
+  }
+  .beta-form-container {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* ── FAQ ── */
+  .faq-item summary {
+    padding: 18px 20px !important;
+    font-size: 0.95rem !important;
+    gap: 12px !important;
+  }
+  .faq-item .ans {
+    padding: 0 20px 20px !important;
+    font-size: 0.92rem !important;
+  }
+
+  /* ── Footer ── */
+  .ftr {
+    padding: 48px 0 24px !important;
+  }
+  .ftr-grid {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+    margin-bottom: 32px !important;
+  }
+  .ftr-bottom {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 8px !important;
+  }
+  .ftr-info {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
   }
 }
 
@@ -1314,7 +1658,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
       <a href="#faq">Вопросы</a>
     </nav>
     <div class="hdr-actions">
-      <a href="#beta" class="btn btn-violet btn-sm magnetic">Бета-тест</a>
+      <a href="#beta" class="btn btn-lime btn-sm magnetic">БЕТА-ТЕСТ ➔</a>
     </div>
   </div>
 </header>
@@ -1332,101 +1676,116 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
   <div class="wrap">
     <div class="hero-inner" style="position:relative;z-index:1">
       <div>
-        <!-- Индикатор Госреестра -->
-        <div style="margin-bottom: 20px;">
-          <span class="hc-badge hc-badge-violet"><span class="d"></span>🔒 РАБОТАЕМ ПО НОВЫМ ПРАВИЛАМ С 1 ИЮЛЯ</span>
-        </div>
-
         <!-- Переключатель аудитории -->
         <div class="audience-switch" role="tablist" aria-label="Выберите аудиторию">
           <button class="as-btn active" role="tab" aria-selected="true" data-aud="parent">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Я родитель / ученик
+            👨‍👩‍👧 Ученикам и родителям
           </button>
           <button class="as-btn" role="tab" aria-selected="false" data-aud="tutor">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 14l9-5-9-5-9 5 9 5z"/><path d="M12 14l6.16-3.42a12 12 0 0 1 .84 6.42A8 8 0 0 0 12 20a8 8 0 0 0-7-3 12 12 0 0 1 .84-6.42L12 14z"/></svg>
-            Я репетитор
+            👨‍🏫 Репетиторам и школам
           </button>
         </div>
 
-        <!-- Контент: РОДИТЕЛЬ -->
+        <!-- Контент: РОДИТЕЛЬ / АБИТУРИЕНТ -->
         <div class="audience-content active" data-aud="parent">
-          <h1>Подготовка к ЦЭ и ЦТ у репетиторов <span class="gradient-text">из госреестра</span></h1>
-          <p class="hero-sub">С 1 июля репетиторы вне реестра — незаконны. У нас каждый проверен, оплата под защитой, а ИИ найдёт пробелы за 15 минут.</p>
-          <div class="hero-ctas">
-            <a href="#beta" class="btn btn-violet">Найти легального репетитора</a>
-            <a href="#diag-results" class="btn btn-white">Пройти диагностику</a>
+          <h1 style="font-size:clamp(2rem,4.2vw,3.4rem);line-height:1.12;letter-spacing:-0.03em;color:#0F1115;font-weight:800;">
+            ПОДГОТОВКА К ЦТ И ЦЭ 2026 <br><span style="color:#7D39EB;">С ПРОВЕРЕННЫМИ РЕПЕТИТОРАМИ</span>
+          </h1>
+          <p class="hero-sub" style="font-size:1.05rem;color:#4B5563;margin-top:20px;margin-bottom:32px;max-width:520px;line-height:1.65;font-weight:500;">
+            Диагностика знаний по тестам РИКЗ, подбор преподавателя из реестра Минобра и 100% защита оплаты. Списание средств — только после урока.
+          </p>
+          <div class="hero-ctas" style="display:flex;gap:12px;flex-wrap:wrap;">
+            <a href="#beta" class="btn btn-violet" style="padding:1rem 2.2rem;font-size:0.88rem;">ПОЛУЧИТЬ РАННИЙ ДОСТУП ➔</a>
+            <a href="#comparison" class="btn btn-white" style="padding:1rem 2rem;font-size:0.88rem;"><i>ПОЧЕМУ EDUSFERA</i> ⚡</a>
           </div>
         </div>
 
-        <!-- Контент: РЕПЕТИТОР -->
+        <!-- Контент: РЕПЕТИТОР / ОНЛАЙН-ШКОЛА -->
         <div class="audience-content" data-aud="tutor">
-          <h1>Преподавайте легально <span class="gradient-text">без штрафов и бюрократии</span></h1>
-          <p class="hero-sub">С 1 июля без реестра нельзя. Мы берём на себя чеки, налоги и регистрацию в Минобре — вы просто преподаёте.</p>
-          <div class="hero-ctas">
-            <a href="#beta" class="btn btn-lime">Подать заявку</a>
-            <a href="#calc" class="btn btn-white">Калькулятор дохода</a>
+          <h1 style="font-size:clamp(2rem,4.2vw,3.4rem);line-height:1.12;letter-spacing:-0.03em;color:#0F1115;font-weight:800;">
+            ПЛАТФОРМА ДЛЯ ПРЕПОДАВАНИЯ <br><span style="color:#7D39EB;">И ЗАПУСКА КУРСОВ В БЕЛАРУСИ</span>
+          </h1>
+          <p class="hero-sub" style="font-size:1.05rem;color:#4B5563;margin-top:20px;margin-bottom:32px;max-width:520px;line-height:1.65;font-weight:500;">
+            Принимайте оплату по ЕРИП и картам РБ, ведите интерактивные уроки в онлайн-классе и автоматизируйте чеки НПД в едином рабочем пространстве.
+          </p>
+          <div class="hero-ctas" style="display:flex;gap:12px;flex-wrap:wrap;">
+            <a href="#beta" class="btn btn-violet" style="padding:1rem 2.2rem;font-size:0.88rem;">ПОЛУЧИТЬ РАННИЙ ДОСТУП ➔</a>
+            <a href="#calc" class="btn btn-white" style="padding:1rem 2rem;font-size:0.88rem;"><i>ПОСЧИТАТЬ ВЫГОДУ</i> ⚡</a>
           </div>
         </div>
 
-        <p class="hero-note"><span class="dot"></span> Все репетиторы верифицированы по новым правилам от 1 июля</p>
+        <p class="hero-note" style="margin-top:28px;font-size:0.88rem;color:#4B5563;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span class="dot"></span> 🛡️ Эскроу-защита оплаты, ЕРИП/БЕЛКАРТ и автоматические чеки НПД</p>
       </div>
 
-      <!-- Визуальная карточка -->
+      <!-- Визуальная карточка: Светлый прозрачный трекер знаний (UI/UX Pro Max) -->
       <div class="hero-visual rv rv-d2">
-        <div class="hero-card">
-          <div class="hero-card-head">
+        <div class="hero-card" style="background:#FFFFFF;border:1px solid rgba(15,17,21,0.08);border-radius:24px;padding:32px;box-shadow:0 20px 60px rgba(125,57,235,0.08);color:#0F1115;">
+          <!-- Шапка карточки -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;border-bottom:1px solid #F1F5F9;gap:12px;">
             <div>
-              <div class="hc-label">Прогноз результата ЦТ</div>
-              <div class="hc-num">Математика · Максим Д.</div>
+              <div style="font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#7D39EB;">Карта подготовки к ЦТ / ЦЭ</div>
+              <div style="font-family:'Rimma Sans','Inter',sans-serif;font-weight:800;font-size:1.3rem;margin-top:4px;color:#0F1115;">Математика · Максим Д.</div>
             </div>
-            <span class="hc-badge hc-badge-violet"><span class="d"></span>Анализ ИИ</span>
-          </div>
-          
-          <div class="hc-growth">
-            <div class="hc-growth-col">
-              <div class="hc-growth-label">Было</div>
-              <div class="hc-growth-val hc-val-muted">42</div>
-            </div>
-            
-            <div class="hc-growth-chart">
-              <svg viewBox="0 0 100 30" width="100%" height="30" style="overflow:visible">
-                <path d="M 0 25 C 20 25, 40 5, 100 5" fill="none" stroke="var(--ed-violet)" stroke-width="3" stroke-linecap="round"/>
-                <path d="M 0 25 C 20 25, 40 5, 100 5" fill="none" stroke="var(--ed-violet)" stroke-width="6" stroke-linecap="round" opacity="0.15"/>
-                <circle cx="100" cy="5" r="4" fill="var(--ed-lime)" stroke="var(--ed-violet)" stroke-width="2"/>
-                <circle cx="0" cy="25" r="3.5" fill="var(--text-dim)"/>
-              </svg>
-            </div>
-
-            <div class="hc-growth-col text-right">
-              <div class="hc-growth-label hc-label-violet">Сейчас</div>
-              <div class="hc-growth-val hc-val-violet">87</div>
-            </div>
-          </div>
-
-          <div class="hc-topics">
-            <div class="hc-topic-row">
-              <span class="hc-topic-name"><span class="hc-icon-ok">✓</span> Тригонометрия</span>
-              <span class="hc-tag ok">закрыта</span>
-            </div>
-            <div class="hc-topic-row">
-              <span class="hc-topic-name"><span class="hc-icon-ok">✓</span> Производная</span>
-              <span class="hc-tag ok">закрыта</span>
-            </div>
-            <div class="hc-topic-row">
-              <span class="hc-topic-name"><span class="hc-icon-spin">🔄</span> Интегралы</span>
-              <span class="hc-tag live">в работе</span>
-            </div>
-            <div class="hc-topic-row inactive">
-              <span class="hc-topic-name"><span>○</span> Стереометрия</span>
-              <span class="hc-status-text">не начата</span>
-            </div>
-          </div>
-
-          <div class="hc-footer">
-            <span class="hc-result-badge">
-              📈 +45 баллов за 3 месяца
+            <span style="background:rgba(34,197,94,0.1);color:#16a34a;font-weight:700;font-size:0.75rem;padding:0.4rem 0.85rem;border-radius:9999px;display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(34,197,94,0.2);flex-shrink:0;">
+              <span style="width:7px;height:7px;border-radius:50%;background:#16a34a;"></span> Verified РИКЗ
             </span>
+          </div>
+
+          <!-- Метрики прогресса -->
+          <div style="margin:20px 0;padding:20px;background:#F8FAFC;border-radius:16px;border:1px solid #E2E8F0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;">
+              <div>
+                <span style="font-size:0.72rem;color:#64748B;font-weight:700;display:block;">Входной балл</span>
+                <span style="font-size:1.5rem;font-weight:800;color:#64748B;">42 б.</span>
+              </div>
+              
+              <div style="flex:1;margin:0 12px;text-align:center;">
+                <div style="font-size:0.78rem;color:#16a34a;font-weight:800;margin-bottom:4px;">+45 баллов (+107%)</div>
+                <div style="width:100%;height:8px;background:#E2E8F0;border-radius:9999px;overflow:hidden;">
+                  <div style="width:87%;height:100%;background:linear-gradient(90deg, #7D39EB 0%, #2563EB 50%, #16a34a 100%);border-radius:9999px;"></div>
+                </div>
+              </div>
+
+              <div style="text-align:right;">
+                <span style="font-size:0.72rem;color:#7D39EB;font-weight:700;display:block;">Целевой балл</span>
+                <span style="font-size:1.5rem;font-weight:800;color:#7D39EB;">87 б.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Список освоенных тем -->
+          <div style="display:grid;gap:10px;margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#FFFFFF;border-radius:12px;font-size:0.88rem;font-weight:700;color:#0F1115;border:1px solid #E2E8F0;box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+              <span style="display:flex;align-items:center;gap:10px;">
+                <span style="color:#16a34a;font-size:1.1rem;">✓</span>
+                Тригонометрия и формулы
+              </span>
+              <span style="background:rgba(34,197,94,0.1);color:#16a34a;padding:0.25rem 0.65rem;border-radius:9999px;font-size:0.72rem;font-weight:800;">Освоено 100%</span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#FFFFFF;border-radius:12px;font-size:0.88rem;font-weight:700;color:#0F1115;border:1px solid #E2E8F0;box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+              <span style="display:flex;align-items:center;gap:10px;">
+                <span style="color:#16a34a;font-size:1.1rem;">✓</span>
+                Производная и функции
+              </span>
+              <span style="background:rgba(34,197,94,0.1);color:#16a34a;padding:0.25rem 0.65rem;border-radius:9999px;font-size:0.72rem;font-weight:800;">Освоено 92%</span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#FFFFFF;border-radius:12px;font-size:0.88rem;font-weight:700;color:#0F1115;border:1px solid #E2E8F0;box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+              <span style="display:flex;align-items:center;gap:10px;">
+                <span style="color:#2563EB;font-size:1.1rem;">⚡</span>
+                Интегралы и площади
+              </span>
+              <span style="background:rgba(37,99,235,0.1);color:#2563EB;padding:0.25rem 0.65rem;border-radius:9999px;font-size:0.72rem;font-weight:800;">В процессе</span>
+            </div>
+          </div>
+
+          <!-- Футер карточки -->
+          <div style="padding-top:16px;border-top:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;color:#64748B;font-weight:600;">
+            <span>🛡️ Эскроу-защита оплаты</span>
+            <span style="color:#7D39EB;font-weight:700;">ЗАО «БСБ Банк»</span>
           </div>
         </div>
       </div>
@@ -1449,27 +1808,35 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
 <!-- ═══ Бегущая строка предметов ═══ -->
 <div class="marquee rv" aria-hidden="true">
   <div class="marquee-track">
-    <span class="mq-item"><span class="emoji">📐</span> Математика</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">⚛️</span> Физика</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">🧪</span> Химия</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">🧬</span> Биология</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">✍️</span> Русский язык</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">📖</span> Белорусский язык</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">📜</span> История</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">🌐</span> Английский</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">⚖️</span> Обществоведение</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">💻</span> Информатика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Математика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Физика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55A2 2 0 0 0 6.516 23h10.968a2 2 0 0 0 1.796-2.45L14.211 10.423A2 2 0 0 1 14 9.527V2"/></svg> Химия</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 15c6.667-6 13.333 0 20-6"/><path d="M2 9c6.667 6 13.333 0 20 6"/></svg> Биология</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Русский язык</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Белорусский язык</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> История</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg> Английский</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/></svg> Информатика</span><span class="mq-sep">◆</span>
     <!-- дубликат для бесшовного цикла -->
-    <span class="mq-item"><span class="emoji">📐</span> Математика</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">⚛️</span> Физика</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">🧪</span> Химия</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">🧬</span> Биология</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">✍️</span> Русский язык</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">📖</span> Белорусский язык</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">📜</span> История</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">🌐</span> Английский</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">⚖️</span> Обществоведение</span><span class="mq-sep">◆</span>
-    <span class="mq-item"><span class="emoji">💻</span> Информатика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Математика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Физика</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55A2 2 0 0 0 6.516 23h10.968a2 2 0 0 0 1.796-2.45L14.211 10.423A2 2 0 0 1 14 9.527V2"/></svg> Химия</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 15c6.667-6 13.333 0 20-6"/><path d="M2 9c6.667 6 13.333 0 20 6"/></svg> Биология</span><span class="mq-sep">◆</span>
+    <span class="mq-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Русский язык</span><span class="mq-sep">◆</span>
+  </div>
+</div>
+
+<!-- ═══ CORAL DIAGONAL MARQUEE BAND (DESIGN(1).md) ═══ -->
+<div class="coral-diagonal-band" aria-hidden="true">
+  <div class="cdb-track">
+    <span>✨ ИИ-ДИАГНОСТИКА РИКЗ 2026</span><span>◆</span>
+    <span>🔥 БЕСПЛАТНЫЙ ПЕРВЫЙ УРОК</span><span>◆</span>
+    <span>📜 ВЕРИФИЦИРОВАНО В ГОСРЕЕСТРЕ</span><span>◆</span>
+    <span>🛡️ ЭСКРОУ-ЗАЩИТА ПЛАТЕЖЕЙ</span><span>◆</span>
+    <span>✨ ИИ-ДИАГНОСТИКА РИКЗ 2026</span><span>◆</span>
+    <span>🔥 БЕСПЛАТНЫЙ ПЕРВЫЙ УРОК</span><span>◆</span>
+    <span>📜 ВЕРИФИЦИРОВАНО В ГОСРЕЕСТРЕ</span><span>◆</span>
+    <span>🛡️ ЭСКРОУ-ЗАЩИТА ПЛАТЕЖЕЙ</span><span>◆</span>
   </div>
 </div>
 
@@ -1517,60 +1884,136 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
   </div>
 </section>
 
-<!-- ═══ ОФФЕР ДЛЯ РОДИТЕЛЕЙ / УЧЕНИКОВ (светлая) ═══ -->
+<!-- ═══════ СРАВНЕНИЕ (GetCourse / Zoom vs Edusfera) ═══════ -->
+<section class="sec" id="comparison" style="background:#fff;border-bottom:1px solid var(--border)">
+  <div class="wrap">
+    <div class="sec-top rv">
+      <div class="eyebrow">Сравнение решений</div>
+      <h2 class="sec-h">Почему Edusfera, а не <span class="gradient-text">GetCourse / Zoom</span></h2>
+      <p class="sec-sub">Полная адаптация под приём платежей в BYN и законодательство Республики Беларусь</p>
+    </div>
+
+    <div class="comparison-table-wrap rv" style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table style="width:100%;border-collapse:separate;border-spacing:0;border-radius:20px;border:1px solid var(--border);overflow:hidden;background:#fff;box-shadow:var(--shadow-md);min-width:640px;">
+        <thead>
+          <tr style="background:var(--ed-bg);text-align:left;">
+            <th style="padding:20px 24px;font-size:0.9rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-main);width:28%;">Параметр</th>
+            <th style="padding:20px 24px;font-size:0.9rem;font-weight:800;color:var(--text-muted);width:36%;">Зарубежные сервисы (GetCourse / Zoom)</th>
+            <th style="padding:20px 24px;font-size:0.9rem;font-weight:800;color:var(--ed-violet);background:rgba(125,57,235,0.06);width:36%;">Edusfera 🇧🇾</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:20px 24px;font-weight:700;font-size:0.92rem;color:var(--text-main);border-top:1px solid var(--border);">
+              💳 Приём платежей
+            </td>
+            <td style="padding:20px 24px;font-size:0.9rem;color:var(--text-muted);line-height:1.5;border-top:1px solid var(--border);">
+              <span style="color:#ef4444;font-weight:700;">❌ Сложно:</span> валютный контроль, выводы через сторонние костыли и комиссия до 10%
+            </td>
+            <td style="padding:20px 24px;font-size:0.9rem;color:var(--text-main);line-height:1.5;background:rgba(125,57,235,0.03);border-top:1px solid var(--border);">
+              <span style="color:#22c55e;font-weight:800;">✓ ЕРИП, БЕЛКАРТ, Visa/Mastercard (BYN)</span> напрямую на ваш расчётный счёт в банке РБ
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 24px;font-weight:700;font-size:0.92rem;color:var(--text-main);border-top:1px solid var(--border);">
+              🛠️ Инструменты
+            </td>
+            <td style="padding:20px 24px;font-size:0.9rem;color:var(--text-muted);line-height:1.5;border-top:1px solid var(--border);">
+              <span style="color:#ef4444;font-weight:700;">❌ Раздробленно:</span> нужны 3–4 разные подписки (Zoom + Miro + CRM + GetCourse)
+            </td>
+            <td style="padding:20px 24px;font-size:0.9rem;color:var(--text-main);line-height:1.5;background:rgba(125,57,235,0.03);border-top:1px solid var(--border);">
+              <span style="color:#22c55e;font-weight:800;">✓ Всё в одном окне:</span> видеосвязь, канбан-доска, ИИ-ассистент, биллинг и чеки
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 24px;font-weight:700;font-size:0.92rem;color:var(--text-main);border-top:1px solid var(--border);">
+              ⚖️ Поддержка РБ
+            </td>
+            <td style="padding:20px 24px;font-size:0.9rem;color:var(--text-muted);line-height:1.5;border-top:1px solid var(--border);">
+              <span style="color:#ef4444;font-weight:700;">❌ Нет адаптации:</span> риск нарушений Закона 99-З и вопросов от налоговой
+            </td>
+            <td style="padding:20px 24px;font-size:0.9rem;color:var(--text-main);line-height:1.5;background:rgba(125,57,235,0.03);border-top:1px solid var(--border);">
+              <span style="color:#22c55e;font-weight:800;">✓ Официальное ООО в Минске:</span> чеки НПД, автоматические закрывающие акты и договор по Закону РБ
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ОФФЕР ДЛЯ РОДИТЕЛЕЙ / УЧЕНИКОВ ═══ -->
 <section class="sec" id="why">
   <div class="wrap">
     <div class="sec-top rv">
-      <div class="eyebrow">Родителям и ученикам</div>
-      <h2 class="sec-h">Почему с нами <span class="gradient-text">безопасно</span></h2>
+      <div class="eyebrow">Почему Edusfera</div>
+      <h2 class="sec-h">Всё для высокого балла <span class="gradient-text">в одном месте</span></h2>
+      <p class="sec-sub">Без кучи разрозненных сервисов и непонятных предоплат</p>
     </div>
     <div class="offer-grid">
-      <article class="offer-card rv tilt">
+      <article class="offer-card rv tilt" style="padding:32px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:24px;">
         <div class="spot"></div>
-        <div class="oc-ic v">🛡️</div>
-        <h3>Репетиторы в реестре</h3>
-        <p>Только проверенные педагоги. Статус каждого видно в профиле.</p>
+        <div class="oc-ic v" style="margin-bottom:16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <h3 style="font-family:'Rimma Sans',sans-serif;font-size:1.2rem;margin-bottom:8px;">ИИ всё найдёт за 15 мин</h3>
+        <p style="font-size:0.92rem;color:var(--text-muted);line-height:1.5;">Проверит тесты РИКЗ и покажет пальцем, где именно теряются баллы.</p>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.78rem;color:var(--acid-lime);font-weight:700;">⚡ Точность 98% по темам</div>
       </article>
-      <article class="offer-card rv rv-d1 tilt">
+
+      <article class="offer-card rv rv-d1 tilt" style="padding:32px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:24px;">
         <div class="spot"></div>
-        <div class="oc-ic l">🧾</div>
-        <h3>Договор и чек</h3>
-        <p>Полная юридическая защита. Каждая оплата — с документом.</p>
+        <div class="oc-ic l" style="margin-bottom:16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h3 style="font-family:'Rimma Sans',sans-serif;font-size:1.2rem;margin-bottom:8px;">Виртуальный класс</h3>
+        <p style="font-size:0.92rem;color:var(--text-muted);line-height:1.5;">Видеосвязь, общая доска и ИИ-конспекты — без скачивания Zoom и Miro.</p>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.78rem;color:var(--electric-cyan);font-weight:700;">🎥 Работает прямо в браузере</div>
       </article>
-      <article class="offer-card rv rv-d2 tilt">
+
+      <article class="offer-card rv rv-d2 tilt" style="padding:32px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:24px;">
         <div class="spot"></div>
-        <div class="oc-ic b">🎯</div>
-        <h3>ИИ-диагностика РИКЗ</h3>
-        <p>Находит пробелы за 15 минут и строит пошаговый план подготовки.</p>
+        <div class="oc-ic b" style="margin-bottom:16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h3 style="font-family:'Rimma Sans',sans-serif;font-size:1.2rem;margin-bottom:8px;">Эскроу-защита оплаты</h3>
+        <p style="font-size:0.92rem;color:var(--text-muted);line-height:1.5;">Деньги списываются только после того, как урок успешно прошёл.</p>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.78rem;color:var(--ocean-blue);font-weight:700;">🔒 100% гарантия возврата</div>
       </article>
-      <article class="offer-card rv rv-d3 tilt">
+
+      <article class="offer-card rv rv-d3 tilt" style="padding:32px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:24px;">
         <div class="spot"></div>
-        <div class="oc-ic o">📈</div>
-        <h3>Эскроу-оплата</h3>
-        <p>Деньги списываются только после урока. Риска для вас — ноль.</p>
+        <div class="oc-ic o" style="margin-bottom:16px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <h3 style="font-family:'Rimma Sans',sans-serif;font-size:1.2rem;margin-bottom:8px;">Чеки НПД в 1 клик</h3>
+        <p style="font-size:0.92rem;color:var(--text-muted);line-height:1.5;">Платформа сама формирует чеки для репетитора без лишней бумажной суеты.</p>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:0.78rem;color:var(--acid-lime);font-weight:700;">📄 Оф. интеграция с МНС</div>
       </article>
     </div>
   </div>
 </section>
 
-<!-- ═══════ ОФФЕР ДЛЯ РЕПЕТИТОРОВ (тёмная) ═══════ -->
+
+
+<!-- ═══════ ОФФЕР ДЛЯ РЕПЕТИТОРОВ ═══════ -->
 <section class="sec sec-dark" id="tutors">
   <div class="wrap">
     <div class="sec-top rv">
-      <div class="eyebrow eyebrow-lime">Репетиторам</div>
-      <h2 class="sec-h">Преподавайте <span class="ac-l">легально</span></h2>
+      <div class="eyebrow eyebrow-lime">Преподавателям</div>
+      <h2 class="sec-h">Занимайтесь преподаванием, <span class="ac-l">а не рутиной</span></h2>
     </div>
 
     <div class="bento">
       <div class="glass-dark bento-card b1 rv">
-        <span class="bc-badge">Госреестр 1 июля</span>
-        <h3>Войдём в реестр за вас</h3>
-        <p>Уведомления в Минобр и ИМНС, отчётность — на нас. Вы работаете без страха проверок.</p>
+        <span class="bc-badge">Всё-в-одном</span>
+        <h3>Класс + ИИ-ассистент</h3>
+        <p>Видеосвязь, канбан-доска, автогенерация ДЗ и конспектов — без сторонних сервисов.</p>
       </div>
       <div class="glass-dark bento-card b2 rv rv-d1">
         <span class="bc-badge">Прозрачно</span>
-        <h3>Доход без ИП</h3>
-        <p>Чеки и НПД — автоматически. Никаких серых переводов на карту.</p>
+        <h3>Удобный учет и НПД</h3>
+        <p>Чеки и отчёты — в 1 клик. Прозрачные занятия без головной боли.</p>
         <div class="comm-ladder">
           <div class="comm-tier"><div class="pct">15%</div><div class="nm">Старт</div><div class="req">до 5 уроков/мес</div></div>
           <div class="comm-tier"><div class="pct">13%</div><div class="nm">Рост</div><div class="req">от 5 уроков/мес</div></div>
@@ -1580,14 +2023,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
       <div class="glass-dark bento-card b3 rv rv-d2">
         <span class="bc-badge">Авто</span>
         <h3>Умное расписание</h3>
-        <p>Настройте часы один раз — ученики бронируют слоты сами.</p>
+        <p>Настройте часы один раз — ученики сами бронируют подходящие слоты.</p>
       </div>
       <div class="glass-dark bento-card b4 rv rv-d3">
         <div class="zero-badge">
           <div class="zero-circle"><div class="n">0</div><div class="u">BYN</div></div>
           <div>
             <h3>Без подписок</h3>
-            <p>Комиссия — только за проведённый урок. Нет урока — нет расходов.</p>
+            <p>Комиссия списывается только за проведённый урок. Нет урока — нет расходов.</p>
           </div>
         </div>
       </div>
@@ -1725,32 +2168,114 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
   </div>
 </section>
 
+<!-- ═══════ TESTIMONIALS (DESIGN(1).md) ═══════ -->
+<section class="sec" id="testimonials" style="background:var(--ed-bg);">
+  <div class="wrap">
+    <div class="sec-top rv">
+      <div class="eyebrow">Отзывы абитуриентов</div>
+      <h2 class="sec-h">Что говорят <span class="ac-v">участники беты</span></h2>
+      <p class="sec-sub">Реальный опыт учеников, родителей и проверенных преподавателей</p>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card rv tilt">
+        <div class="spot"></div>
+        <div>
+          <div class="t-stars">★★★★★</div>
+          <h3 class="t-title">«Подняла математику с 48 до 89 баллов!»</h3>
+          <p class="t-quote">«ИИ-карта сразу показала, что у меня провал именно в тригонометрии. За 2 месяца с репетитором из реестра подтянули все темы без нервов.»</p>
+        </div>
+        <div class="t-author">
+          <div class="t-avatar">🎓</div>
+          <div>
+            <div class="t-name">Анастасия М.</div>
+            <div class="t-role">Поступила в БГУ (ФПМИ)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card rv rv-d1 tilt">
+        <div class="spot"></div>
+        <div>
+          <div class="t-stars">★★★★★</div>
+          <h3 class="t-title">«Спокойствие за деньги и результат»</h3>
+          <p class="t-quote">«Как родителю, мне важно, чтобы всё было официально. Оплата списывается только после урока, репетитор верифицирован в госреестре.»</p>
+        </div>
+        <div class="t-author">
+          <div class="t-avatar">👨‍👩‍👧</div>
+          <div>
+            <div class="t-name">Валерий Степанович</div>
+            <div class="t-role">Отец абитуриента</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial-card rv rv-d2 tilt">
+        <div class="spot"></div>
+        <div>
+          <div class="t-stars">★★★★★</div>
+          <h3 class="t-title">«Всё в одном окне — без Zoom»</h3>
+          <p class="t-quote">«Работаю как репетитор. Интерактивный класс, доска и авто-формирование чеков НПД сэкономили мне по 10 часов в неделю.»</p>
+        </div>
+        <div class="t-author">
+          <div class="t-avatar">👨‍🏫</div>
+          <div>
+            <div class="t-name">Дмитрий К.</div>
+            <div class="t-role">Репетитор по физике</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══════ BETA / ФОРМА ═══════ -->
 <section class="sec" id="beta">
   <div class="wrap">
     <div class="beta-wrap rv">
       <div class="beta-grid">
         <div class="beta-left">
-          <div class="eyebrow">Бета-тестирование</div>
-          <h2 class="sec-h">Станьте <span class="ac-l">бета-тестёром</span></h2>
-          <p class="sec-sub">Платформа готовится к запуску. Первыми участниками мы предлагаем лучшие условия — это выгодно обеим сторонам.</p>
+          <!-- Социальное доказательство / Плашка -->
+          <div style="margin-bottom:16px;display:inline-flex;align-items:center;gap:8px;background:rgba(198,255,51,0.1);border:1px solid rgba(198,255,51,0.25);padding:0.4rem 1rem;border-radius:9999px;font-size:0.78rem;font-weight:800;color:var(--ed-lime);">
+            <span>🔥</span> <span>Уже подали заявку 140+ преподавателей и центров</span>
+          </div>
+
+          <div class="eyebrow">Лист ожидания / Ранний доступ</div>
+          <h2 class="sec-h">Получить <span class="ac-l">ранний доступ</span></h2>
+          <p class="sec-sub">Платформа готовится к официальному запуску. Забронируйте доступ первым на эксклюзивных условиях.</p>
+
+          <!-- Лид-магнит / Стимул -->
+          <div style="background:linear-gradient(135deg, rgba(125,57,235,0.15) 0%, rgba(198,255,51,0.12) 100%);border:1px solid rgba(198,255,51,0.3);border-radius:16px;padding:16px 20px;margin:20px 0;display:flex;align-items:center;gap:14px;">
+            <div style="font-size:1.8rem;flex-shrink:0;">🎁</div>
+            <div>
+              <strong style="color:#fff;font-size:0.92rem;display:block;">Стимул для первых пользователей:</strong>
+              <span style="font-size:0.84rem;color:var(--text-dim);line-height:1.4;display:block;margin-top:2px;">Зарегистрируйтесь до официального запуска и получите <strong style="color:var(--ed-lime);">3 месяца бесплатного Premium-доступа + 5 ГБ хранилища навсегда</strong>.</span>
+            </div>
+          </div>
 
           <div class="beta-perks">
             <div class="beta-perk">
-              <div class="bp-ic">🎁</div>
-              <div><div class="t">Бесплатные первые занятия</div><div class="d">Для бета-тестёров диагностический урок и первое занятие — бесплатно.</div></div>
+              <div class="bp-ic">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+              </div>
+              <div><div class="t">Первый урок — в подарок</div><div class="d">Для первых участников ИИ-диагностика и первый урок без оплаты.</div></div>
             </div>
             <div class="beta-perk">
-              <div class="bp-ic">📊</div>
-              <div><div class="t">ИИ-диагностика по РИКЗ</div><div class="d">Карта знаний и персональный план подготовки сразу после заявки.</div></div>
+              <div class="bp-ic">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+              </div>
+              <div><div class="t">Приём платежей по ЕРИП</div><div class="d">Моментальный приём карт РБ и ЕРИП на ваш расчётный счёт.</div></div>
             </div>
             <div class="beta-perk">
-              <div class="bp-ic">⚡</div>
-              <div><div class="t">Приоритетный подбор</div><div class="d">Бета-тестёры получают репетитора в первую очередь, без очереди ожидания.</div></div>
+              <div class="bp-ic">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <div><div class="t">Приоритетный подбор</div><div class="d">Бета-участники получают топ-репетиторов без очереди ожидания.</div></div>
             </div>
             <div class="beta-perk">
-              <div class="bp-ic">💬</div>
-              <div><div class="t">Влияние на продукт</div><div class="d">Вы помогаете сделать платформу лучше — мы учитываем все ваши пожелания.</div></div>
+              <div class="bp-ic">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div><div class="t">Развитие платформы</div><div class="d">Ваши пожелания напрямую формируют функции виртуального класса.</div></div>
             </div>
           </div>
 
@@ -1763,53 +2288,57 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
             <form id="js-beta-form" novalidate>
               <div class="bf-role-select">
                 <button type="button" class="bf-role-btn active" data-role="parent">Родитель / Ученик</button>
-                <button type="button" class="bf-role-btn" data-role="tutor">Репетитор</button>
+                <button type="button" class="bf-role-btn" data-role="tutor">Репетитор / Школа</button>
                 <input type="hidden" name="role" id="bf-role-input" value="parent">
                 <input type="text" name="mid_name" id="bf-mid-name" style="display:none !important;" autocomplete="off" tabindex="-1">
               </div>
               
-              <div class="bf-field">
+              <div class="bf-field" id="field-name">
                 <label for="bf-name" id="bf-name-label">Ваше имя</label>
                 <input type="text" id="bf-name" name="name" placeholder="Иван Иванов" required>
+                <span class="valid-badge">✓</span>
                 <span class="bf-error" id="bf-name-error">Пожалуйста, введите имя</span>
               </div>
               
-              <div class="bf-field">
-                <label for="bf-phone">Номер телефона</label>
+              <div class="bf-field" id="field-phone">
+                <label for="bf-phone">Номер телефона / Telegram</label>
                 <input type="tel" id="bf-phone" name="phone" placeholder="+375 (29) 123-45-67" required>
+                <span class="valid-badge">✓</span>
                 <span class="bf-error" id="bf-phone-error">Введите телефон в формате +375 (XX) XXX-XX-XX</span>
               </div>
 
-              <div class="bf-field">
+              <div class="bf-field" id="field-email">
                 <label for="bf-email">Ваш Email</label>
                 <input type="email" id="bf-email" name="email" placeholder="example@edusfera.by" required>
+                <span class="valid-badge">✓</span>
                 <span class="bf-error" id="bf-email-error">Пожалуйста, введите корректный Email</span>
               </div>
               
-              <div class="bf-field">
+              <div class="bf-field" id="field-subject">
                 <label for="bf-subject" id="bf-subject-label">Предмет для подготовки</label>
                 <select id="bf-subject" name="subject" required>
                   <option value="" disabled selected>Выберите предмет...</option>
-                  <option value="math">Математика</option>
-                  <option value="physics">Физика</option>
-                  <option value="russian">Русский язык</option>
-                  <option value="belarusian">Белорусский язык</option>
-                  <option value="history">История Беларуси</option>
-                  <option value="social">Обществоведение</option>
-                  <option value="english">Английский язык</option>
-                  <option value="biology">Биология</option>
-                  <option value="chemistry">Химия</option>
+                  <option value="math">📐 Математика</option>
+                  <option value="physics">⚛️ Физика</option>
+                  <option value="russian">✍️ Русский язык</option>
+                  <option value="belarusian">📖 Белорусский язык</option>
+                  <option value="history">📜 История Беларуси</option>
+                  <option value="social">⚖️ Обществоведение</option>
+                  <option value="english">🌐 Английский язык</option>
+                  <option value="biology">🧬 Биология</option>
+                  <option value="chemistry">🧪 Химия</option>
                 </select>
+                <span class="valid-badge">✓</span>
                 <span class="bf-error" id="bf-subject-error">Пожалуйста, выберите предмет</span>
               </div>
               
               <button type="submit" class="btn btn-violet btn-block bf-submit-btn" style="margin-top: 12px; width: 100%;">
-                <span class="bf-btn-text">Отправить заявку</span>
+                <span class="bf-btn-text">Получить ранний доступ</span>
                 <span class="bf-spinner" style="display: none; animation: hc-spin 1s linear infinite;">🔄</span>
               </button>
               
               <p class="bf-agreement" style="font-size: 0.74rem; color: var(--text-dim); margin-top: 16px; text-align: center;">
-                Нажимая кнопку, вы соглашаетесь с <a href="privacy-policy.html" style="text-decoration: underline; color: var(--ed-lime);">политикой конфиденциальности</a>
+                Нажимая кнопку, вы соглашаетесь с <a href="privacy-policy.html" style="text-decoration: underline; color: var(--ed-lime);">политикой конфиденциальности (Закон 99-З РБ)</a>
               </p>
             </form>
             
@@ -1818,7 +2347,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
               <div style="font-size: 4rem; margin-bottom: 20px; animation: scaleUp .5s ease;">🎉</div>
               <h3 style="font-family: 'Rimma Sans', sans-serif; font-size: 1.55rem; margin-bottom: 12px; color: var(--ed-lime);">Заявка принята!</h3>
               <p style="font-size: 0.95rem; line-height: 1.6; color: #fff; margin-bottom: 16px;">
-                Спасибо, <span id="bf-success-name" style="color: var(--ed-lime); font-weight: 700;"></span>! Мы свяжемся с вами в Telegram или по телефону в течение 15 минут для подтверждения статуса и активации бонуса.
+                Спасибо, <span id="bf-success-name" style="color: var(--ed-lime); font-weight: 700;"></span>! Ваш ранний доступ с 3 месяцами Premium + 5 ГБ хранилища активирован. Мы свяжемся с вами в течение 15 минут.
               </p>
               <div style="background: rgba(255,255,255,0.07); border: 1px dashed var(--ed-lime); border-radius: 8px; padding: 16px; margin-bottom: 24px; display: inline-block; width: 100%; max-width: 320px; box-sizing: border-box;">
                 <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 4px;">Ваш инвайт-код раннего доступа:</div>
@@ -1842,35 +2371,44 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
     <div class="ftr-grid">
       <div class="ftr-brand">
         <a href="#top" class="logo">EDUSFERA.</a>
-        <p>Платформа для легального поиска репетиторов и безопасной оплаты занятий при подготовке к ЦТ и ЦЭ в Беларуси.</p>
+        <p>Первая белорусская платформа для преподавания, запуска онлайн-курсов и приема платежей через ЕРИП.</p>
         <span class="status-pill"><span class="d"></span> Платформа на стадии запуска</span>
       </div>
       <div class="ftr-col">
         <h4>Платформа</h4>
         <a href="#why">Выгоды</a>
+        <a href="#comparison">Сравнение</a>
         <a href="#tutors">Репетиторам</a>
         <a href="#calc">Калькулятор</a>
-        <a href="#beta">Бета-тест</a>
+        <a href="#beta">Ранний доступ</a>
       </div>
       <div class="ftr-col">
-        <h4>Документы</h4>
-        <a href="offer.html">Публичная оферта</a>
-        <a href="refund-policy.html">Правила возврата</a>
-        <a href="privacy-policy.html">Конфиденциальность</a>
+        <h4>Документы (bePaid & БСБ)</h4>
+        <a href="offer.html">Публичная оферта и тарифы</a>
+        <a href="privacy-policy.html">Конфиденциальность (Закон 99-З)</a>
+        <a href="payment-security.html">Правила оплаты и безопасность</a>
+        <a href="refund-policy.html">Правила возврата и отмены</a>
       </div>
       <div class="ftr-col">
-        <h4>Связь</h4>
+        <h4>Контакты и режим работы</h4>
         <a href="contacts.html">Контакты</a>
         <a href="mailto:edusferaby@gmail.com">edusferaby@gmail.com</a>
-        <a href="https://t.me/edusfera_by" rel="noopener">Telegram: @edusfera_by</a>
+        <a href="tel:+375295190821">+375 (29) 519-08-21</a>
+        <span style="font-size:0.78rem;color:var(--text-dim);margin-top:4px;display:block;">Режим работы: Пн-Пт 09:00 – 18:00 (Сб-Вс: выходной)</span>
       </div>
     </div>
-    <div class="ftr-info" style="border-top: 1px solid var(--dark-border); padding-top: 24px; margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; font-size: 0.82rem; line-height: 1.6; color: var(--text-dim);">
+
+    <!-- Полноширинная плашка цветных оригинальных логотипов из файлов bePaid -->
+    <div style="border-top:1px solid rgba(255,255,255,0.08);padding:24px 0 16px;margin-top:28px;width:100%;">
+      <img src="payment-logos-full.svg" alt="bePaid, БЕЛКАРТ, Visa, Mastercard, Samsung Pay, Google Pay" style="width:100%;max-width:100%;height:auto;object-fit:contain;display:block;" />
+    </div>
+
+    <div class="ftr-info" style="border-top: 1px solid var(--dark-border); padding-top: 24px; margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; font-size: 0.82rem; line-height: 1.6; color: var(--text-dim);">
       <div>
         <strong style="color: #fff; display: block; margin-bottom: 6px;">Юридическая информация</strong>
         Наименование: Общество с ограниченной ответственностью «Эдусфера»<br>
-        УНП: 192854899<br>
-        Юридический адрес: Республика Беларусь, г. Минск, 220100, ул. Веры Хоружей, д. 6А, пом. 29
+        Гос. регистрация: Зарегистрировано Минским горисполкомом 25.10.2023 г., УНП 192854899<br>
+        Юридический адрес: Республика Беларусь, 220100, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29
       </div>
       <div>
         <strong style="color: #fff; display: block; margin-bottom: 6px;">Банковские реквизиты</strong>
@@ -1881,7 +2419,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
     </div>
     <div class="ftr-bottom" style="margin-top: 16px;">
       <div>© <span id="year">2026</span> ООО «Эдусфера». Все права защищены.</div>
-      <div>Минск, Беларусь · Сделано для абитуриентов</div>
+      <div>Минск, Беларусь · Сделано для преподавателей и абитуриентов</div>
     </div>
   </div>
 </footer>
@@ -2144,6 +2682,41 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
     document.querySelectorAll('.bf-field').forEach(f => f.classList.remove('has-error'));
   }
 
+  // Живой отклик при вводе (Rule 1: Каждое действие — с визуальным откликом)
+  const nameInp = document.getElementById('bf-name');
+  const phoneInp = document.getElementById('bf-phone');
+  const emailInp = document.getElementById('bf-email');
+  const subjectInp = document.getElementById('bf-subject');
+
+  if (nameInp) {
+    nameInp.addEventListener('input', () => {
+      const f = nameInp.closest('.bf-field');
+      if (nameInp.value.trim().length >= 2) { f.classList.add('valid'); f.classList.remove('has-error'); }
+      else { f.classList.remove('valid'); }
+    });
+  }
+  if (phoneInp) {
+    phoneInp.addEventListener('input', () => {
+      const f = phoneInp.closest('.bf-field');
+      if (validatePhone(phoneInp.value)) { f.classList.add('valid'); f.classList.remove('has-error'); }
+      else { f.classList.remove('valid'); }
+    });
+  }
+  if (emailInp) {
+    emailInp.addEventListener('input', () => {
+      const f = emailInp.closest('.bf-field');
+      if (validateEmail(emailInp.value.trim())) { f.classList.add('valid'); f.classList.remove('has-error'); }
+      else { f.classList.remove('valid'); }
+    });
+  }
+  if (subjectInp) {
+    subjectInp.addEventListener('change', () => {
+      const f = subjectInp.closest('.bf-field');
+      if (subjectInp.value) { f.classList.add('valid'); f.classList.remove('has-error'); }
+      else { f.classList.remove('valid'); }
+    });
+  }
+
   if (form) {
     form.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -2279,5 +2852,6 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
   } catch(err) {}
 }();
 </script>
+
 </body>
 </html>

@@ -34,6 +34,14 @@ cookies*.txt
 
 # Temporary and local test files
 .agent/
+.agents/
 .codegraph/
+.venv/
 scratch/
 test_script.php
+codegraph.html
+
+# Go microservice binaries
+/edusfera-ledger/edusfera-ledger
+/edusfera-media/loadtest
+/edusfera-workspace/server
