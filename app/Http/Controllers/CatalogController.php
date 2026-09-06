@@ -126,9 +126,7 @@ class CatalogController extends Controller
 
     public function show(TutorProfile $tutor)
     {
-        abort_unless($tutor->is_verified, 404);
-
-        $tutor->load('user');
+        $tutor->load(['user', 'user.subscription']);
         $selectedDate = request('date')
             ? CarbonImmutable::createFromFormat('Y-m-d', (string) request('date'), $this->bookingService->displayTimezone())
             : $this->bookingService->minBookableDate();

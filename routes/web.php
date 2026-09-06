@@ -95,9 +95,13 @@ Route::match(['get', 'post'], '/account/add', [AccountSwitcherController::class,
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 Route::get('/tutors', [CatalogController::class, 'index'])->name('tutors.index');
 Route::get('/tutors/{tutor}', [CatalogController::class, 'show'])->name('tutors.show');
+Route::get('/tutor/{tutor}', [CatalogController::class, 'show'])->name('tutor.show');
 Route::post('/tutors/{tutor}/book', [LessonBookingController::class, 'store'])
     ->middleware(['auth', 'throttle:10,1'])
     ->name('tutors.book');
+Route::post('/tutor/{tutor}/book', [LessonBookingController::class, 'store'])
+    ->middleware(['auth', 'throttle:10,1'])
+    ->name('tutor.book');
 Route::get('/checkout/{lesson}', [CheckoutController::class, 'show'])
     ->middleware('auth')
     ->name('checkout.show');

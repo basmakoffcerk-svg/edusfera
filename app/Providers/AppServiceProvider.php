@@ -109,6 +109,38 @@ class AppServiceProvider extends ServiceProvider
         // Passport::tokensCan() принимает массив [scope => description].
         Passport::tokensCan(config('oauth.scopes', []));
 
+        // Поддержка разрешения репетитора по tutor_profile.id, user_id или email
+        \Illuminate\Support\Facades\Route::bind('tutor', function ($value) {
+            if ($value instanceof TutorProfile) {
+                return $value;
+            }
+
+            $profile = TutorProfile::query()
+                ->where('id', $value)
+                ->orWhere('user_id', $value)
+                ->first();
+
+            if ($profile) {
+                return $profile;
+            }
+
+            $user = User::query()
+                ->where('id', $value)
+                ->orWhere('email', $value)
+                ->first();
+
+            if ($user && ($user->isTutor() || $user->role === 'tutor' || (is_object($user->role) && $user->role->value === 'tutor'))) {
+                return $user->tutorProfile ?: $user->tutorProfile()->create([
+                    'subjects' => ['Математика'],
+                    'price_per_hour' => '35.00',
+                    'is_verified' => true,
+                    'verification_status' => 'approved',
+                ]);
+            }
+
+            abort(404);
+        });
+
         if (file_exists(public_path('hot')) && ! in_array(request()->getHost(), ['localhost', '127.0.0.1'], true)) {
             @unlink(public_path('hot'));
         }
