@@ -1,0 +1,60 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://edusfera.by/events/lesson.booked.v1.json",
+    "title": "lesson.booked.v1 payload",
+    "description": "Payload integration event lesson.booked v1. Emitted when a student books a lesson with a tutor. Within major version 1 fields are only added, never removed or retyped (requirement 8.5). additionalProperties=true allows forward-compatible extensions.",
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+        "lesson_id",
+        "tutor_id",
+        "student_id",
+        "start_time",
+        "end_time",
+        "duration_minutes",
+        "price",
+        "package_code"
+    ],
+    "properties": {
+        "lesson_id": {
+            "description": "Lesson aggregate id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "tutor_id": {
+            "description": "Tutor user id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "student_id": {
+            "description": "Student user id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "start_time": {
+            "description": "Planned lesson start, ISO-8601 UTC.",
+            "type": "string",
+            "format": "date-time"
+        },
+        "end_time": {
+            "description": "Planned lesson end, ISO-8601 UTC.",
+            "type": "string",
+            "format": "date-time"
+        },
+        "duration_minutes": {
+            "description": "Planned duration in minutes.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "price": {
+            "description": "Lesson price as decimal string (e.g. '25.00').",
+            "type": "string",
+            "minLength": 1
+        },
+        "package_code": {
+            "description": "Package code (single, pack_4, pack_8).",
+            "type": "string",
+            "minLength": 1
+        }
+    }
+}

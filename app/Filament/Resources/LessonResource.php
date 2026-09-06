@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Contracts\Lesson\LessonBooker;
+use App\Domain\Lesson\CancelReason;
 use App\Filament\Resources\LessonResource\Pages;
 use App\Models\Lesson;
 use App\Models\LessonReview;
-use App\Notifications\LessonCancelledNotification;
 use App\Notifications\LessonConfirmedNotification;
-use App\Support\BynMoneyFormatter;
 use App\Services\ChatService;
 use App\Services\Payment\PaymentService;
 use App\Services\PostLessonReportService;
+use App\Support\BynMoneyFormatter;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -24,7 +25,6 @@ use Filament\Tables;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\HtmlString;
 
 class LessonResource extends Resource
 {
@@ -154,14 +154,10 @@ class LessonResource extends Resource
                                         ->formatStateUsing(fn ($state) => BynMoneyFormatter::format((string) $state)),
                                     Infolists\Components\TextEntry::make('package_label')
                                         ->label('Тип оплаты'),
-                                    Infolists\Components\TextEntry::make('platform_commission')
-                                        ->label('Комиссия платформы')
-                                        ->formatStateUsing(fn ($state) => BynMoneyFormatter::format((string) $state))
-                                        ->visible(fn () => auth()->user()?->role === 'admin'),
                                     Infolists\Components\TextEntry::make('net_amount')
-                                        ->label('К выплате репетитору')
+                                        ->label('К зачислению репетитору')
                                         ->formatStateUsing(fn ($state) => BynMoneyFormatter::format((string) $state))
-                                        ->visible(fn () => in_array(auth()->user()?->role, ['admin', 'tutor'], true)),
+                                        ->visible(fn () => auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isTutor())),
                                 ]),
 
                             Infolists\Components\Section::make('Отзыв')
@@ -190,11 +186,11 @@ class LessonResource extends Resource
                     ->label('Репетитор')
                     ->searchable()
                     ->description(fn (Lesson $record): string => $record->package_label)
-                    ->toggleable(isToggledHiddenByDefault: auth()->user()?->role === 'tutor'),
+                    ->toggleable(isToggledHiddenByDefault: auth()->user()?->isTutor() ?? false),
                 Tables\Columns\TextColumn::make('student.name')
                     ->label('Ученик')
                     ->searchable()
-                    ->description(fn (Lesson $record): string => $record->parent?->name ? 'Родитель: ' . $record->parent->name : 'Самостоятельная запись')
+                    ->description(fn (Lesson $record): string => $record->parent?->name ? 'Родитель: '.$record->parent->name : 'Самостоятельная запись')
                     ->toggleable(isToggledHiddenByDefault: auth()->user()?->role !== 'tutor'),
                 Tables\Columns\TextColumn::make('start_time')
                     ->label('Начало')
@@ -245,7 +241,7 @@ class LessonResource extends Resource
                     ->formatStateUsing(fn ($state): string => $state ? 'Заполнен' : 'Не заполнен')
                     ->badge()
                     ->color(fn ($state): string => $state ? 'success' : 'gray')
-                    ->toggleable(isToggledHiddenByDefault: auth()->user()?->role === 'admin'),
+                    ->toggleable(isToggledHiddenByDefault: auth()->user()?->isAdmin() ?? false),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -270,7 +266,7 @@ class LessonResource extends Resource
                     ->query(fn (Builder $query): Builder => $query->whereDate('start_time', now(config('booking.display_timezone'))->toDateString())),
                 Filter::make('needs_report')
                     ->label('Без отчёта')
-                    ->visible(fn (): bool => auth()->user()?->role === 'tutor')
+                    ->visible(fn (): bool => auth()->user()?->isTutor() ?? false)
                     ->query(fn (Builder $query): Builder => $query
                         ->whereIn('status', [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED])
                         ->where('payment_status', Lesson::PAYMENT_PAID)
@@ -292,20 +288,18 @@ class LessonResource extends Resource
                     ->label('Подробнее')
                     ->button()
                     ->color('gray'),
-                Tables\Actions\Action::make('open_meeting')
-                    ->label('Войти')
+                Tables\Actions\Action::make('open_classroom')
+                    ->label('Войти в класс')
                     ->icon('heroicon-o-video-camera')
                     ->color('primary')
-                    ->url(fn (Lesson $record): ?string => $record->meeting_link)
-                    ->openUrlInNewTab()
-                    ->visible(fn (Lesson $record): bool => filled($record->meeting_link)
-                        && $record->payment_status === Lesson::PAYMENT_PAID
+                    ->url(fn (Lesson $record): string => route('classroom.show', $record))
+                    ->visible(fn (Lesson $record): bool => $record->payment_status === Lesson::PAYMENT_PAID
                         && in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true)),
                 Tables\Actions\Action::make('confirm')
                     ->label('Подтвердить')
                     ->color('success')
                     ->icon('heroicon-o-check-circle')
-                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, ['admin', 'tutor'], true) && $record->status === Lesson::STATUS_PENDING && $record->payment_status === Lesson::PAYMENT_PAID)
+                    ->visible(fn (Lesson $record): bool => auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isTutor()) && $record->status === Lesson::STATUS_PENDING && $record->payment_status === Lesson::PAYMENT_PAID)
                     ->requiresConfirmation()
                     ->action(function (Lesson $record): void {
                         $record->update(['status' => Lesson::STATUS_CONFIRMED]);
@@ -315,7 +309,7 @@ class LessonResource extends Resource
                     ->label('Завершить')
                     ->color('success')
                     ->icon('heroicon-o-flag')
-                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, ['admin', 'tutor'], true)
+                    ->visible(fn (Lesson $record): bool => auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isTutor())
                         && $record->status === Lesson::STATUS_CONFIRMED
                         && $record->payment_status === Lesson::PAYMENT_PAID
                         && $record->end_time->isPast())
@@ -334,12 +328,12 @@ class LessonResource extends Resource
                     ->label('Оплатить урок')
                     ->icon('heroicon-o-credit-card')
                     ->color('success')
-                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, ['student', 'parent'], true) && $record->payment_status === Lesson::PAYMENT_UNPAID)
+                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true) && $record->payment_status === Lesson::PAYMENT_UNPAID)
                     ->url(fn (Lesson $record): string => route('checkout.show', $record)),
                 Tables\Actions\Action::make('meeting_link')
                     ->label('Ссылка на встречу')
                     ->icon('heroicon-o-video-camera')
-                    ->visible(fn (): bool => in_array(auth()->user()?->role, ['admin', 'tutor'], true))
+                    ->visible(fn (): bool => auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isTutor()))
                     ->fillForm(fn (Lesson $record): array => ['meeting_link' => $record->meeting_link])
                     ->form([
                         Forms\Components\TextInput::make('meeting_link')
@@ -352,7 +346,7 @@ class LessonResource extends Resource
                     ->label('Отчёт после урока')
                     ->icon('heroicon-o-document-text')
                     ->color('primary')
-                    ->visible(fn (Lesson $record): bool => auth()->user()?->role === 'tutor'
+                    ->visible(fn (Lesson $record): bool => (auth()->user()?->isTutor() ?? false)
                         && in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true)
                         && $record->payment_status === Lesson::PAYMENT_PAID)
                     ->fillForm(fn (Lesson $record): array => [
@@ -412,7 +406,7 @@ class LessonResource extends Resource
                     ->label('Оценить')
                     ->icon('heroicon-o-star')
                     ->color('warning')
-                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, ['student', 'parent'], true)
+                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)
                         && $record->status === Lesson::STATUS_COMPLETED
                         && $record->payment_status === Lesson::PAYMENT_PAID
                         && $record->review === null)
@@ -454,11 +448,11 @@ class LessonResource extends Resource
                     ->visible(function (Lesson $record): bool {
                         $user = auth()->user();
 
-                        if (in_array($user?->role, ['admin', 'tutor'], true)) {
+                        if ($user && ($user->isAdmin() || $user->isTutor())) {
                             return in_array($record->status, [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED], true);
                         }
 
-                        if (in_array($user?->role, ['student', 'parent'], true)) {
+                        if ($user && ($user->isStudent() || $user->role === \App\Enums\UserRole::Parent)) {
                             return in_array($record->status, [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED], true)
                                 && $record->start_time->isAfter(now('UTC')->addDay());
                         }
@@ -467,30 +461,24 @@ class LessonResource extends Resource
                     })
                     ->requiresConfirmation()
                     ->action(function (Lesson $record): void {
-                        if ($record->payment_status === Lesson::PAYMENT_PAID) {
-                            app(PaymentService::class)->refundLessonPayment($record, 'lesson_cancelled');
+                        // Требование 6.3: мутация агрегата Lesson идёт через контракт
+                        // LessonBooker, а не через прямое изменение Eloquent-модели.
+                        $wasPaid = $record->payment_status === Lesson::PAYMENT_PAID;
 
-                            Notification::make()
-                                ->title('Урок отменен, возврат оформлен')
-                                ->success()
-                                ->send();
-
-                            return;
-                        }
-
-                        $record->update(['status' => Lesson::STATUS_CANCELLED]);
-                        $record->student?->notify(new LessonCancelledNotification($record->fresh()));
-                        $record->tutor?->notify(new LessonCancelledNotification($record->fresh()));
+                        app(LessonBooker::class)->cancel(
+                            (int) $record->id,
+                            CancelReason::lessonCancelled(),
+                        );
 
                         Notification::make()
-                            ->title('Урок отменен')
+                            ->title($wasPaid ? 'Урок отменен, возврат оформлен' : 'Урок отменен')
                             ->success()
                             ->send();
                     }),
                 Tables\Actions\Action::make('reschedule')
                     ->label('Перенести')
                     ->icon('heroicon-o-arrow-path')
-                    ->visible(fn (): bool => in_array(auth()->user()?->role, ['student', 'parent'], true))
+                    ->visible(fn (): bool => in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true))
                     ->requiresConfirmation()
                     ->modalDescription('Функция переноса появится в следующей итерации MVP.')
                     ->action(fn (): null => null),
@@ -515,15 +503,15 @@ class LessonResource extends Resource
         $query = parent::getEloquentQuery()->with(['tutor', 'student', 'parent', 'transaction', 'review']);
         $user = auth()->user();
 
-        if ($user?->role === 'admin') {
+        if ($user?->isAdmin()) {
             return $query;
         }
 
-        if ($user?->role === 'tutor') {
+        if ($user?->isTutor()) {
             return $query->where('tutor_id', $user->id);
         }
 
-        if ($user?->role === 'parent') {
+        if ($user?->role === \App\Enums\UserRole::Parent) {
             return $query->where(function (Builder $builder) use ($user): Builder {
                 return $builder
                     ->where('student_id', $user->id)
@@ -596,8 +584,8 @@ class LessonResource extends Resource
         }
 
         return match (auth()->user()?->role) {
-            'tutor' => 'Моё расписание',
-            'student', 'parent' => 'Мои уроки',
+            \App\Enums\UserRole::Tutor => 'Моё расписание',
+            \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent => 'Мои уроки',
             default => 'Уроки',
         };
     }
@@ -605,25 +593,26 @@ class LessonResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         $panelId = Filament::getCurrentPanel()?->getId();
+        $user = auth()->user();
 
-        if ($panelId === 'site-admin') {
+        if ($panelId === 'site-admin' || $user?->isAdmin()) {
             return 'Операции';
         }
 
-        return auth()->user()?->role === 'tutor'
-            ? 'Организация'
+        return $user?->isTutor()
+            ? 'Занятия'
             : 'Обучение';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 2;
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->user();
-        $panelId = Filament::getCurrentPanel()?->getId();
 
-        if ($panelId === 'site-admin') {
-            return $user?->role === 'admin';
-        }
-
-        return in_array($user?->role, ['tutor', 'student', 'parent'], true);
+        return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent, \App\Enums\UserRole::Admin], true);
     }
 }

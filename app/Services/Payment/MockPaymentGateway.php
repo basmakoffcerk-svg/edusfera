@@ -13,7 +13,7 @@ class MockPaymentGateway implements PaymentGatewayInterface
     {
         $payload = [
             'success' => true,
-            'gateway_transaction_id' => 'mock_' . Str::uuid(),
+            'gateway_transaction_id' => 'mock_'.Str::uuid(),
             'status' => 'success',
             'callback_url' => $this->getCallbackUrl(),
             'payload' => $data,
@@ -27,6 +27,25 @@ class MockPaymentGateway implements PaymentGatewayInterface
     public function verifyPayment(string $transactionId): bool
     {
         Log::channel('payments')->info('Mock payment verified', [
+            'gateway_transaction_id' => $transactionId,
+        ]);
+
+        return true;
+    }
+
+    public function capturePayment(string $transactionId, float $amount): bool
+    {
+        Log::channel('payments')->info('Mock payment captured', [
+            'gateway_transaction_id' => $transactionId,
+            'amount' => number_format($amount, 2, '.', ''),
+        ]);
+
+        return true;
+    }
+
+    public function voidPayment(string $transactionId): bool
+    {
+        Log::channel('payments')->info('Mock payment voided', [
             'gateway_transaction_id' => $transactionId,
         ]);
 

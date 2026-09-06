@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\Events\EventActor;
+use App\Domain\Shared\Events\EventEnvelopeFactory;
+use App\Enums\UserRole;
 use App\Exceptions\SlotUnavailableException;
+use App\Integrations\Outbox\OutboxRepository;
 use App\Models\Lesson;
 use App\Models\TutorAvailability;
 use App\Models\TutorProfile;
@@ -12,15 +16,17 @@ use App\Models\User;
 use App\Notifications\LessonBookedStudentNotification;
 use App\Notifications\LessonBookedTutorNotification;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
-    public function __construct(private readonly PackageService $packageService)
-    {
-    }
+    public function __construct(
+        private readonly PackageService $packageService,
+        private readonly EventEnvelopeFactory $eventFactory,
+        private readonly OutboxRepository $outbox,
+    ) {}
 
     public function createBooking(
         TutorProfile $tutorProfile,
@@ -55,6 +61,7 @@ class BookingService
 
         $lesson = DB::transaction(function () use ($booker, $duration, $endLocal, $notes, $packageCode, $startLocal, $tutorProfile): Lesson {
             User::query()->whereKey($tutorProfile->user_id)->lockForUpdate()->first();
+            User::query()->whereKey($booker->id)->lockForUpdate()->first();
 
             $startUtc = $startLocal->utc();
             $endUtc = $endLocal->utc();
@@ -78,38 +85,74 @@ class BookingService
                 throw new SlotUnavailableException('Время занято.');
             }
 
+            $hasStudentConflict = Lesson::query()
+                ->where('student_id', $booker->id)
+                ->where('status', '!=', Lesson::STATUS_CANCELLED)
+                ->where(function ($query) use ($nowUtc) {
+                    $query
+                        ->where('payment_status', '!=', Lesson::PAYMENT_UNPAID)
+                        ->orWhereNull('payment_lock_expires_at')
+                        ->orWhere('payment_lock_expires_at', '>', $nowUtc);
+                })
+                ->where('start_time', '<', $endUtc)
+                ->where('end_time', '>', $startUtc)
+                ->lockForUpdate()
+                ->exists();
+
+            if ($hasStudentConflict) {
+                throw ValidationException::withMessages([
+                    'slot' => 'У вас уже есть занятие в это время.',
+                ]);
+            }
+
             $price = (float) $tutorProfile->price_per_hour;
             $package = $this->packageService->resolve($packageCode, $price);
             $payableAmount = $package['total'];
-            $commission = round($payableAmount * (float) config('payments.commission_rate', 0.15), 2);
-            $netAmount = round($payableAmount - $commission, 2);
+            $netAmount = $payableAmount;
 
-            $lesson = Lesson::query()->create([
+            $lesson = Lesson::query()->forceCreate([
                 'tutor_id' => $tutorProfile->user_id,
                 'student_id' => $booker->id,
-                'parent_id' => $booker->role === 'parent' ? $booker->id : null,
+                'parent_id' => $booker->role === UserRole::Parent ? $booker->id : null,
                 'start_time' => $startUtc,
                 'end_time' => $endUtc,
                 'duration_minutes' => $duration,
                 'price' => number_format($price, 2, '.', ''),
-                'platform_commission' => number_format($commission, 2, '.', ''),
+                'platform_commission' => '0.00',
                 'net_amount' => number_format($netAmount, 2, '.', ''),
-                'status' => Lesson::STATUS_PENDING,
-                'payment_status' => Lesson::PAYMENT_UNPAID,
+                'status' => Lesson::STATUS_CONFIRMED,
+                'payment_status' => Lesson::PAYMENT_PAID,
                 'package_code' => $package['code'],
                 'package_lessons' => $package['lessons'],
                 'package_lessons_remaining' => $package['lessons'],
                 'package_total' => number_format($package['total'], 2, '.', ''),
                 'package_discount' => number_format($package['discount'], 2, '.', ''),
-                'payment_lock_expires_at' => now('UTC')->addMinutes(15),
+                'payment_lock_expires_at' => null,
                 'checkout_started_at' => now('UTC'),
                 'notes' => $notes,
             ]);
 
+            // Эмиссия интеграционного события lesson.booked.v1 в outbox.
+            // Запись атомарна с созданием урока (та же транзакция).
+            $this->outbox->append(
+                $this->eventFactory->lessonBooked(
+                    $lesson,
+                    new EventActor('user', $lesson->student_id, 'student'),
+                ),
+            );
+
             DB::afterCommit(function () use ($lesson): void {
                 $lesson->loadMissing('student', 'tutor');
-                $lesson->student?->notify(new LessonBookedStudentNotification($lesson));
-                $lesson->tutor?->notify(new LessonBookedTutorNotification($lesson));
+                try {
+                    $lesson->student?->notify(new LessonBookedStudentNotification($lesson));
+                } catch (\Throwable $e) {
+                    Log::warning('Booking notification to student failed: '.$e->getMessage());
+                }
+                try {
+                    $lesson->tutor?->notify(new LessonBookedTutorNotification($lesson));
+                } catch (\Throwable $e) {
+                    Log::warning('Booking notification to tutor failed: '.$e->getMessage());
+                }
             });
 
             return $lesson;
@@ -198,6 +241,7 @@ class BookingService
 
         $parentLesson = DB::transaction(function () use ($booker, $duration, $notes, $package, $price, $starts, $tutorProfile): Lesson {
             User::query()->whereKey($tutorProfile->user_id)->lockForUpdate()->first();
+            User::query()->whereKey($booker->id)->lockForUpdate()->first();
 
             foreach ($starts as $startLocal) {
                 $startUtc = $startLocal->utc();
@@ -221,65 +265,100 @@ class BookingService
                 if ($hasConflict) {
                     throw new SlotUnavailableException('Один из выбранных слотов уже занят.');
                 }
+
+                $hasStudentConflict = Lesson::query()
+                    ->where('student_id', $booker->id)
+                    ->where('status', '!=', Lesson::STATUS_CANCELLED)
+                    ->where(function ($query) use ($nowUtc) {
+                        $query
+                            ->where('payment_status', '!=', Lesson::PAYMENT_UNPAID)
+                            ->orWhereNull('payment_lock_expires_at')
+                            ->orWhere('payment_lock_expires_at', '>', $nowUtc);
+                    })
+                    ->where('start_time', '<', $endUtc)
+                    ->where('end_time', '>', $startUtc)
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($hasStudentConflict) {
+                    throw ValidationException::withMessages([
+                        'slots' => 'У вас уже есть занятие в один из выбранных слотов.',
+                    ]);
+                }
             }
 
             $payableAmount = $package['total'];
-            $commission = round($payableAmount * (float) config('payments.commission_rate', 0.15), 2);
-            $netAmount = round($payableAmount - $commission, 2);
-            $paymentLockExpiresAt = now('UTC')->addMinutes(15);
+            $netAmount = $payableAmount;
+            $paymentLockExpiresAt = null;
             $checkoutStartedAt = now('UTC');
             $firstStart = $starts->first();
 
-            $parentLesson = Lesson::query()->create([
+            $parentLesson = Lesson::query()->forceCreate([
                 'tutor_id' => $tutorProfile->user_id,
                 'student_id' => $booker->id,
-                'parent_id' => $booker->role === 'parent' ? $booker->id : null,
+                'parent_id' => $booker->role === UserRole::Parent ? $booker->id : null,
                 'start_time' => $firstStart->utc(),
                 'end_time' => $firstStart->addMinutes($duration)->utc(),
                 'duration_minutes' => $duration,
                 'price' => number_format($price, 2, '.', ''),
-                'platform_commission' => number_format($commission, 2, '.', ''),
+                'platform_commission' => '0.00',
                 'net_amount' => number_format($netAmount, 2, '.', ''),
-                'status' => Lesson::STATUS_PENDING,
-                'payment_status' => Lesson::PAYMENT_UNPAID,
+                'status' => Lesson::STATUS_CONFIRMED,
+                'payment_status' => Lesson::PAYMENT_PAID,
                 'package_code' => $package['code'],
                 'package_lessons' => $package['lessons'],
                 'package_lessons_remaining' => $package['lessons'],
                 'package_total' => number_format($package['total'], 2, '.', ''),
                 'package_discount' => number_format($package['discount'], 2, '.', ''),
-                'payment_lock_expires_at' => $paymentLockExpiresAt,
+                'payment_lock_expires_at' => null,
                 'checkout_started_at' => $checkoutStartedAt,
                 'notes' => $notes,
             ]);
 
-            $starts->skip(1)->each(function (CarbonImmutable $startLocal) use ($booker, $duration, $package, $parentLesson, $paymentLockExpiresAt, $price, $tutorProfile): void {
-                Lesson::query()->create([
+            $starts->skip(1)->each(function (CarbonImmutable $startLocal) use ($booker, $duration, $package, $parentLesson, $price, $tutorProfile): void {
+                Lesson::query()->forceCreate([
                     'tutor_id' => $tutorProfile->user_id,
                     'student_id' => $booker->id,
-                    'parent_id' => $booker->role === 'parent' ? $booker->id : null,
+                    'parent_id' => $booker->role === UserRole::Parent ? $booker->id : null,
                     'start_time' => $startLocal->utc(),
                     'end_time' => $startLocal->addMinutes($duration)->utc(),
                     'duration_minutes' => $duration,
                     'price' => number_format($price, 2, '.', ''),
                     'platform_commission' => '0.00',
                     'net_amount' => '0.00',
-                    'status' => Lesson::STATUS_PENDING,
-                    'payment_status' => Lesson::PAYMENT_UNPAID,
+                    'status' => Lesson::STATUS_CONFIRMED,
+                    'payment_status' => Lesson::PAYMENT_PAID,
                     'package_code' => $package['code'],
                     'package_lessons' => 1,
                     'package_lessons_remaining' => null,
                     'package_parent_lesson_id' => $parentLesson->id,
                     'package_total' => null,
                     'package_discount' => '0.00',
-                    'payment_lock_expires_at' => $paymentLockExpiresAt,
+                    'payment_lock_expires_at' => null,
                     'checkout_started_at' => $parentLesson->checkout_started_at,
                 ]);
             });
 
+            // Эмиссия интеграционного события lesson.booked.v1 в outbox.
+            $this->outbox->append(
+                $this->eventFactory->lessonBooked(
+                    $parentLesson,
+                    new EventActor('user', $parentLesson->student_id, 'student'),
+                ),
+            );
+
             DB::afterCommit(function () use ($parentLesson): void {
                 $parentLesson->loadMissing('student', 'tutor');
-                $parentLesson->student?->notify(new LessonBookedStudentNotification($parentLesson));
-                $parentLesson->tutor?->notify(new LessonBookedTutorNotification($parentLesson));
+                try {
+                    $parentLesson->student?->notify(new LessonBookedStudentNotification($parentLesson));
+                } catch (\Throwable $e) {
+                    Log::warning('Package booking notification to student failed: '.$e->getMessage());
+                }
+                try {
+                    $parentLesson->tutor?->notify(new LessonBookedTutorNotification($parentLesson));
+                } catch (\Throwable $e) {
+                    Log::warning('Package booking notification to tutor failed: '.$e->getMessage());
+                }
             });
 
             return $parentLesson;
@@ -326,12 +405,12 @@ class BookingService
         foreach ($availability as $window) {
             $cursor = CarbonImmutable::createFromFormat(
                 'Y-m-d H:i:s',
-                $dayStartLocal->format('Y-m-d') . ' ' . $window->start_time,
+                $dayStartLocal->format('Y-m-d').' '.$window->start_time,
                 $timezone,
             );
             $windowEnd = CarbonImmutable::createFromFormat(
                 'Y-m-d H:i:s',
-                $dayStartLocal->format('Y-m-d') . ' ' . $window->end_time,
+                $dayStartLocal->format('Y-m-d').' '.$window->end_time,
                 $timezone,
             );
 
@@ -369,6 +448,24 @@ class BookingService
         return CarbonImmutable::now($this->displayTimezone())->addDay()->startOfDay();
     }
 
+    public function generateTutorBookingUrl(User $tutor): string
+    {
+        $profileId = $tutor->tutorProfile?->id ?? TutorProfile::query()->where('user_id', $tutor->id)->value('id') ?? $tutor->id;
+
+        return url("/tutors/{$profileId}#book");
+    }
+
+    public function confirmBooking(Lesson $lesson): Lesson
+    {
+        $lesson->update([
+            'status' => Lesson::STATUS_CONFIRMED,
+            'payment_status' => Lesson::PAYMENT_PAID,
+            'payment_lock_expires_at' => null,
+        ]);
+
+        return $lesson->fresh();
+    }
+
     public function displayTimezone(): string
     {
         return (string) config('booking.display_timezone', 'Europe/Minsk');
@@ -376,7 +473,7 @@ class BookingService
 
     private function ensureBookerCanBook(User $booker, TutorProfile $tutorProfile): void
     {
-        if (! in_array($booker->role, ['student', 'parent'], true)) {
+        if (! in_array($booker->role, [UserRole::Student, UserRole::Parent], true)) {
             throw ValidationException::withMessages([
                 'slot' => 'Запись доступна только ученикам и родителям.',
             ]);
@@ -435,5 +532,4 @@ class BookingService
             ]);
         }
     }
-
 }

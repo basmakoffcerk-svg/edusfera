@@ -1,47 +1,81 @@
-<x-filament-widgets::widget>
-    <section class="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-        <div class="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-            <div>
-                <p class="text-xs font-black uppercase tracking-[0.22em] text-stone-500">Лестница комиссий</p>
-                <div class="mt-2 flex flex-wrap items-center gap-3">
-                    <h3 class="text-3xl font-black tracking-[-0.05em] text-stone-950">Текущая комиссия: {{ $currentRate }}%</h3>
-                    <span class="inline-flex min-h-9 items-center rounded-full bg-stone-100 px-3 text-xs font-bold text-stone-700">
-                        {{ $monthlyPaidLessons }} оплаченных уроков в этом месяце
+<div class="tutor-card">
+    <div class="tutor-comm-top">
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                <span class="tutor-card-label">SaaS Подписка</span>
+                <span class="tutor-chip tutor-chip--done" style="padding: 3px 8px; font-size: 11px;">
+                    100% дохода вам
+                </span>
+                @if ($isFounder)
+                    <span class="tutor-chip" style="padding: 3px 8px; font-size: 11px; background: rgba(245, 158, 11, 0.12); color: #d97706; border-color: rgba(245, 158, 11, 0.3);">
+                        ★ Статус Основателя (Founder)
                     </span>
-                </div>
-
-                <p class="mt-3 text-sm leading-7 text-stone-600">
-                    @if ($nextTier)
-                        Проведите еще {{ $lessonsToNextTier }}
-                        {{ trans_choice('урок|урока|уроков', $lessonsToNextTier) }}
-                        через платформу, чтобы снизить комиссию до {{ $nextTier['rate'] }}%.
-                    @else
-                        Вы уже на максимальной ступени комиссии. Сохраняйте уроки внутри платформы, чтобы не терять маржинальность.
-                    @endif
-                </p>
-
-                <div class="mt-4">
-                    <div class="flex items-center justify-between text-xs font-black uppercase tracking-[0.18em] text-stone-500">
-                        <span>{{ $currentTier['label'] }}</span>
-                        <span>{{ $nextTier['label'] ?? 'Максимум' }}</span>
-                    </div>
-                    <div class="mt-2 h-3 overflow-hidden rounded-full bg-stone-100">
-                        <div class="h-full rounded-full bg-lime-500 transition-all duration-500" style="width: {{ $progress }}%;"></div>
-                    </div>
-                </div>
+                @endif
             </div>
 
-            <div class="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                <p class="text-xs font-black uppercase tracking-[0.2em] text-stone-500">Доход за месяц</p>
-                <p class="mt-2 text-3xl font-black tracking-[-0.05em] text-stone-950">{{ $monthlyRevenue }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/></p>
-                <p class="mt-2 text-sm leading-7 text-stone-600">{{ $nextTierRevenueHint }}</p>
-                <a
-                    href="/admin/transactions"
-                    class="mt-3 inline-flex min-h-10 items-center rounded-xl bg-lime-400 px-4 text-sm font-black text-stone-950 transition hover:bg-lime-300"
-                >
-                    История оплат
-                </a>
+            <div class="tutor-comm-rate" style="gap: 8px;">
+                <span class="tutor-comm-rate-value">{{ $planTitle }}</span>
+                <span class="tutor-comm-rate-unit" style="font-size: 0.95rem; font-weight: 700; color: #6B7280;">
+                    ({{ $monthlyPrice }} BYN/мес)
+                </span>
+                <span class="tutor-chip {{ $statusBadge['color'] === 'active' || $statusBadge['color'] === 'trial' ? 'tutor-chip--active' : '' }}" style="font-size: 11px; padding: 4px 8px;">
+                    {{ $statusBadge['label'] }} · {{ $statusBadge['hint'] }}
+                </span>
             </div>
         </div>
-    </section>
-</x-filament-widgets::widget>
+
+        <div class="tutor-comm-revenue">
+            <span class="tutor-card-label">Прямой доход на карту · {{ now()->translatedFormat('F') }}</span>
+            <p class="tutor-comm-revenue-value">{{ $monthlyRevenue }} <span class="tutor-comm-revenue-unit">BYN</span></p>
+        </div>
+    </div>
+
+    <div class="tutor-comm-progress">
+        <div class="tutor-comm-progress-head">
+            <span>
+                @if ($maxResponses === null)
+                    <strong style="color: #059669;">Безлимитные отклики</strong> на заявки учеников (Premium)
+                @elseif ($maxResponses > 0)
+                    Квота откликов: <strong>{{ $responsesUsed }} / {{ $maxResponses }}</strong> в этом месяце
+                    (осталось <strong>{{ max(0, $maxResponses - $responsesUsed) }}</strong>)
+                @else
+                    <strong>0 откликов</strong> в тарифе Basic (только входящие заявки из каталога)
+                @endif
+            </span>
+            <span>
+                @if ($maxResponses !== null && $maxResponses > 0)
+                    {{ $progressPercent }}% лимита
+                @else
+                    {{ $isTrial ? 'Пробный доступ' : 'Активный тариф' }}
+                @endif
+            </span>
+        </div>
+
+        <div class="tutor-progress" style="margin-top: 8px;">
+            <div style="width: {{ $progressPercent }}%;"></div>
+        </div>
+
+        <div class="tutor-chips" style="margin-top: 16px;">
+            @foreach ($plansInfo as $item)
+                <span class="tutor-chip {{ $item['isActive'] ? 'tutor-chip--active' : '' }}">
+                    @if ($item['isActive'])
+                        <span class="tutor-chip-dot"></span>
+                    @endif
+                    <strong>{{ $item['name'] }}</strong> ({{ $item['price'] }}) · {{ $item['responses'] }}
+                </span>
+            @endforeach
+        </div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 20px;">
+        <a href="/admin/tutor-subscription-page" class="tutor-link" style="margin-top: 0;">
+            Управление тарифом и счетами ЕРИП
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+        </a>
+
+        <a href="/admin/lessons" class="tutor-link" style="margin-top: 0; color: #6B7280;">
+            Расписание и уроки
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+        </a>
+    </div>
+</div>

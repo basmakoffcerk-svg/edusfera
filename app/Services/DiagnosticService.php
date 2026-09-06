@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 class DiagnosticService
 {
     /**
-     * @param array<int, string> $weakTopics
+     * @param  array<int, string>  $weakTopics
      */
     public function recordBaseline(
         StudentGoal $goal,
@@ -111,7 +111,133 @@ class DiagnosticService
     }
 
     /**
-     * @param array<int, string> $weakTopics
+     * Record completed AI diagnostic attempt with RIKZ evaluation.
+     *
+     * @param  array<string, mixed>  $evalResult
+     * @param  array<string, mixed>  $answers
+     */
+    public function recordAiDiagnostic(
+        StudentGoal $goal,
+        int $studentId,
+        array $evalResult,
+        array $answers,
+    ): DiagnosticAttempt {
+        if ($goal->student_id !== $studentId) {
+            throw ValidationException::withMessages([
+                'goal' => 'Эта цель недоступна для текущего пользователя.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($answers, $evalResult, $goal, $studentId): DiagnosticAttempt {
+            $scaledScore = (int) ($evalResult['scaled_score'] ?? 0);
+            $targetScore = isset($evalResult['target_score']) ? (int) $evalResult['target_score'] : $goal->target_score;
+
+            $goal->update([
+                'current_score' => $scaledScore,
+                'target_score' => $targetScore,
+                'latest_diagnostic_at' => now('UTC'),
+                'status' => 'active',
+            ]);
+
+            $track = $goal->examTracks()
+                ->where('status', 'active')
+                ->latest('id')
+                ->first();
+
+            $attempt = DiagnosticAttempt::query()->create([
+                'student_goal_id' => $goal->id,
+                'exam_track_id' => $track?->id,
+                'student_id' => $studentId,
+                'tutor_id' => $goal->tutor_id,
+                'subject' => $goal->subject,
+                'exam_type' => $goal->exam_type,
+                'source' => 'ai_diagnostic',
+                'score' => $scaledScore,
+                'max_score' => 100,
+                'taken_at' => now('UTC'),
+                'breakdown' => [
+                    'accuracy_percent' => $evalResult['accuracy_percent'] ?? 0,
+                    'correct_count' => $evalResult['correct_count'] ?? 0,
+                    'incorrect_count' => $evalResult['incorrect_count'] ?? 0,
+                    'pass_probability_percent' => $evalResult['pass_probability_percent'] ?? 0,
+                    'earned_primary_score' => $evalResult['earned_primary_score'] ?? 0,
+                    'max_primary_score' => $evalResult['max_primary_score'] ?? 0,
+                    'skill_gaps' => $evalResult['skill_gaps'] ?? [],
+                    'cognitive_profile' => $evalResult['cognitive_profile'] ?? [],
+                    'study_plan' => $evalResult['study_plan'] ?? [],
+                    'tutor_recommendations' => $evalResult['tutor_recommendations'] ?? [],
+                    'answers' => $answers,
+                ],
+                'notes' => $evalResult['notes'] ?? null,
+            ]);
+
+            SkillGap::query()
+                ->where('student_goal_id', $goal->id)
+                ->where('student_id', $studentId)
+                ->where('status', 'open')
+                ->update(['status' => 'resolved']);
+
+            $gaps = (array) ($evalResult['skill_gaps'] ?? []);
+            foreach ($gaps as $gap) {
+                SkillGap::query()->create([
+                    'student_goal_id' => $goal->id,
+                    'diagnostic_attempt_id' => $attempt->id,
+                    'student_id' => $studentId,
+                    'subject' => $goal->subject,
+                    'topic' => $gap['topic'] ?? 'Неизвестная тема',
+                    'severity' => $gap['severity'] ?? 'medium',
+                    'status' => 'open',
+                    'last_detected_at' => now('UTC'),
+                    'evidence' => [
+                        'source' => 'ai_diagnostic',
+                        'question_id' => $gap['question_id'] ?? null,
+                        'part' => $gap['part'] ?? null,
+                        'potential_score_loss' => $gap['potential_score_loss'] ?? null,
+                        'trap_analysis' => $gap['trap_analysis'] ?? null,
+                        'cognitive_bias' => $gap['cognitive_bias'] ?? null,
+                    ],
+                ]);
+            }
+
+            $summary = "ИИ-диагностика по предмету «{$goal->subject}» завершена. Прогнозируемый балл: {$scaledScore}/100.";
+            if ($targetScore !== null) {
+                $summary .= " Цель: {$targetScore} баллов.";
+            }
+            if (count($gaps) > 0) {
+                $gapTopics = array_unique(array_column($gaps, 'topic'));
+                $summary .= ' Выявлены пробелы: ' . implode(', ', array_slice($gapTopics, 0, 3)) . '.';
+            }
+
+            ProgressSnapshot::query()->updateOrCreate(
+                [
+                    'student_goal_id' => $goal->id,
+                    'snapshot_date' => now(config('booking.display_timezone'))->toDateString(),
+                ],
+                [
+                    'exam_track_id' => $track?->id,
+                    'student_id' => $studentId,
+                    'tutor_id' => $goal->tutor_id,
+                    'current_score' => $scaledScore,
+                    'predicted_score' => $scaledScore,
+                    'target_score' => $targetScore,
+                    'completed_topics_count' => 0,
+                    'active_skill_gaps_count' => count($gaps),
+                    'summary' => $summary,
+                    'meta' => [
+                        'source' => 'ai_diagnostic',
+                        'diagnostic_attempt_id' => $attempt->id,
+                        'accuracy_percent' => $evalResult['accuracy_percent'] ?? 0,
+                        'pass_probability_percent' => $evalResult['pass_probability_percent'] ?? null,
+                    ],
+                ],
+            );
+
+            return $attempt;
+        });
+    }
+
+    /**
+     * @param  array<int, string>  $weakTopics
      */
     private function buildSummary(string $subject, ?int $currentScore, ?int $targetScore, array $weakTopics): string
     {
@@ -126,7 +252,7 @@ class DiagnosticService
         }
 
         if ($weakTopics !== []) {
-            $parts[] = 'В фокусе: ' . implode(', ', $weakTopics) . '.';
+            $parts[] = 'В фокусе: '.implode(', ', $weakTopics).'.';
         }
 
         return implode(' ', $parts);

@@ -2,17 +2,37 @@
 
 namespace App\Providers;
 
+use App\Contracts\Classroom\ClassroomTokenIssuer;
+use App\Contracts\Events\EventBusInterface;
+use App\Contracts\Integrations\AiAssistantClient;
+use App\Contracts\Lesson\LessonBooker;
+use App\Contracts\Lesson\LessonReader;
+use App\Domain\Classroom\RsaClassroomTokenIssuer;
+use App\Filament\Responses\LogoutResponse;
+use App\Integrations\AI\NullAiAssistantClient;
+use App\Integrations\EventBus\NullEventBus;
+use App\Integrations\EventBus\RedisStreamsEventBus;
+use App\Models\ClassroomFile;
+use App\Models\ClassroomNote;
 use App\Models\Lesson;
+use App\Models\TutorProfile;
 use App\Models\User;
+use App\Policies\ClassroomFilePolicy;
+use App\Policies\ClassroomNotePolicy;
 use App\Policies\LessonPolicy;
+use App\Policies\TutorProfilePolicy;
+use App\Services\Lesson\EloquentLessonBooker;
+use App\Services\Lesson\EloquentLessonReader;
 use App\Services\Payment\DisabledPaymentGateway;
 use App\Services\Payment\MockPaymentGateway;
 use App\Services\Payment\PaymentGatewayInterface;
-use InvalidArgumentException;
+use App\Services\Payment\AlfaBankPaymentGateway;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
+use Laravel\Passport\Passport;
 use Throwable;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,11 +42,49 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Полный logout из Filament-панелей должен чистить cookie связанных
+        // аккаунтов (см. App\Filament\Responses\LogoutResponse).
+        $this->app->singleton(
+            \Filament\Http\Responses\Auth\Contracts\LogoutResponse::class,
+            LogoutResponse::class,
+        );
+
         $this->app->bind(PaymentGatewayInterface::class, function () {
             return match (config('payments.gateway', 'mock')) {
-                'mock' => new MockPaymentGateway(),
-                'disabled' => new DisabledPaymentGateway(),
-                default => throw new InvalidArgumentException('Unknown payment gateway [' . config('payments.gateway') . '].'),
+                'alfa', 'alfabank' => new \App\Services\Payment\AlfaBankPaymentGateway,
+                'webpay' => new \App\Services\Payment\AlfaBankPaymentGateway,
+                'mock' => new MockPaymentGateway,
+                'disabled' => new DisabledPaymentGateway,
+                default => throw new InvalidArgumentException('Unknown payment gateway ['.config('payments.gateway').'].'),
+            };
+        });
+
+        // Требование 9.4: биндинг EventBusInterface на основе config('events.bus.driver').
+        $this->app->bind(EventBusInterface::class, function () {
+            return match (config('events.bus.driver', 'null')) {
+                'redis_streams' => new RedisStreamsEventBus,
+                'log' => new NullEventBus(logEnabled: true),
+                default => new NullEventBus,
+            };
+        });
+
+        // Требование 6.2, 6.3: контракты контекста Lesson разрывают связь UI ↔ Eloquent.
+        $this->app->bind(LessonReader::class, EloquentLessonReader::class);
+        $this->app->bind(LessonBooker::class, EloquentLessonBooker::class);
+
+        // Требование 15.1: контракт клиента AI-сервиса. В фундаменте AI-сервиса
+        // ещё нет — биндим заглушку, возвращающую пустой набор обработанных
+        // lesson_id. Реальный HTTP-клиент заменит биндинг в feature-spec'е AI.
+        $this->app->bind(AiAssistantClient::class, NullAiAssistantClient::class);
+
+        // Требование 11.1, 11.8: classroom-token-issuer. Feature-флаг
+        // classroom.token_algorithm управляет алгоритмом: RS256 (по умолчанию)
+        // → RsaClassroomTokenIssuer. HS256-fallback остаётся в
+        // ClassroomService::generateMediaToken() для переходного периода.
+        $this->app->bind(ClassroomTokenIssuer::class, function () {
+            return match (config('classroom.token_algorithm', 'RS256')) {
+                'RS256' => new RsaClassroomTokenIssuer,
+                default => new RsaClassroomTokenIssuer,
             };
         });
     }
@@ -37,7 +95,94 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(Lesson::class, LessonPolicy::class);
+        Gate::policy(ClassroomFile::class, ClassroomFilePolicy::class);
+        Gate::policy(ClassroomNote::class, ClassroomNotePolicy::class);
+        Gate::policy(TutorProfile::class, TutorProfilePolicy::class);
+
+        // Требование 3.1, 3.3: включить grant client_credentials и ограничить TTL токенов 30 мин.
+        // В Passport v13 client_credentials grant включён по умолчанию.
+        // Устанавливаем TTL для всех токенов и отдельно для client_credentials.
+        Passport::tokensExpireIn(now()->addMinutes(30));
+        Passport::clientCredentialsTokensExpireIn(now()->addMinutes(30));
+
+        // Требование 13.1: регистрируем каталог допустимых scope-ов.
+        // Passport::tokensCan() принимает массив [scope => description].
+        Passport::tokensCan(config('oauth.scopes', []));
+
+        // Поддержка разрешения репетитора по tutor_profile.id, user_id или email
+        \Illuminate\Support\Facades\Route::bind('tutor', function ($value) {
+            if ($value instanceof TutorProfile) {
+                return $value;
+            }
+
+            $profile = TutorProfile::query()
+                ->where('id', $value)
+                ->orWhere('user_id', $value)
+                ->first();
+
+            if ($profile) {
+                return $profile;
+            }
+
+            $user = User::query()
+                ->where('id', $value)
+                ->orWhere('email', $value)
+                ->first();
+
+            if ($user && ($user->isTutor() || $user->role === 'tutor' || (is_object($user->role) && $user->role->value === 'tutor'))) {
+                return $user->tutorProfile ?: $user->tutorProfile()->create([
+                    'subjects' => ['Математика'],
+                    'price_per_hour' => '35.00',
+                    'is_verified' => true,
+                    'verification_status' => 'approved',
+                ]);
+            }
+
+            abort(404);
+        });
+
+        if (file_exists(public_path('hot')) && ! in_array(request()->getHost(), ['localhost', '127.0.0.1'], true)) {
+            @unlink(public_path('hot'));
+        }
+
         $this->syncTechnicalAdminAccount();
+        $this->enforceProductionSecurity();
+        $this->configureOpenBasedirFallback();
+    }
+
+    /**
+     * Предотвращение ошибки is_file(): open_basedir restriction в ISPmanager при загрузке файлов.
+     */
+    private function configureOpenBasedirFallback(): void
+    {
+        $tmpDir = storage_path('app/tmp');
+        if (! is_dir($tmpDir)) {
+            @mkdir($tmpDir, 0777, true);
+        }
+
+        putenv("TMPDIR={$tmpDir}");
+        putenv("TEMP={$tmpDir}");
+        putenv("TMP={$tmpDir}");
+    }
+
+    /**
+     * Enforce security invariants that must never reach production.
+     */
+    private function enforceProductionSecurity(): void
+    {
+        if (! app()->isProduction()) {
+            return;
+        }
+
+        // M6: APP_DEBUG must be false in production — leaky error pages expose stack traces.
+        if (config('app.debug')) {
+            abort(500, 'APP_DEBUG must be disabled in production.');
+        }
+
+        // C2: SESSION_SECURE_COOKIE must be true in production — prevents cookie interception over HTTP.
+        if (config('session.secure') !== true) {
+            abort(500, 'SESSION_SECURE_COOKIE must be true in production.');
+        }
     }
 
     private function syncTechnicalAdminAccount(): void
@@ -54,6 +199,13 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
+        // M8: reject trivially weak passwords in production.
+        if (app()->isProduction() && strlen($password) < 16) {
+            report(new InvalidArgumentException('SITE_ADMIN_PASSWORD must be at least 16 characters in production.'));
+
+            return;
+        }
+
         try {
             if (! Schema::hasTable('users')) {
                 return;
@@ -62,7 +214,7 @@ class AppServiceProvider extends ServiceProvider
             $admin = User::query()->firstOrNew(['email' => $email]);
 
             $admin->name = $name !== '' ? $name : 'Технический администратор';
-            $admin->role = 'admin';
+            $admin->role = 'admin'; // Raw string needed before cast hydration
             $admin->is_verified = true;
 
             if (! $admin->exists || ! Hash::check($password, (string) $admin->password)) {

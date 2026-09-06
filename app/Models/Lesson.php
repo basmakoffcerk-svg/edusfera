@@ -6,8 +6,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lesson extends Model
@@ -15,14 +15,21 @@ class Lesson extends Model
     use SoftDeletes;
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_CONFIRMED = 'confirmed';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_CANCELLED = 'cancelled';
+
     public const STATUS_NO_SHOW = 'no_show';
 
     public const PAYMENT_UNPAID = 'unpaid';
+
     public const PAYMENT_PAID = 'paid';
+
     public const PAYMENT_REFUNDED = 'refunded';
+
     public const PAYMENT_PARTIALLY_REFUNDED = 'partially_refunded';
 
     protected $fillable = [
@@ -32,17 +39,12 @@ class Lesson extends Model
         'start_time',
         'end_time',
         'duration_minutes',
-        'price',
-        'platform_commission',
-        'net_amount',
         'status',
         'payment_status',
         'package_code',
         'package_lessons',
         'package_lessons_remaining',
         'package_parent_lesson_id',
-        'package_total',
-        'package_discount',
         'payment_lock_expires_at',
         'checkout_started_at',
         'meeting_link',
@@ -88,6 +90,20 @@ class Lesson extends Model
             && $this->payment_lock_expires_at->isFuture();
     }
 
+    public function isSettled(): bool
+    {
+        if ($this->relationLoaded('settlement')) {
+            return $this->settlement?->isSettled() ?? false;
+        }
+
+        return $this->settlement()->whereNotNull('settled_at')->exists();
+    }
+
+    public function hasStarted(): bool
+    {
+        return $this->start_time !== null && $this->start_time->isPast();
+    }
+
     public function tutor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'tutor_id');
@@ -106,6 +122,11 @@ class Lesson extends Model
     public function transaction(): HasOne
     {
         return $this->hasOne(Transaction::class);
+    }
+
+    public function settlement(): HasOne
+    {
+        return $this->hasOne(LessonSettlement::class);
     }
 
     public function conversation(): HasOne
@@ -131,5 +152,17 @@ class Lesson extends Model
     public function homeworkAssignments(): HasMany
     {
         return $this->hasMany(HomeworkAssignment::class);
+    }
+
+    public function classroomSessions(): HasMany
+    {
+        return $this->hasMany(ClassroomSession::class);
+    }
+
+    public function activeClassroom(): HasOne
+    {
+        return $this->hasOne(ClassroomSession::class)
+            ->whereIn('status', ['waiting', 'active'])
+            ->latestOfMany();
     }
 }

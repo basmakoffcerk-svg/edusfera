@@ -9,8 +9,8 @@ use App\Models\Lesson;
 use App\Models\Message;
 use App\Models\User;
 use App\Notifications\LessonLowRatingNotification;
-use App\Services\ChatUnreadCounter;
 use App\Services\ChatService;
+use App\Services\ChatUnreadCounter;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -62,7 +62,7 @@ class MessagesPage extends Page
 
     public function mount(?int $conversation = null): void
     {
-        abort_unless(in_array(auth()->user()?->role, ['admin', 'tutor', 'student', 'parent'], true), 403);
+        abort_unless(in_array(auth()->user()?->role, [\App\Enums\UserRole::Admin, \App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true), 403);
 
         $requestedConversationId = $conversation ?? $this->conversationId;
 
@@ -263,22 +263,22 @@ class MessagesPage extends Page
         $panelId = Filament::getCurrentPanel()?->getId();
 
         if ($panelId === 'site-admin') {
-            return $user?->role === 'admin';
+            return $user?->isAdmin() ?? false;
         }
 
-        return in_array($user?->role, ['tutor', 'student', 'parent'], true);
+        return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
     }
 
     public static function getNavigationGroup(): ?string
     {
         return Filament::getCurrentPanel()?->getId() === 'site-admin'
             ? 'Коммуникация'
-            : 'Основное';
+            : 'Связь';
     }
 
     public static function getNavigationSort(): ?int
     {
-        return 2;
+        return 1;
     }
 
     public static function getNavigationBadge(): ?string
@@ -378,7 +378,7 @@ class MessagesPage extends Page
 
         $query = Conversation::query();
 
-        if ($user?->role === 'admin') {
+        if ($user?->isAdmin()) {
             return $query;
         }
 
@@ -390,6 +390,8 @@ class MessagesPage extends Page
     public function formatMessage(Message $message): Htmlable
     {
         $content = app(ChatService::class)->sanitizeMessageForDisplay($message->message);
+        // SECURITY (M5): e() MUST be called before any regex that produces HtmlString.
+        // Removing this escape or reordering will open XSS.
         $content = e($content);
         $content = preg_replace('/\[(контакты скрыты)\]/u', '<span class="ef-masked">[$1]</span>', $content) ?? $content;
         $content = preg_replace('/\[(платежные данные скрыты)\]/u', '<span class="ef-masked">[$1]</span>', $content) ?? $content;
@@ -411,7 +413,7 @@ class MessagesPage extends Page
         if ($otherUser->phone) {
             $actions[] = [
                 'label' => 'Позвонить',
-                'url' => 'tel:' . preg_replace('/\s+/', '', (string) $otherUser->phone),
+                'url' => 'tel:'.preg_replace('/\s+/', '', (string) $otherUser->phone),
                 'external' => false,
             ];
         }
@@ -421,7 +423,7 @@ class MessagesPage extends Page
         if ($telegram) {
             $actions[] = [
                 'label' => 'Написать в Telegram',
-                'url' => 'https://t.me/' . ltrim($telegram, '@'),
+                'url' => 'https://t.me/'.ltrim($telegram, '@'),
                 'external' => true,
             ];
         }
@@ -431,7 +433,7 @@ class MessagesPage extends Page
 
     private function quickReplies(): array
     {
-        if (auth()->user()?->role !== 'tutor') {
+        if (! (auth()->user()?->isTutor() ?? false)) {
             return [];
         }
 
@@ -450,7 +452,7 @@ class MessagesPage extends Page
             return null;
         }
 
-        if (in_array($user->role, ['student', 'parent'], true)) {
+        if (in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
             if ($conversation->lesson && $conversation->lesson->payment_status !== \App\Models\Lesson::PAYMENT_PAID) {
                 return [
                     'label' => 'Забронировать',
@@ -472,10 +474,10 @@ class MessagesPage extends Page
             }
         }
 
-        if ($user->role === 'tutor') {
+        if ($user->isTutor()) {
             return [
-                'label' => 'Предложить время',
-                'url' => '/admin/availability',
+                'label' => 'Моё расписание',
+                'url' => route('filament.admin.pages.tutor-availability-page'),
                 'external' => false,
                 'variant' => 'ghost',
             ];
@@ -539,7 +541,7 @@ class MessagesPage extends Page
             'upsell_url' => route('tutors.show', [
                 'tutor' => $conversation->tutor?->tutorProfile,
                 'date' => now(config('booking.display_timezone'))->addDay()->format('Y-m-d'),
-            ]) . '#booking',
+            ]).'#booking',
         ];
     }
 }

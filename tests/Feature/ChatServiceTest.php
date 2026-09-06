@@ -73,7 +73,7 @@ class ChatServiceTest extends TestCase
         ]);
     }
 
-    public function test_it_masks_contacts_before_first_booking(): void
+    public function test_it_allows_free_contact_sharing_in_saas_model(): void
     {
         Notification::fake();
 
@@ -92,18 +92,15 @@ class ChatServiceTest extends TestCase
 
         $result = $service->sendMessage($conversation->id, $student->id, 'Напишите мне на +375291234567');
 
-        $this->assertNotNull($result['warning']);
-        $this->assertStringContainsString('автоматически сразу после бронирования первого', $result['warning']);
+        $this->assertNull($result['warning']);
         $this->assertDatabaseHas('messages', [
             'conversation_id' => $conversation->id,
             'sender_id' => $student->id,
-            'message' => 'Напишите мне на [контакты скрыты]',
+            'message' => 'Напишите мне на +375291234567',
         ]);
-        $this->assertDatabaseHas('messages', [
+        $this->assertDatabaseMissing('messages', [
             'conversation_id' => $conversation->id,
-            'sender_id' => null,
             'is_system' => true,
-            'message' => $result['warning'],
         ]);
     }
 
@@ -127,7 +124,7 @@ class ChatServiceTest extends TestCase
             'last_message_at' => now(),
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => now()->addDay(),
@@ -170,7 +167,7 @@ class ChatServiceTest extends TestCase
             'last_message_at' => now(),
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => now()->addDay(),
@@ -200,7 +197,7 @@ class ChatServiceTest extends TestCase
         ]);
     }
 
-    public function test_it_penalizes_tutor_after_three_contact_bypass_attempts(): void
+    public function test_it_does_not_penalize_tutor_for_sharing_contacts_in_saas_model(): void
     {
         Notification::fake();
 
@@ -239,10 +236,9 @@ class ChatServiceTest extends TestCase
 
         $profile = $tutor->tutorProfile()->firstOrFail();
 
-        $this->assertSame(3, $profile->contact_bypass_attempts);
-        $this->assertNotNull($profile->search_penalized_until);
-        $this->assertTrue($profile->search_penalized_until->isFuture());
-        Notification::assertSentTo($admin, \App\Notifications\ChatBypassAttemptNotification::class);
+        $this->assertSame(0, $profile->contact_bypass_attempts);
+        $this->assertNull($profile->search_penalized_until);
+        Notification::assertNotSentTo($admin, \App\Notifications\ChatBypassAttemptNotification::class);
     }
 
     public function test_messages_page_does_not_open_foreign_conversation(): void

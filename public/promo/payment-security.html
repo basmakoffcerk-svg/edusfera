@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Правила оплаты и безопасность платежей | Edusfera</title>
+    <meta name="description" content="Регламент приёма онлайн-платежей, гарантии безопасности, прозрачные расчеты и шифрование данных для пользователей платформы Edusfera (ООО «Эдусфера»).">
+    <link rel="stylesheet" href="variables.css">
+    <style>
+        :root {
+            --bg-dark: #0f1115;
+            --card-dark: #161920;
+            --border: #262b36;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --ed-purple: #7D39EB;
+            --ed-lime: #C6FF33;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+            background: rgba(15, 17, 21, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-weight: 900;
+            font-size: 1.5rem;
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: -0.05em;
+        }
+        .logo span { color: var(--ed-lime); }
+        .back-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: #fff; }
+        
+        main { padding: 48px 0 80px; }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+        .doc-meta {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-bottom: 36px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .doc-section {
+            background: var(--card-dark);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 28px;
+        }
+        .doc-section h2 {
+            font-size: 1.3rem;
+            color: #fff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .doc-section p, .doc-section li {
+            color: var(--text-muted);
+            font-size: 0.98rem;
+            margin-bottom: 12px;
+        }
+        .doc-section ul {
+            padding-left: 24px;
+            margin-bottom: 16px;
+        }
+        .doc-section li { margin-bottom: 8px; }
+        
+        .receipt-sample {
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            margin: 20px 0;
+            color: #d1d5db;
+        }
+        .receipt-header {
+            text-align: center;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 40px 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container header-content">
+        <a href="index.html" class="logo">EDUSFERA<span>.</span></a>
+        <a href="index.html" class="back-link">← На главную</a>
+    </div>
+</header>
+
+<main>
+    <div class="container">
+        <h1>Правила оплаты и безопасность платежей</h1>
+        <div class="doc-meta">
+            Редакция от 7 августа 2026 года · ООО «Эдусфера» (УНП 192854899)
+        </div>
+
+        <div class="doc-section">
+            <h2>💳 1. Способы оплаты и валюта расчётов</h2>
+            <p>Все расчёты на образовательной платформе Edusfera осуществляются исключительно в <strong>белорусских рублях (BYN)</strong> в соответствии с законодательством Республики Беларусь.</p>
+            <p>К оплате принимаются банковские карты международных платёжных систем <strong>VISA, Visa Secure, MasterCard, MasterCard Identity Check</strong>, национальной платёжной системы <strong>БЕЛКАРТ, Белкарт ИнтернетПароль</strong>, а также сервисы <strong>Apple Pay, Samsung Pay</strong> через интернет-эквайринг <strong>ЗАО «Альфа-Банк»</strong>, а также система «Расчет» (АИС ЕРИП).</p>
+        </div>
+
+        <div class="doc-section">
+            <h2>🛒 2. Описание предлагаемых услуг и тарифов</h2>
+            <p>Через интернет-эквайринг сайта Edusfera.by принимается оплата исключительно за программные услуги подписки (SaaS) для преподавателей:</p>
+            <ul>
+                <li><strong>Тариф «Basic»:</strong> 20.00 BYN в месяц (192.00 BYN в год со скидкой 20%). Профиль в каталоге, Встроенный класс, расписание, чеки НПД.</li>
+                <li><strong>Тариф «Pro»:</strong> 40.00 BYN в месяц (384.00 BYN в год со скидкой 20%). Приоритет в каталоге, ИИ-тренажеры ЦЭ/ЦТ, модуль домашних заданий.</li>
+                <li><strong>Тариф «Premium»:</strong> 60.00 BYN в месяц (576.00 BYN в год со скидкой 20%). Максимальный приоритет выдачи, персональная поддержка.</li>
+                <li><strong>Пробный период (Trial):</strong> первые 30 дней бесплатно (0.00 BYN).</li>
+                <li><strong>Расчеты за уроки:</strong> Ученик производит оплату за урок напрямую на банковскую карту Репетитора. Денег репетиторов внутри платформы нет: Edusfera не принимает оплату за занятия, выступая каталогом преподавателей и удобным программным сервисом по подписке.</li>
+            </ul>
+        </div>
+
+        <div class="doc-section">
+            <h2>💳 3. Прямые расчеты за уроки (отсутствие денег репетиторов на платформе)</h2>
+            <p>На платформе Edusfera действует принцип прямой прозрачной модели:</p>
+            <ul>
+                <li><strong>Прямой расчет с преподавателем:</strong> Ученик рассчитывается за занятия напрямую с Репетитором удобным для сторон способом (переводом на банковскую карту преподавателя или через ЕРИП).</li>
+                <li><strong>Отсутствие средств репетиторов на платформе:</strong> Денег репетиторов внутри платформы нет. Платформа не аккумулирует, не депонирует, не удерживает и не выводит деньги за уроки.</li>
+                <li><strong>Назначение платежей на сайте:</strong> Все онлайн-платежи через интернет-эквайринг ЗАО «Альфа-Банк» на сайте Edusfera.by принимаются исключительно за SaaS-подписку Репетиторов в пользу ООО «Эдусфера».</li>
+            </ul>
+        </div>
+
+        <div class="doc-section">
+            <h2>📄 4. Образец электронного чека подтверждения оплаты</h2>
+            <p>После успешной транзакции пользователю на электронную почту высылается квитанция (электронный чек), подтверждающая факт проведения оплаты.</p>
+            
+            <div class="receipt-sample">
+                <div class="receipt-header">
+                    <strong>ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ «ЭДУСФЕРА»</strong><br>
+                    УНП 192854899 · Республика Беларусь, г. Минск, ул. В. Хоружей, 6А-29<br>
+                    КВИТАНЦИЯ ОБ ОПЛАТЕ УСЛУГ (ЭЛЕКТРОННЫЙ ЧЕК)
+                </div>
+                <div>Заказ №: EDUSFERA-2026-8942</div>
+                <div>Дата и время: {{ date('d.m.Y H:i:s') }}</div>
+                <div>Оператор платформы: ООО «Эдусфера» (УНП 192854899)</div>
+                <div>Наименование услуги: Предоставление доступа к цифровой платформе Edusfera (SaaS-подписка, тариф Pro)</div>
+                <div>Сумма оплаты: 40.00 BYN</div>
+                <div>Способ оплаты: Интернет-эквайринг ЗАО «Альфа-Банк»</div>
+                <div>Статус транзакции: ОПЛАЧЕНО 100%</div>
+                <div>Платёжная система: БЕЛКАРТ / VISA / MasterCard / Apple Pay / Samsung Pay</div>
+                <div style="margin-top:12px; border-top:1px dashed rgba(255,255,255,0.2); padding-top:8px; text-align:center; font-size:0.78rem; color:var(--ed-lime);">
+                    ✓ Чек сгенерирован автоматически в электронной форме и имеет полную юридическую силу.
+                </div>
+            </div>
+        </div>
+
+        <div class="doc-section">
+            <h2>💳 5. Принимаемые платёжные системы и логотипы участников процесса</h2>
+            <p>Оплата услуг осуществляется безналичным путём банковскими картами и сервисами <strong>VISA, Visa Secure, MasterCard, MasterCard ID Check, БЕЛКАРТ, Белкарт ИнтернетПароль, Apple Pay, Samsung Pay</strong> через интернет-эквайринг <strong>ЗАО «Альфа-Банк»</strong>:</p>
+
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0;">
+                <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 44px; border: 1px solid var(--border);">
+                    <img src="/logo/alfa-bank.png" alt="Альфа-Банк" style="height: 28px; max-width: 120px; object-fit: contain;">
+                </div>
+                <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 44px; border: 1px solid var(--border);">
+                    <img src="/logo/belkart-internetparol.png" alt="БЕЛКАРТ" style="height: 28px; max-width: 95px; object-fit: contain;">
+                </div>
+                <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 44px; border: 1px solid var(--border);">
+                    <img src="logo/belkart-internetparol.svg" alt="Белкарт ИнтернетПароль" style="height: 28px; max-width: 95px; object-fit: contain;">
+                </div>
+                <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 44px; border: 1px solid var(--border);">
+                    <img src="/logo/visa.png" alt="VISA" style="height: 24px; max-width: 75px; object-fit: contain;">
+                </div>
+                <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 44px; border: 1px solid var(--border);">
+                    <img src="/logo/visa-secure.png" alt="Visa Secure" style="height: 28px; max-width: 90px; object-fit: contain;">
+                </div>
+                <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 44px; border: 1px solid var(--border);">
+                    <img src="/logo/mastercard.png" alt="MasterCard" style="height: 28px; max-width: 70px; object-fit: contain;">
+                </div>
+                <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 44px; border: 1px solid var(--border);">
+                    <img src="/logo/mastercard-id-check.png" alt="Mastercard Identity Check" style="height: 28px; max-width: 90px; object-fit: contain;">
+                </div>
+                <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 44px; border: 1px solid var(--border);">
+                    <img src="/logo/apple-pay.png" alt="Apple Pay" style="height: 24px; max-width: 65px; object-fit: contain;">
+                </div>
+                <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 44px; border: 1px solid var(--border);">
+                    <img src="/logo/samsung-pay.png" alt="Samsung Pay" style="height: 24px; max-width: 85px; object-fit: contain;">
+                </div>
+            </div>
+
+            <p style="font-size: 0.88rem; color: var(--text-muted);">Все транзакции совершаются в строгом соответствии с требованиями Международных платёжных систем Visa International, MasterCard Worldwide и национальной платёжной системы БЕЛКАРТ.</p>
+        </div>
+
+        <div class="doc-section">
+            <h2>🔒 6. Безопасность платежей и протокол шифрования</h2>
+            <p>Безопасность проводимых платежей обеспечивается банком-эквайером <strong>ЗАО «Альфа-Банк»</strong>, сертифицированной по международному стандарту безопасности <strong>PCI DSS Level 1</strong>.</p>
+            <ul>
+                <li><strong>Криптографическое шифрование:</strong> Передача реквизитов карты осуществляется по защищённому каналу с использованием шифрования TLS / SSL (256-bit).</li>
+                <li><strong>Конфиденциальность данных:</strong> Конфиденциальные данные карты (номер, CVC/CVV код, срок действия) вводятся на защищённом авторизационном сервере и не доступны ООО «Эдусфера».</li>
+                <li><strong>Технология 3D-Secure:</strong> Платёж подтверждается одноразовым паролем (SMS/Push), высылаемым банком-эмитентом держателя карты.</li>
+                <li><strong>Защита персональных данных:</strong> Данные пользователей защищаются в соответствии с Законом РБ № 99-З «О защите персональных данных».</li>
+            </ul>
+        </div>
+
+        <div class="doc-section">
+            <h2>📦 7. Правила и сроки предоставления услуг</h2>
+            <p>Все образовательные и информационные услуги предоставляются в электронном виде через сеть Интернет. Доступ к заказанному функционалу, онлайн-классу и материалам активируется в Личном кабинете <strong>автоматически и моментально (в течение 1–5 минут)</strong> после подтверждения оплаты.</p>
+        </div>
+
+        <div class="doc-section">
+            <h2>🔄 8. Порядок отмены подписки и возврата денежных средств</h2>
+            <p>Преподаватель вправе в любой момент отключить автопродление подписки в Личном кабинете в 1 клик. При наличии законных оснований для возврата абонентской платы денежные средства возвращаются <strong>исключительно на ту же банковскую карту</strong>, с которой была совершена оплата через интернет-эквайринг ЗАО «Альфа-Банк», в срок от 1 до 30 банковских дней. Взаиморасчеты за уроки производятся напрямую между учеником и репетитором.</p>
+        </div>
+
+        <div class="doc-section">
+            <h2>🔄 9. Информация о рекуррентных платежах (подписках)</h2>
+            <p>Оплата услуг на платформе осуществляется в форме стандартных разовых платежей. Функционал рекуррентных списаний (автопродление подписки) будет активирован в личном кабинете после формирования транзакционной истории в соответствии с правилами банка-эквайера.</p>
+        </div>
+
+        <div class="doc-section">
+            <h2>🏛️ 10. Полные реквизиты организации и страна нахождения</h2>
+            <p><strong>Наименование организации:</strong> Общество с ограниченной ответственностью «Эдусфера» (ООО «Эдусфера»)</p>
+            <p><strong>Государственная регистрация:</strong> Зарегистрировано Минским горисполкомом 04.05.2026 г., УНП 192854899</p>
+            <p><strong>Юридический адрес и страна нахождения:</strong> Республика Беларусь, 220100, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29</p>
+            <p><strong>Банк-эквайер и партнёр:</strong> ЗАО «Альфа-Банк»</p>
+            <p><strong>Контактные данные:</strong> Email: edusferaby@gmail.com | Телефон: +375 (29) 519-08-21</p>
+            <p><strong>Режим работы:</strong> Понедельник – Пятница: 09:00 – 18:00 (Суббота, Воскресенье: выходной)</p>
+            <p><strong>Лицензирование:</strong> Деятельность не подлежит лицензированию в соответствии с законодательством Республики Беларусь.</p>
+        </div>
+    </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="ftr">
+  <div class="wrap">
+    <div class="ftr-grid">
+      <div class="ftr-brand">
+        <a href="index.html#top" class="logo">EDUSFERA.</a>
+        <p>Первая белорусская платформа для преподавания, запуска онлайн-курсов и безопасного приёма платежей.</p>
+        <span class="status-pill"><span class="d"></span> Платформа на стадии запуска</span>
+      </div>
+      <div class="ftr-col">
+        <h4>Платформа</h4>
+        <a href="index.html#why">Выгоды</a>
+        <a href="index.html#comparison">Сравнение</a>
+        <a href="index.html#tutors">Репетиторам</a>
+        <a href="index.html#calc">Калькулятор</a>
+        <a href="index.html#beta">Ранний доступ</a>
+      </div>
+      <div class="ftr-col">
+        <h4>Правовые документы</h4>
+        <a href="offer.html">Публичная оферта и тарифы</a>
+        <a href="privacy-policy.html">Конфиденциальность (Закон 99-З)</a>
+        <a href="payment-security.html">Правила оплаты и безопасность</a>
+        <a href="refund-policy.html">Правила возврата и отмены</a>
+      </div>
+      <div class="ftr-col">
+        <h4>Контакты и режим работы</h4>
+        <a href="contacts.html">Контакты</a>
+        <a href="mailto:edusferaby@gmail.com">edusferaby@gmail.com</a>
+        <a href="tel:+375295190821">+375 (29) 519-08-21</a>
+        <span style="font-size:0.78rem;color:var(--text-dim);margin-top:4px;display:block;">Режим работы: Пн-Пт 09:00 – 18:00 (Сб-Вс: выходной)</span>
+      </div>
+    </div>
+
+    <!-- Payment Systems & Acquiring Logos Strip -->
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--dark-border);">
+      <p style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">
+        Принимаем к онлайн-оплате через интернет-эквайринг ЗАО «Альфа-Банк»
+      </p>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/alfa-bank.png" alt="Альфа-Банк" style="height: 24px; max-width: 110px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/belkart-internetparol.png" alt="БЕЛКАРТ" style="height: 24px; max-width: 90px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="logo/belkart-internetparol.svg" alt="Белкарт ИнтернетПароль" style="height: 24px; max-width: 90px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/visa.png" alt="VISA" style="height: 20px; max-width: 70px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/visa-secure.png" alt="Visa Secure" style="height: 24px; max-width: 85px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/mastercard.png" alt="MasterCard" style="height: 24px; max-width: 65px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/mastercard-id-check.png" alt="Mastercard Identity Check" style="height: 24px; max-width: 85px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/apple-pay.png" alt="Apple Pay" style="height: 20px; max-width: 60px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/samsung-pay.png" alt="Samsung Pay" style="height: 20px; max-width: 80px; object-fit: contain;">
+        </div>
+      </div>
+    </div>
+
+    <div class="ftr-info" style="border-top: 1px solid var(--dark-border); padding-top: 24px; margin-top: 20px; font-size: 0.82rem; line-height: 1.6; color: var(--text-dim);">
+      <div>
+        <strong style="color: #fff; display: block; margin-bottom: 6px;">Юридическая информация</strong>
+        Наименование: Общество с ограниченной ответственностью «Эдусфера» (ООО «Эдусфера»)<br>
+        Гос. регистрация: Зарегистрировано Минским горисполкомом 04.05.2026 г., УНП 192854899<br>
+        Юридический адрес: Республика Беларусь, 220100, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29 (Страна нахождения: Республика Беларусь)<br>
+        Интернет-эквайринг: ЗАО «Альфа-Банк»<br>
+        Лицензирование: Деятельность не подлежит лицензированию и сертификации в соответствии с законодательством Республики Беларусь.
+      </div>
+    </div>
+    <div class="ftr-bottom" style="margin-top: 16px;">
+      <div>© 2026 ООО «Эдусфера». Все права защищены.</div>
+      <div>Минск, Беларусь · Сделано для преподавателей и абитуриентов</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

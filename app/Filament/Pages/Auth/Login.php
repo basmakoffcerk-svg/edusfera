@@ -6,16 +6,19 @@ namespace App\Filament\Pages\Auth;
 
 use App\Models\User;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Models\Contracts\FilamentUser;
-use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Hash;
 
 class Login extends \Filament\Pages\Auth\Login
 {
     protected static string $view = 'filament.admin.pages.auth.login';
+    protected static string $layout = 'filament-panels::components.layout.base';
 
     public function mount(): void
     {
@@ -28,12 +31,26 @@ class Login extends \Filament\Pages\Auth\Login
         }
     }
 
+    public function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                $this->getEmailFormComponent(),
+                $this->getPasswordFormComponent(),
+                $this->getRememberFormComponent(),
+            ])
+            ->inlineLabel(false)
+            ->columns(1)
+            ->statePath('data');
+    }
+
     protected function getEmailFormComponent(): Component
     {
         return TextInput::make('email')
             ->label('Email или телефон')
             ->placeholder('name@example.com или +375XXXXXXXXX')
             ->required()
+            ->inlineLabel(false)
             ->autocomplete('username')
             ->autofocus()
             ->extraInputAttributes([
@@ -45,10 +62,20 @@ class Login extends \Filament\Pages\Auth\Login
     protected function getPasswordFormComponent(): Component
     {
         return parent::getPasswordFormComponent()
+            ->label('Пароль')
+            ->inlineLabel(false)
+            ->revealable()
             ->autocomplete('current-password')
             ->extraInputAttributes([
                 'tabindex' => 2,
             ]);
+    }
+
+    protected function getAuthenticateFormAction(): Action
+    {
+        return Action::make('authenticate')
+            ->label('Войти')
+            ->submit('authenticate');
     }
 
     public function authenticate(): ?LoginResponse
@@ -67,6 +94,8 @@ class Login extends \Filament\Pages\Auth\Login
         $user = $this->resolveUserFromLogin($login);
 
         if (! $user || ! Hash::check((string) ($data['password'] ?? ''), (string) $user->password)) {
+            // Anti-Brute force: задержка при неверном пароле для защиты от автоматизированного перебора
+            usleep(300000);
             $this->throwFailureValidationException();
         }
 
@@ -76,6 +105,7 @@ class Login extends \Filament\Pages\Auth\Login
         ) {
             Filament::auth()->logout();
 
+            usleep(300000);
             $this->throwFailureValidationException();
         }
 
@@ -102,13 +132,13 @@ class Login extends \Filament\Pages\Auth\Login
             return '/admin';
         }
 
-        if ($user->role === 'tutor') {
+        if ($user->isTutor()) {
             return $user->tutorProfile()->exists()
                 ? '/admin'
                 : '/admin/tutor-profiles/create';
         }
 
-        if ($user->role === 'admin') {
+        if ($user->isAdmin()) {
             return '/site-admin';
         }
 
@@ -161,11 +191,11 @@ class Login extends \Filament\Pages\Auth\Login
         $normalized = preg_replace('/[^\d+]/', '', $phone) ?? $phone;
 
         if (str_starts_with($normalized, '375')) {
-            return '+' . $normalized;
+            return '+'.$normalized;
         }
 
         if (str_starts_with($normalized, '80')) {
-            return '+375' . substr($normalized, 2);
+            return '+375'.substr($normalized, 2);
         }
 
         return $normalized;
@@ -173,7 +203,7 @@ class Login extends \Filament\Pages\Auth\Login
 
     private function isSafeRedirect(string $redirectTo): bool
     {
-        if (str_starts_with($redirectTo, '/')) {
+        if (str_starts_with($redirectTo, '/') && ! str_starts_with($redirectTo, '//') && ! str_starts_with($redirectTo, '/\\')) {
             return true;
         }
 

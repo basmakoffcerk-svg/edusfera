@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://edusfera.by/events/lesson.cancelled.v1.json",
+    "title": "lesson.cancelled.v1 payload",
+    "description": "Payload integration event lesson.cancelled v1. Emitted when a lesson is cancelled by tutor, student or system. Within major version 1 fields are only added, never removed or retyped (requirement 8.5). additionalProperties=true allows forward-compatible extensions.",
+    "type": "object",
+    "additionalProperties": true,
+    "required": [
+        "lesson_id",
+        "tutor_id",
+        "student_id",
+        "cancelled_by",
+        "cancel_reason"
+    ],
+    "properties": {
+        "lesson_id": {
+            "description": "Lesson aggregate id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "tutor_id": {
+            "description": "Tutor user id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "student_id": {
+            "description": "Student user id.",
+            "type": "integer",
+            "minimum": 1
+        },
+        "cancelled_by": {
+            "description": "Who cancelled the lesson: tutor, student, system.",
+            "type": "string",
+            "enum": ["tutor", "student", "system"]
+        },
+        "cancel_reason": {
+            "description": "Human-readable cancellation reason.",
+            "type": "string"
+        }
+    }
+}

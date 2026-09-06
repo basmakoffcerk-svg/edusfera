@@ -53,11 +53,10 @@ class PackageService
     {
         $singlePrice = (float) $lesson->price;
         $package = $this->resolve($packageCode, $singlePrice);
-        $commission = round($package['total'] * (float) config('payments.commission_rate', 0.15), 2);
-        $netAmount = round($package['total'] - $commission, 2);
+        $netAmount = $package['total'];
 
         $lesson->update([
-            'platform_commission' => number_format($commission, 2, '.', ''),
+            'platform_commission' => '0.00',
             'net_amount' => number_format($netAmount, 2, '.', ''),
             'package_code' => $package['code'],
             'package_lessons' => $package['lessons'],

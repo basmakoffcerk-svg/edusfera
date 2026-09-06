@@ -13,7 +13,7 @@ return new class extends Migration
         Schema::table('tutor_profiles', function (Blueprint $table): void {
             $table->json('exam_specializations')->nullable()->after('lesson_languages');
             $table->unsignedSmallInteger('average_score_growth')->nullable()->after('exam_specializations');
-            $table->unsignedInteger('students_prepared_count')->default(0)->after('average_score_growth');
+            $table->unsignedInteger('students_prepared_count')->nullable()->default(0)->after('average_score_growth');
             $table->unsignedSmallInteger('max_recent_score')->nullable()->after('students_prepared_count');
             $table->boolean('diagnostic_supported')->default(false)->after('max_recent_score');
         });

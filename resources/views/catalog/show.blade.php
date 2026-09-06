@@ -404,113 +404,135 @@
                         <button type="submit" class="btn btn-outline">Показать слоты</button>
                     </form>
 
-                    @auth
-                        @if(in_array(auth()->user()->role, ['student','parent'], true))
-                            <form method="POST" action="{{ route('tutors.book', $tutor) }}" class="tp-booking-form" @if($isPackageBooking) data-package-booking data-required-slots="{{ $selectedPackageLessons }}" @endif>
-                                @csrf
-                                @if($errors->any())
-                                    <div style="padding:.85rem 1rem;border-radius:.75rem;border:1px solid #fecaca;background:#fef2f2;color:#991b1b;">
-                                        <strong style="display:block;margin-bottom:.4rem;">Проверьте форму перед бронированием:</strong>
-                                        <ul style="margin:0;padding-left:1rem;">
-                                            @foreach($errors->all() as $error)
-                                                <li>{{ $error }}</li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                @endif
-                                @error('slot')
-                                    <span class="tp-error">{{ $message }}</span>
-                                @enderror
+                    @php
+                        $userObj = auth()->user();
+                        $userRoleVal = $userObj ? (is_object($userObj->role) ? $userObj->role->value : (string) $userObj->role) : null;
+                        $canBook = $userObj && ($userObj->role?->canBook() || in_array($userRoleVal, ['student', 'parent'], true));
+                    @endphp
 
-                                <div class="tp-slots">
-                                    @forelse($slots as $slot)
-                                        <label style="cursor:pointer;">
-                                            @if($isPackageBooking)
-                                                <input type="checkbox" name="slots[]" value="{{ $slot['value'] }}" class="peer sr-only" @checked(in_array($slot['value'], old('slots', []), true))>
-                                            @else
-                                                <input type="radio" name="slot" value="{{ $slot['value'] }}" class="peer sr-only" required @checked(old('slot') === $slot['value'])>
-                                            @endif
-                                            <span class="tp-slot">{{ $selectedDate->translatedFormat('D') }} · {{ $slot['label'] }}</span>
-                                        </label>
-                                    @empty
-                                        <div style="grid-column:1/-1;padding:1.5rem;border:1px dashed var(--border);border-radius:.75rem;background:#f8f9fc;color:var(--text-sec);font-size:.9rem;">
-                                            На эту дату свободных слотов нет. Выберите другой день.
+                    @if($canBook)
+                        <form method="POST" action="{{ route('tutors.book', $tutor) }}" class="tp-booking-form" @if($isPackageBooking) data-package-booking data-required-slots="{{ $selectedPackageLessons }}" @endif>
+                            @csrf
+                            @if($errors->any())
+                                <div style="padding:.85rem 1rem;border-radius:.75rem;border:1px solid #fecaca;background:#fef2f2;color:#991b1b;">
+                                    <strong style="display:block;margin-bottom:.4rem;">Проверьте форму перед бронированием:</strong>
+                                    <ul style="margin:0;padding-left:1rem;">
+                                        @foreach($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+                            @error('slot')
+                                <span class="tp-error">{{ $message }}</span>
+                            @enderror
+
+                            <div class="tp-slots">
+                                @forelse($slots as $slot)
+                                    <label style="cursor:pointer;">
+                                        @if($isPackageBooking)
+                                            <input type="checkbox" name="slots[]" value="{{ $slot['value'] }}" class="peer sr-only" @checked(in_array($slot['value'], old('slots', []), true))>
+                                        @else
+                                            <input type="radio" name="slot" value="{{ $slot['value'] }}" class="peer sr-only" required @checked(old('slot') === $slot['value'])>
+                                        @endif
+                                        <span class="tp-slot">{{ $selectedDate->translatedFormat('D') }} · {{ $slot['label'] }}</span>
+                                    </label>
+                                @empty
+                                    <div style="grid-column:1/-1;padding:1.5rem;border:1px dashed var(--border);border-radius:.75rem;background:#f8f9fc;color:var(--text-sec);font-size:.9rem;">
+                                        На эту дату свободных слотов нет. Выберите другой день.
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <div>
+                                <span class="tp-form-label">Пакет оплаты</span>
+                                <div class="tp-packages">
+                                    <label class="tp-package-option">
+                                        <input type="radio" name="package" value="single" @checked($selectedPackageCode === 'single')>
+                                        <div class="tp-package">
+                                            <div class="tp-package-label">Старт</div>
+                                            <h3>Стартовая сессия</h3>
+                                            <div class="tp-package-price">{{ number_format($singlePrice, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/></div>
+                                            <div class="tp-package-note">Диагностика, знакомство и фиксация цели.</div>
                                         </div>
-                                    @endforelse
-                                </div>
-
-                                <div>
-                                    <span class="tp-form-label">Пакет оплаты</span>
-                                    <div class="tp-packages">
-                                        <label class="tp-package-option">
-                                            <input type="radio" name="package" value="single" @checked($selectedPackageCode === 'single')>
-                                            <div class="tp-package">
-                                                <div class="tp-package-label">Старт</div>
-                                                <h3>Стартовая сессия</h3>
-                                                <div class="tp-package-price">{{ number_format($singlePrice, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/></div>
-                                                <div class="tp-package-note">Диагностика, знакомство и фиксация цели.</div>
-                                            </div>
-                                        </label>
-                                        <label class="tp-package-option">
-                                            <input type="radio" name="package" value="pack_4" @checked($selectedPackageCode === 'pack_4')>
-                                            <div class="tp-package featured">
-                                                <div class="tp-package-label">Популярно</div>
-                                                <h3>Траектория 4 занятия</h3>
-                                                <div class="tp-package-price">{{ number_format($pack4, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/></div>
-                                                <div class="tp-package-note">Первая видимая траектория роста + экономия {{ number_format($pack4Saving, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/>.</div>
-                                            </div>
-                                        </label>
-                                        <label class="tp-package-option">
-                                            <input type="radio" name="package" value="pack_8" @checked($selectedPackageCode === 'pack_8')>
-                                            <div class="tp-package">
-                                                <div class="tp-package-label">Интенсив</div>
-                                                <h3>Траектория 8 занятий</h3>
-                                                <div class="tp-package-price">{{ number_format($pack8, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/></div>
-                                                <div class="tp-package-note">Полный цикл: домашка, отчёты и контроль прогресса. Экономия {{ number_format($pack8Saving, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/>.</div>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="tp-booking-grid">
-                                    <label>
-                                        <span class="tp-form-label">Имя ученика</span>
-                                        <input type="text" name="name" value="{{ old('name', auth()->user()->name) }}" class="tp-input" required>
-                                        @error('name')<span class="tp-error">{{ $message }}</span>@enderror
                                     </label>
-                                    <label>
-                                        <span class="tp-form-label">Телефон</span>
-                                        <input type="tel" name="phone" value="{{ old('phone', auth()->user()->phone) }}" placeholder="+375XXXXXXXXX" class="tp-input" required pattern="\+375\d{9}" inputmode="numeric">
-                                        @error('phone')<span class="tp-error">{{ $message }}</span>@enderror
+                                    <label class="tp-package-option">
+                                        <input type="radio" name="package" value="pack_4" @checked($selectedPackageCode === 'pack_4')>
+                                        <div class="tp-package featured">
+                                            <div class="tp-package-label">Популярно</div>
+                                            <h3>Траектория 4 занятия</h3>
+                                            <div class="tp-package-price">{{ number_format($pack4, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/></div>
+                                            <div class="tp-package-note">Первая видимая траектория роста + экономия {{ number_format($pack4Saving, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/>.</div>
+                                        </div>
+                                    </label>
+                                    <label class="tp-package-option">
+                                        <input type="radio" name="package" value="pack_8" @checked($selectedPackageCode === 'pack_8')>
+                                        <div class="tp-package">
+                                            <div class="tp-package-label">Интенсив</div>
+                                            <h3>Траектория 8 занятий</h3>
+                                            <div class="tp-package-price">{{ number_format($pack8, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/></div>
+                                            <div class="tp-package-note">Полный цикл: домашка, отчёты и контроль прогресса. Экономия {{ number_format($pack8Saving, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/>.</div>
+                                        </div>
                                     </label>
                                 </div>
+                            </div>
 
+                            <div class="tp-booking-grid">
                                 <label>
-                                    <span class="tp-form-label">Комментарий к уроку</span>
-                                    <textarea name="notes" rows="4" class="tp-textarea">{{ old('notes') }}</textarea>
-                                    @error('notes')<span class="tp-error">{{ $message }}</span>@enderror
+                                    <span class="tp-form-label">Имя ученика</span>
+                                    <input type="text" name="name" value="{{ old('name', auth()->user()->name) }}" class="tp-input" required>
+                                    @error('name')<span class="tp-error">{{ $message }}</span>@enderror
                                 </label>
-
-                                <label class="tp-terms">
-                                    <input type="checkbox" name="terms" value="1" required @checked(old('terms'))>
-                                    <span>Согласен с условиями отмены и переноса. Оплата и история брони остаются внутри платформы.</span>
+                                <label>
+                                    <span class="tp-form-label">Телефон</span>
+                                    <input type="tel" name="phone" value="{{ old('phone', auth()->user()->phone) }}" placeholder="+375XXXXXXXXX" class="tp-input" required pattern="\+375\d{9}" inputmode="numeric">
+                                    @error('phone')<span class="tp-error">{{ $message }}</span>@enderror
                                 </label>
-                                @error('terms')<span class="tp-error">{{ $message }}</span>@enderror
+                            </div>
 
-                                <button type="submit" class="btn btn-primary">Забронировать</button>
-                            </form>
-                        @else
-                            <div class="tp-auth-box"><p style="margin:0">Запись доступна из аккаунта ученика или родителя.</p></div>
-                        @endif
+                            <label>
+                                <span class="tp-form-label">Комментарий к уроку</span>
+                                <textarea name="notes" rows="4" class="tp-textarea">{{ old('notes') }}</textarea>
+                                @error('notes')<span class="tp-error">{{ $message }}</span>@enderror
+                            </label>
+
+                            <label class="tp-terms">
+                                <input type="checkbox" name="terms" value="1" required @checked(old('terms'))>
+                                <span>Согласен с условиями отмены и переноса. Оплата и история брони остаются внутри платформы.</span>
+                            </label>
+                            @error('terms')<span class="tp-error">{{ $message }}</span>@enderror
+
+                            <button type="submit" class="btn btn-primary">Забронировать</button>
+                        </form>
+                    @elseif(auth()->check())
+                        <div class="tp-slots" style="margin-bottom:1rem;">
+                            @forelse($slots as $slot)
+                                <div class="tp-slot" style="opacity:0.8;cursor:default;">{{ $selectedDate->translatedFormat('D') }} · {{ $slot['label'] }}</div>
+                            @empty
+                                <div style="grid-column:1/-1;padding:1.5rem;border:1px dashed var(--border);border-radius:.75rem;background:#f8f9fc;color:var(--text-sec);font-size:.9rem;">
+                                    На эту дату свободных слотов нет. Выберите другой день.
+                                </div>
+                            @endforelse
+                        </div>
+                        <div class="tp-auth-box"><p style="margin:0">Вы авторизованы как {{ $userRoleVal === 'tutor' ? 'преподаватель' : 'администратор' }}. Запись на уроки доступна из аккаунта ученика или родителя.</p></div>
                     @else
+                        <div class="tp-slots" style="margin-bottom:1rem;">
+                            @forelse($slots as $slot)
+                                <a href="/admin/login?redirect_to={{ urlencode(url()->full()) }}" class="tp-slot" style="text-decoration:none;">{{ $selectedDate->translatedFormat('D') }} · {{ $slot['label'] }}</a>
+                            @empty
+                                <div style="grid-column:1/-1;padding:1.5rem;border:1px dashed var(--border);border-radius:.75rem;background:#f8f9fc;color:var(--text-sec);font-size:.9rem;">
+                                    На эту дату свободных слотов нет. Выберите другой день.
+                                </div>
+                            @endforelse
+                        </div>
                         <div class="tp-auth-box">
-                            <p>Чтобы зафиксировать время и безопасно оплатить урок, войдите или создайте аккаунт.</p>
+                            <p>Чтобы зафиксировать время и безопасно оплатить урок, войдите или создайте аккаунт ученика или родителя.</p>
                             <div class="tp-auth-actions">
                                 <a href="/admin/login?redirect_to={{ urlencode(url()->full()) }}" class="btn btn-primary">Войти</a>
                                 <a href="/admin/register?redirect_to={{ urlencode(url()->full()) }}" class="btn btn-outline">Регистрация</a>
                             </div>
                         </div>
-                    @endauth
+                    @endif
                 </section>
 
                 <!-- REVIEWS -->

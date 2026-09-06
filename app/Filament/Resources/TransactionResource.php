@@ -6,8 +6,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Models\Transaction;
-use App\Support\BynMoneyFormatter;
 use App\Services\Payment\PaymentService;
+use App\Support\BynMoneyFormatter;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -21,7 +21,7 @@ class TransactionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 1;
 
     public static function table(Table $table): Table
     {
@@ -32,23 +32,23 @@ class TransactionResource extends Resource
                     ->label('Урок'),
                 Tables\Columns\TextColumn::make('lesson.tutor.name')
                     ->label('Репетитор')
-                    ->toggleable(isToggledHiddenByDefault: auth()->user()?->role === 'tutor'),
+                    ->toggleable(isToggledHiddenByDefault: auth()->user()?->isTutor() ?? false),
                 Tables\Columns\TextColumn::make('lesson.student.name')
                     ->label('Ученик')
-                    ->toggleable(isToggledHiddenByDefault: auth()->user()?->role !== 'tutor'),
+                    ->toggleable(isToggledHiddenByDefault: ! (auth()->user()?->isTutor() ?? false)),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Сумма')
                     ->formatStateUsing(fn (mixed $state) => BynMoneyFormatter::format((string) $state)),
                 Tables\Columns\TextColumn::make('platform_commission')
-                    ->label('Комиссия')
+                    ->label('Комиссия платформы')
                     ->formatStateUsing(fn (mixed $state) => BynMoneyFormatter::format((string) $state))
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('acquiring_fee')
-                    ->label('Эквайринг')
+                    ->label('Банковский эквайринг')
                     ->formatStateUsing(fn (mixed $state) => BynMoneyFormatter::format((string) $state))
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('net_amount')
-                    ->label('К выплате')
+                    ->label('К зачислению')
                     ->formatStateUsing(fn (mixed $state) => BynMoneyFormatter::format((string) $state)),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')
@@ -77,7 +77,7 @@ class TransactionResource extends Resource
                 Tables\Actions\Action::make('request_payout')
                     ->label('Запросить выплату')
                     ->icon('heroicon-o-arrow-up-on-square')
-                    ->visible(fn (): bool => auth()->user()?->role === 'tutor')
+                    ->visible(fn (): bool => auth()->user()?->isTutor() ?? false)
                     ->requiresConfirmation()
                     ->action(function (): void {
                         app(PaymentService::class)->requestPayout(auth()->id());
@@ -96,11 +96,11 @@ class TransactionResource extends Resource
         $query = parent::getEloquentQuery()->with(['lesson.tutor', 'lesson.student', 'user']);
         $user = auth()->user();
 
-        if ($user?->role === 'admin') {
+        if ($user?->isAdmin()) {
             return $query;
         }
 
-        if ($user?->role === 'tutor') {
+        if ($user?->isTutor()) {
             return $query->whereHas('lesson', fn (Builder $builder): Builder => $builder->where('tutor_id', $user->id));
         }
 
@@ -123,10 +123,20 @@ class TransactionResource extends Resource
         }
 
         return match (auth()->user()?->role) {
-            'tutor' => 'Транзакции',
-            'student', 'parent' => 'Мои оплаты',
-            default => 'Транзакции',
+            \App\Enums\UserRole::Tutor => 'История выплат',
+            \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent => 'Мои оплаты',
+            default => 'История операций',
         };
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'Операция';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'История выплат';
     }
 
     public static function getNavigationGroup(): ?string
@@ -137,12 +147,7 @@ class TransactionResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->user();
-        $panelId = Filament::getCurrentPanel()?->getId();
 
-        if ($panelId === 'site-admin') {
-            return $user?->role === 'admin';
-        }
-
-        return in_array($user?->role, ['tutor', 'student', 'parent'], true);
+        return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent, \App\Enums\UserRole::Admin], true);
     }
 }

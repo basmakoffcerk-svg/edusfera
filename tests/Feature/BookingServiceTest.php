@@ -71,18 +71,62 @@ class BookingServiceTest extends TestCase
             'id' => $lesson->id,
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
-            'status' => Lesson::STATUS_PENDING,
+            'status' => Lesson::STATUS_CONFIRMED,
+            'payment_status' => Lesson::PAYMENT_PAID,
             'price' => '100.00',
-            'platform_commission' => '15.00',
-            'net_amount' => '85.00',
+            'platform_commission' => '0.00',
+            'net_amount' => '100.00',
             'package_code' => 'single',
             'package_lessons' => 1,
             'package_total' => '100.00',
             'package_discount' => '0.00',
+            'payment_lock_expires_at' => null,
         ]);
 
         Notification::assertSentTo($student, LessonBookedStudentNotification::class);
         Notification::assertSentTo($tutor, LessonBookedTutorNotification::class);
+    }
+
+    public function test_generate_tutor_booking_url(): void
+    {
+        $tutor = User::factory()->create(['role' => 'tutor']);
+        $profile = TutorProfile::query()->create([
+            'user_id' => $tutor->id,
+            'subjects' => ['Математика'],
+            'price_per_hour' => 100,
+            'experience_years' => 5,
+            'legal_status' => 'ip',
+            'is_verified' => true,
+        ]);
+
+        $url = app(BookingService::class)->generateTutorBookingUrl($tutor);
+
+        $this->assertStringContainsString('/tutors/'.$profile->id.'#book', $url);
+    }
+
+    public function test_confirm_booking_sets_confirmed_and_paid(): void
+    {
+        $tutor = User::factory()->create(['role' => 'tutor']);
+        $student = User::factory()->create(['role' => 'student']);
+        $lesson = Lesson::query()->forceCreate([
+            'tutor_id' => $tutor->id,
+            'student_id' => $student->id,
+            'start_time' => now()->addDay(),
+            'end_time' => now()->addDay()->addHour(),
+            'duration_minutes' => 60,
+            'price' => '100.00',
+            'platform_commission' => '0.00',
+            'net_amount' => '100.00',
+            'status' => Lesson::STATUS_PENDING,
+            'payment_status' => Lesson::PAYMENT_UNPAID,
+            'payment_lock_expires_at' => now()->addMinutes(15),
+        ]);
+
+        $confirmed = app(BookingService::class)->confirmBooking($lesson);
+
+        $this->assertSame(Lesson::STATUS_CONFIRMED, $confirmed->status);
+        $this->assertSame(Lesson::PAYMENT_PAID, $confirmed->payment_status);
+        $this->assertNull($confirmed->payment_lock_expires_at);
     }
 
     public function test_booking_service_blocks_double_booking(): void
@@ -125,7 +169,7 @@ class BookingServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => $slot->utc(),
@@ -196,8 +240,8 @@ class BookingServiceTest extends TestCase
             'package_lessons_remaining' => 4,
             'package_total' => '190.00',
             'package_discount' => '10.00',
-            'platform_commission' => '28.50',
-            'net_amount' => '161.50',
+            'platform_commission' => '0.00',
+            'net_amount' => '190.00',
         ]);
     }
 
@@ -294,7 +338,7 @@ class BookingServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => $date->setTime(10, 0)->utc(),
@@ -348,7 +392,7 @@ class BookingServiceTest extends TestCase
             'is_active' => true,
         ]);
 
-        Lesson::query()->create([
+        Lesson::query()->forceCreate([
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
             'start_time' => $date->subMinutes(30)->utc(),

@@ -35,4 +35,27 @@ return [
         ],
     ],
 
+    'ai' => [
+        // Per-client секрет для HMAC-SHA256 проверки входящих webhook'ов
+        // AI-сервиса на POST /webhooks/ai/recommendations (требование 10).
+        'webhook_secret' => env('AI_WEBHOOK_SECRET'),
+    ],
+
+    'ledger' => [
+        'url' => env('LEDGER_URL', 'http://ledger:8080'),
+        'enabled' => env('LEDGER_ENABLED', true),
+    ],
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL') . '/auth/google/callback'),
+    ],
+
+    'yandex' => [
+        'client_id' => env('YANDEX_CLIENT_ID'),
+        'client_secret' => env('YANDEX_CLIENT_SECRET'),
+        'redirect' => env('YANDEX_REDIRECT_URI', env('APP_URL') . '/auth/yandex/callback'),
+    ],
+
 ];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\TutorProfileResource\Pages;
 use App\Models\TutorProfile;
 use App\Support\BynMoneyFormatter;
@@ -16,8 +17,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 
 class TutorProfileResource extends Resource
 {
@@ -25,7 +26,7 @@ class TutorProfileResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
-    protected static ?string $navigationLabel = 'Профиль Репетитора';
+    protected static ?string $navigationLabel = 'Анкета преподавателя';
 
     protected static ?int $navigationSort = 1;
 
@@ -39,12 +40,12 @@ class TutorProfileResource extends Resource
 
         return self::isAdminContext()
             ? 'Анкеты репетиторов'
-            : 'Профиль Репетитора';
+            : 'Анкета преподавателя';
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return Filament::getCurrentPanel()?->getId() === 'site-admin'
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || self::isAdminContext())
             ? 'Модерация'
             : 'Профиль';
     }
@@ -53,19 +54,14 @@ class TutorProfileResource extends Resource
     {
         return self::isAdminContext()
             ? 'Анкета репетитора'
-            : 'Профиль репетитора';
+            : 'Анкета преподавателя';
     }
 
     public static function getPluralModelLabel(): string
     {
         return self::isAdminContext()
             ? 'Анкеты репетиторов'
-            : 'Профили репетиторов';
-    }
-
-    public static function canCreate(): bool
-    {
-        return Auth::user()?->role === 'tutor';
+            : 'Анкеты преподавателей';
     }
 
     /**
@@ -124,12 +120,14 @@ class TutorProfileResource extends Resource
 
     private static function iconHtml(): string
     {
-        return '<img src="' . e(asset('byn-ico.svg')) . '" alt="" aria-hidden="true" style="display:inline-block;width:0.81em;height:1em;vertical-align:-0.12em">';
+        return '<img src="'.e(asset('byn-ico.svg')).'" alt="" aria-hidden="true" style="display:inline-block;width:0.81em;height:1em;vertical-align:-0.12em">';
     }
 
     private static function isAdminContext(): bool
     {
-        return Auth::user()?->role === 'admin';
+        $user = Auth::user();
+
+        return (bool) ($user?->isAdmin() || Filament::getCurrentPanel()?->getId() === 'site-admin');
     }
 
     /**
@@ -139,57 +137,15 @@ class TutorProfileResource extends Resource
     {
         return [
             Forms\Components\Wizard::make([
-                Forms\Components\Wizard\Step::make('Приветствие')
-                    ->description('Шаг 1 из 4')
+                Forms\Components\Wizard\Step::make('Основная информация')
+                    ->description('Шаг 1 из 3')
                     ->schema([
                         Forms\Components\Placeholder::make('welcome_hook')
                             ->label('')
                             ->content(new HtmlString(
                                 '<div style="padding: 1rem 0;">
-                                    <h2 style="font-size: 1.7rem; font-weight: 800; margin: 0 0 .75rem;">Добро пожаловать в Edusfera! До первых учеников осталось 3 шага.</h2>
-                                    <p style="margin: 0; color: #6b7280; line-height: 1.8;">Мы берем на себя поиск клиентов, платежи и чеки, чтобы вы могли просто преподавать. Заполнение займет не более 15 минут.</p>
-                                </div>'
-                            )),
-                    ]),
-
-                Forms\Components\Wizard\Step::make('Базовые настройки')
-                    ->description('Шаг 2 из 4')
-                    ->schema([
-                        Forms\Components\Select::make('subjects')
-                            ->label('Предметы')
-                            ->multiple()
-                            ->options(self::subjectsOptions())
-                            ->required()
-                            ->helperText('Выберите основные предметы. Эти теги показываются в каталоге.'),
-                        Forms\Components\CheckboxList::make('audiences')
-                            ->label('Классы и аудитория')
-                            ->options(self::audiencesOptions())
-                            ->columns(2)
-                            ->helperText('От этого зависит фильтрация в каталоге для родителей.')
-                            ->required(),
-                        Forms\Components\TextInput::make('price_per_hour')
-                            ->label('Цена за час')
-                            ->numeric()
-                            ->prefix(new HtmlString(self::iconHtml()))
-                            ->minValue(1)
-                            ->required()
-                            ->helperText(fn (Get $get): HtmlString => self::priceHint($get)),
-                        Forms\Components\TextInput::make('experience_years')
-                            ->label('Стаж (лет)')
-                            ->numeric()
-                            ->minValue(0)
-                            ->required(),
-                    ]),
-
-                Forms\Components\Wizard\Step::make('Визуальное доверие')
-                    ->description('Шаг 3 из 4')
-                    ->schema([
-                        Forms\Components\Placeholder::make('photo_guideline')
-                            ->label('Рекомендации по фото')
-                            ->content(new HtmlString(
-                                '<div style="display:grid;gap:.75rem;">
-                                    <div style="padding:.75rem;border-radius:.75rem;background:#ecfdf5;border:1px solid #a7f3d0;"><strong>Good:</strong> светлый портрет, лицо крупно, нейтральный фон.</div>
-                                    <div style="padding:.75rem;border-radius:.75rem;background:#fff1f2;border:1px solid #fecdd3;"><strong>Bad:</strong> темное фото, размыто, селфи с отвлекающим фоном.</div>
+                                    <h2 style="font-size: 1.5rem; font-weight: 700; margin: 0 0 .5rem;">Добро пожаловать! Давайте создадим ваш профиль.</h2>
+                                    <p style="margin: 0; color: #6b7280;">Это основная информация, которую родители увидят в каталоге репетиторов.</p>
                                 </div>'
                             )),
                         Forms\Components\FileUpload::make('avatar_path')
@@ -199,29 +155,18 @@ class TutorProfileResource extends Resource
                             ->avatar()
                             ->imageEditor()
                             ->required()
-                            ->helperText('Родители сначала смотрят на фото.'),
-                        Forms\Components\TextInput::make('telegram_username')
-                            ->label('Telegram username')
-                            ->prefix('@')
-                            ->placeholder('edusfera_tutor')
-                            ->helperText('Необязательно. Откроется ученику в чате после успешной оплаты.'),
-                        Forms\Components\Textarea::make('bio')
-                            ->label('О себе')
-                            ->rows(6)
+                            ->helperText('Выбирайте светлое фото, где хорошо видно лицо. Это сильно повышает доверие.'),
+                        Forms\Components\Select::make('subjects')
+                            ->label('Предметы')
+                            ->multiple()
+                            ->options(self::subjectsOptions())
                             ->required()
-                            ->placeholder("1. Какой у вас опыт.\n2. Какие средние баллы на ЦТ/ЦЭ у ваших учеников.\n3. Как проходит урок (Zoom/Skype, даете ли конспекты)."),
-                        Forms\Components\Textarea::make('education_summary')
-                            ->label('Образование и квалификация')
-                            ->rows(4)
-                            ->placeholder("ВУЗ, специальность, год выпуска, профильные курсы."),
-                        Forms\Components\Textarea::make('achievements')
-                            ->label('Результаты учеников')
-                            ->rows(4)
-                            ->placeholder("Средний прирост балла, кейсы поступления, олимпиадные результаты."),
-                        Forms\Components\Textarea::make('teaching_methodology')
-                            ->label('Методика занятий')
-                            ->rows(4)
-                            ->placeholder("Как строите урок, как даете домашние задания, как отслеживаете прогресс."),
+                            ->helperText('Выберите основные предметы для преподавания.'),
+                        Forms\Components\CheckboxList::make('audiences')
+                            ->label('Классы и аудитория')
+                            ->options(self::audiencesOptions())
+                            ->columns(2)
+                            ->required(),
                         Forms\Components\CheckboxList::make('lesson_formats')
                             ->label('Форматы занятий')
                             ->options([
@@ -231,63 +176,110 @@ class TutorProfileResource extends Resource
                                 'long_term' => 'Долгосрочное сопровождение',
                             ])
                             ->columns(2),
-                        Forms\Components\CheckboxList::make('lesson_languages')
-                            ->label('Языки преподавания')
-                            ->options([
-                                'ru' => 'Русский',
-                                'be' => 'Белорусский',
-                                'en' => 'Английский',
-                            ])
-                            ->columns(3),
-                        Forms\Components\CheckboxList::make('exam_specializations')
-                            ->label('Экзаменационные специализации')
-                            ->options([
-                                'ЦЭ' => 'Подготовка к ЦЭ',
-                                'ЦТ' => 'Подготовка к ЦТ',
-                                'intensive' => 'Экзаменационный интенсив',
-                                'score_growth' => 'Рост балла за 8-12 недель',
-                            ])
-                            ->columns(2)
-                            ->helperText('Эти метки используются в каталоге для целевого подбора родителей и учеников.'),
-                        Forms\Components\Grid::make(3)
+                        Forms\Components\Grid::make(2)
                             ->schema([
-                                Forms\Components\TextInput::make('average_score_growth')
-                                    ->label('Средний рост балла')
+                                Forms\Components\TextInput::make('price_per_hour')
+                                    ->label('Цена за час')
+                                    ->numeric()
+                                    ->prefix(new HtmlString(self::iconHtml()))
+                                    ->minValue(1)
+                                    ->required()
+                                    ->helperText(fn (Get $get): HtmlString => self::priceHint($get)),
+                                Forms\Components\TextInput::make('experience_years')
+                                    ->label('Стаж (лет)')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->maxValue(100)
-                                    ->placeholder('Например, 18'),
-                                Forms\Components\TextInput::make('students_prepared_count')
-                                    ->label('Учеников подготовлено')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->placeholder('Например, 24'),
-                                Forms\Components\TextInput::make('max_recent_score')
-                                    ->label('Лучший недавний результат')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->maxValue(100)
-                                    ->placeholder('Например, 92'),
+                                    ->required(),
                             ]),
-                        Forms\Components\Toggle::make('diagnostic_supported')
-                            ->label('Поддерживает стартовую диагностику и работу по слабым темам')
-                            ->inline(false),
-                        Forms\Components\Textarea::make('homework_policy')
-                            ->label('Домашние задания и обратная связь')
-                            ->rows(3),
-                        Forms\Components\TextInput::make('intro_video_url')
-                            ->label('Ссылка на видео-визитку')
-                            ->url()
-                            ->placeholder('https://youtu.be/...'),
-                        Forms\Components\TextInput::make('trial_lesson_minutes')
-                            ->label('Пробный созвон (минут)')
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(120),
+                    ]),
+
+                Forms\Components\Wizard\Step::make('Презентация и методика')
+                    ->description('Шаг 2 из 3')
+                    ->schema([
+                        Forms\Components\Textarea::make('bio')
+                            ->label('О себе')
+                            ->rows(6)
+                            ->required()
+                            ->placeholder("1. Какой у вас опыт.\n2. Какие средние баллы у учеников.\n3. Как проходит урок."),
+                        Forms\Components\Textarea::make('education_summary')
+                            ->label('Образование и квалификация')
+                            ->rows(4)
+                            ->placeholder('ВУЗ, специальность, год выпуска, профильные курсы.'),
+                        Forms\Components\Textarea::make('achievements')
+                            ->label('Результаты учеников')
+                            ->rows(4)
+                            ->placeholder('Кейсы поступления, олимпиадные результаты.'),
+                        Forms\Components\Textarea::make('teaching_methodology')
+                            ->label('Методика занятий')
+                            ->rows(4)
+                            ->placeholder('Как строите урок, даете домашние задания.'),
+
+                        Forms\Components\Section::make('Дополнительные настройки')
+                            ->description('Эти поля помогут выделить ваш профиль, но они не обязательны.')
+                            ->collapsed()
+                            ->schema([
+                                Forms\Components\TextInput::make('telegram_username')
+                                    ->label('Telegram username')
+                                    ->prefix('@')
+                                    ->placeholder('edusfera_tutor')
+                                    ->helperText('Необязательно. Откроется ученику в чате после успешной оплаты.'),
+                                Forms\Components\CheckboxList::make('lesson_languages')
+                                    ->label('Языки преподавания')
+                                    ->options([
+                                        'ru' => 'Русский',
+                                        'be' => 'Белорусский',
+                                        'en' => 'Английский',
+                                    ])
+                                    ->columns(3),
+                                Forms\Components\CheckboxList::make('exam_specializations')
+                                    ->label('Экзаменационные специализации')
+                                    ->options([
+                                        'ЦЭ' => 'Подготовка к ЦЭ',
+                                        'ЦТ' => 'Подготовка к ЦТ',
+                                        'intensive' => 'Экзаменационный интенсив',
+                                        'score_growth' => 'Рост балла за 8-12 недель',
+                                    ])
+                                    ->columns(2),
+                                Forms\Components\Grid::make(3)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('average_score_growth')
+                                            ->label('Средний рост балла')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->maxValue(100)
+                                            ->placeholder('Например, 18'),
+                                        Forms\Components\TextInput::make('students_prepared_count')
+                                            ->label('Учеников подготовлено')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->placeholder('Например, 24'),
+                                        Forms\Components\TextInput::make('max_recent_score')
+                                            ->label('Лучший недавний результат')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->maxValue(100)
+                                            ->placeholder('Например, 92'),
+                                    ]),
+                                Forms\Components\Toggle::make('diagnostic_supported')
+                                    ->label('Поддерживает стартовую диагностику и работу по слабым темам')
+                                    ->inline(false),
+                                Forms\Components\Textarea::make('homework_policy')
+                                    ->label('Домашние задания и обратная связь')
+                                    ->rows(3),
+                                Forms\Components\TextInput::make('intro_video_url')
+                                    ->label('Ссылка на видео-визитку')
+                                    ->url()
+                                    ->placeholder('https://youtu.be/...'),
+                                Forms\Components\TextInput::make('trial_lesson_minutes')
+                                    ->label('Пробный созвон (минут)')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(120),
+                            ]),
                     ]),
 
                 Forms\Components\Wizard\Step::make('Верификация')
-                    ->description('Шаг 4 из 4')
+                    ->description('Шаг 3 из 3')
                     ->schema([
                         Forms\Components\Select::make('legal_status')
                             ->label('Юридический статус')
@@ -298,6 +290,16 @@ class TutorProfileResource extends Resource
                                 'none' => 'Нет статуса (Физ. лицо)',
                             ])
                             ->required(),
+                        Forms\Components\TextInput::make('unp')
+                            ->label('УНП (9 цифр)')
+                            ->length(9)
+                            ->regex('/^\d{9}$/')
+                            ->required()
+                            ->helperText('Используется для сплитования выплат через WebPAY. Обязательно верифицируется.'),
+                        Forms\Components\TextInput::make('payout_account')
+                            ->label('Расчетный счет / Номер карты для выплат')
+                            ->required()
+                            ->helperText('Реквизиты для перечисления 85% стоимости уроков.'),
                         Forms\Components\FileUpload::make('diploma_path')
                             ->label('Диплом / сертификат')
                             ->directory('diplomas')
@@ -312,21 +314,20 @@ class TutorProfileResource extends Resource
                             ->label('')
                             ->content('Профили с бейджем в среднем получают больше заявок, потому что родители видят подтвержденную квалификацию.'),
                     ]),
-            ])->columnSpanFull(),
+            ])->submitAction(new HtmlString('<button type="submit" class="fi-btn relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-custom fi-btn-color-primary fi-size-md fi-btn-size-md gap-1.5 px-3 py-2 text-sm inline-grid shadow-sm bg-custom-600 text-white hover:bg-custom-500 dark:bg-custom-500 dark:hover:bg-custom-400 focus-visible:ring-custom-500/50 dark:focus-visible:ring-custom-400/50 fi-ac-btn-action" style="--c-400:var(--primary-400);--c-500:var(--primary-500);--c-600:var(--primary-600);"><span class="fi-btn-label">Сохранить</span></button>'))->columnSpanFull(),
 
             Forms\Components\Section::make('Модерация (Только для Админов)')
+                ->visible(fn () => self::isAdminContext())
                 ->schema([
                     Forms\Components\Toggle::make('is_verified')
-                        ->label('Верифицирован')
-                        ->visible(fn () => Auth::user()->role === 'admin'),
+                        ->label('Верифицирован'),
                     Forms\Components\Select::make('verification_status')
                         ->label('Статус модерации')
                         ->options([
                             'pending' => 'На проверке',
                             'approved' => 'Одобрен',
                             'rejected' => 'Отклонен',
-                        ])
-                        ->visible(fn () => Auth::user()->role === 'admin'),
+                        ]),
                 ]),
         ];
     }
@@ -353,7 +354,7 @@ class TutorProfileResource extends Resource
                                 ->content(fn (?TutorProfile $record): string => $record?->user?->phone ?? 'Не указан'),
                             Forms\Components\Placeholder::make('moderation_telegram')
                                 ->label('Telegram')
-                                ->content(fn (?TutorProfile $record): string => $record?->telegram_username ? '@' . ltrim($record->telegram_username, '@') : 'Не указан'),
+                                ->content(fn (?TutorProfile $record): string => $record?->telegram_username ? '@'.ltrim($record->telegram_username, '@') : 'Не указан'),
                             Forms\Components\Placeholder::make('moderation_subjects')
                                 ->label('Предметы')
                                 ->content(fn (?TutorProfile $record): string => implode(', ', $record?->subjects ?? []) ?: 'Не указаны'),
@@ -363,11 +364,11 @@ class TutorProfileResource extends Resource
                             Forms\Components\Placeholder::make('moderation_price')
                                 ->label('Цена')
                                 ->content(fn (?TutorProfile $record): HtmlString|string => $record
-                                    ? new HtmlString(BynMoneyFormatter::format((string) $record->price_per_hour)->toHtml() . '/час')
+                                    ? new HtmlString(BynMoneyFormatter::format((string) $record->price_per_hour)->toHtml().'/час')
                                     : 'Не указана'),
                             Forms\Components\Placeholder::make('moderation_experience')
                                 ->label('Стаж')
-                                ->content(fn (?TutorProfile $record): string => $record ? ((int) $record->experience_years) . ' лет' : 'Не указан'),
+                                ->content(fn (?TutorProfile $record): string => $record ? ((int) $record->experience_years).' лет' : 'Не указан'),
                             Forms\Components\Placeholder::make('moderation_status')
                                 ->label('Юридический статус')
                                 ->content(fn (?TutorProfile $record): string => match ($record?->legal_status) {
@@ -597,11 +598,15 @@ class TutorProfileResource extends Resource
         $query = parent::getEloquentQuery();
         $user = Auth::user();
 
-        if ($user?->role === 'tutor') {
+        if (self::isAdminContext()) {
+            return $query;
+        }
+
+        if ($user?->isTutor()) {
             return $query->where('user_id', $user->id);
         }
 
-        return $query;
+        return $query->whereRaw('1 = 0');
     }
 
     public static function getPages(): array
@@ -616,12 +621,7 @@ class TutorProfileResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         $user = Auth::user();
-        $panelId = Filament::getCurrentPanel()?->getId();
 
-        if ($panelId === 'site-admin') {
-            return $user?->role === 'admin';
-        }
-
-        return $user?->role === 'tutor';
+        return (bool) ($user?->isTutor() || $user?->isAdmin() || Filament::getCurrentPanel()?->getId() === 'site-admin');
     }
 }

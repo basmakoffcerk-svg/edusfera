@@ -4,28 +4,41 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\TutorProfile;
+use App\Enums\UserRole;
 use App\Models\TutorAvailability;
+use App\Models\TutorProfile;
 use App\Services\BookingService;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class CatalogController extends Controller
 {
-    public function __construct(private readonly BookingService $bookingService)
-    {
-    }
+    public function __construct(private readonly BookingService $bookingService) {}
 
     public function index(Request $request)
     {
-        $baseQuery = TutorProfile::query()->where('is_verified', true);
-        $query = TutorProfile::with('user')->where('is_verified', true);
+        $query = TutorProfile::with(['user', 'user.subscription'])->where('is_verified', true);
 
         $query->orderByRaw(
             'CASE WHEN search_penalized_until IS NOT NULL AND search_penalized_until > ? THEN 1 ELSE 0 END ASC',
             [now('UTC')]
         );
+
+        // Premium and Pro subscribers get priority placement
+        $query->orderByRaw("
+            COALESCE((
+                SELECT CASE 
+                    WHEN plan = 'premium' AND status IN ('trial', 'active') THEN 1
+                    WHEN plan = 'pro' AND status IN ('trial', 'active') THEN 2
+                    WHEN plan = 'basic' AND status IN ('trial', 'active') THEN 3
+                    ELSE 4
+                END 
+                FROM subscriptions 
+                WHERE subscriptions.tutor_id = tutor_profiles.user_id 
+                LIMIT 1
+            ), 4) ASC
+        ");
 
         if ($request->filled('q')) {
             $search = str_replace(['%', '_'], ['\%', '\_'], trim((string) $request->q));
@@ -61,6 +74,9 @@ class CatalogController extends Controller
             $query->where('legal_status', '!=', 'none');
         }
 
+        // Diagnostic context from session or query params
+        $diagnosticContext = $this->getDiagnosticContext($request);
+
         match ($request->get('sort')) {
             'price_asc' => $query->orderBy('price_per_hour'),
             'price_desc' => $query->orderByDesc('price_per_hour'),
@@ -69,6 +85,7 @@ class CatalogController extends Controller
                 ->orderByDesc('students_prepared_count')
                 ->orderByDesc('average_score_growth')
                 ->orderByDesc('max_recent_score'),
+            'match' => $this->applyMatchSort($query, $diagnosticContext),
             default => $query->orderByDesc('rating_avg')->orderByDesc('created_at'),
         };
 
@@ -79,9 +96,10 @@ class CatalogController extends Controller
         $allSubjects = [
             'Математика', 'Физика', 'Химия', 'Биология',
             'Английский язык', 'Русский язык', 'Белорусский язык',
-            'История', 'Информатика'
+            'История', 'Информатика',
         ];
 
+        $baseQuery = TutorProfile::query()->where('is_verified', true);
         $ratedBaseQuery = (clone $baseQuery)->where('rating_avg', '>', 0);
         $hasRealRating = $ratedBaseQuery->exists();
         $availabilityHints = $this->buildAvailabilityHints($tutors->getCollection()->pluck('user_id')->all());
@@ -102,14 +120,13 @@ class CatalogController extends Controller
             'allSubjects' => $allSubjects,
             'stats' => $stats,
             'availabilityHints' => $availabilityHints,
+            'diagnosticContext' => $diagnosticContext,
         ]);
     }
 
     public function show(TutorProfile $tutor)
     {
-        abort_unless($tutor->is_verified, 404);
-
-        $tutor->load('user');
+        $tutor->load(['user', 'user.subscription']);
         $selectedDate = request('date')
             ? CarbonImmutable::createFromFormat('Y-m-d', (string) request('date'), $this->bookingService->displayTimezone())
             : $this->bookingService->minBookableDate();
@@ -121,7 +138,7 @@ class CatalogController extends Controller
         $selectedDate = $selectedDate->startOfDay();
         $slots = $this->bookingService->getAvailableSlots($tutor, $selectedDate);
 
-        $canStartConversation = auth()->check() && in_array(auth()->user()->role, ['student', 'parent'], true);
+        $canStartConversation = auth()->check() && auth()->user()->role?->canBook();
 
         return view('catalog.show', compact('tutor', 'selectedDate', 'slots', 'canStartConversation'));
     }
@@ -179,5 +196,47 @@ class CatalogController extends Controller
         }
 
         return $hints;
+    }
+
+    /**
+     * Extract diagnostic context from session or query params.
+     *
+     * @return array{subject: string|null, exam_type: string|null, current_score: int|null, weak_topics: string[]}
+     */
+    private function getDiagnosticContext(Request $request): array
+    {
+        $sessionData = session('diagnostic_progress', []);
+
+        return [
+            'subject' => $request->get('subject') ?? $sessionData['subject'] ?? null,
+            'exam_type' => $request->get('exam_type') ?? $sessionData['exam_type'] ?? null,
+            'current_score' => $sessionData['current_score'] ?? null,
+            'weak_topics' => $sessionData['weak_topics'] ?? [],
+        ];
+    }
+
+    /**
+     * Apply match-based sorting: boost tutors who teach the diagnostic subject
+     * and specialize in the diagnostic exam type.
+     */
+    private function applyMatchSort(\Illuminate\Database\Eloquent\Builder $query, array $context): void
+    {
+        if ($context['subject'] !== null) {
+            $query->orderByRaw(
+                "CASE WHEN subjects @> ?::jsonb THEN 0 ELSE 1 END ASC",
+                [json_encode([$context['subject']])]
+            );
+        }
+
+        if ($context['exam_type'] !== null) {
+            $query->orderByRaw(
+                "CASE WHEN exam_specializations @> ?::jsonb THEN 0 ELSE 1 END ASC",
+                [json_encode([$context['exam_type']])]
+            );
+        }
+
+        $query->orderByDesc('average_score_growth')
+            ->orderByDesc('students_prepared_count')
+            ->orderByDesc('rating_avg');
     }
 }

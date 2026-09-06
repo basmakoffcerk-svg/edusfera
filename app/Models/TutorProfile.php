@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TutorProfile extends Model
 {
+    /**
+     * SECURITY (M1): is_verified, verification_status, rating_avg are mass-assignable
+     * because they are managed by admin approval flows in Filament. Access control
+     * is enforced at the Filament resource level (admin-only actions), NOT at the
+     * model level. Never expose these fields in tutor-facing forms.
+     */
     protected $fillable = [
         'user_id',
         'subjects',
@@ -17,6 +23,10 @@ class TutorProfile extends Model
         'price_per_hour',
         'experience_years',
         'legal_status',
+        'unp',
+        'payout_account',
+        'webpay_billing_id',
+        'webpay_account_id',
         'bio',
         'education_summary',
         'teaching_methodology',

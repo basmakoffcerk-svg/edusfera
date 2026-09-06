@@ -15,28 +15,30 @@ class EditTutorProfile extends EditRecord
 
     public function getTitle(): string
     {
-        return auth()->user()?->role === 'admin'
+        return (bool) auth()->user()?->isAdmin()
             ? 'Модерация анкеты репетитора'
             : 'Редактирование профиля репетитора';
     }
 
     public function getSubheading(): ?string
     {
-        return auth()->user()?->role === 'admin'
+        return (bool) auth()->user()?->isAdmin()
             ? 'Проверьте анкету, документы и примите решение по публикации в каталоге.'
             : null;
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        if (auth()->user()?->role === 'tutor') {
+        $user = auth()->user();
+
+        if ($user?->isTutor()) {
             $data['is_verified'] = false;
             $data['verification_status'] = 'pending';
             $data['verification_submitted_at'] = now();
             $data['onboarding_completed_at'] = now();
         }
 
-        if (auth()->user()?->role === 'admin') {
+        if ($user?->isAdmin()) {
             $status = $data['verification_status'] ?? 'pending';
             $data['verification_status'] = $status;
             $data['is_verified'] = $status === 'approved';
@@ -50,7 +52,7 @@ class EditTutorProfile extends EditRecord
         /** @var TutorProfile $profile */
         $profile = $this->record;
 
-        if (auth()->user()?->role !== 'admin') {
+        if (! auth()->user()?->isAdmin()) {
             return;
         }
 
@@ -75,9 +77,18 @@ class EditTutorProfile extends EditRecord
         return static::getResource()::getUrl('index', panel: $panelId);
     }
 
+    protected function getFormActions(): array
+    {
+        if (auth()->user()?->isAdmin()) {
+            return parent::getFormActions();
+        }
+
+        return [];
+    }
+
     protected function getHeaderActions(): array
     {
-        if (auth()->user()?->role !== 'admin') {
+        if (! auth()->user()?->isAdmin()) {
             return [];
         }
 

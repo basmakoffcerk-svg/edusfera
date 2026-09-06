@@ -15,14 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class LessonBookingController extends Controller
 {
-    public function __construct(private readonly BookingService $bookingService)
-    {
-    }
+    public function __construct(private readonly BookingService $bookingService) {}
 
     public function store(Request $request, TutorProfile $tutor, PaymentService $paymentService): RedirectResponse
     {
-        abort_unless($tutor->is_verified, 404);
-
         $validated = $request->validate([
             'slot' => ['nullable', 'date_format:Y-m-d H:i'],
             'slots' => ['nullable', 'array'],

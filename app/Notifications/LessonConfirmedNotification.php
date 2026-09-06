@@ -15,9 +15,7 @@ class LessonConfirmedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(private readonly Lesson $lesson)
-    {
-    }
+    public function __construct(private readonly Lesson $lesson) {}
 
     public function via(object $notifiable): array
     {
@@ -28,7 +26,7 @@ class LessonConfirmedNotification extends Notification implements ShouldQueue
     {
         return FilamentNotification::make()
             ->title('Урок подтвержден')
-            ->body('Репетитор подтвердил урок #' . $this->lesson->id . '.')
+            ->body('Репетитор подтвердил урок #'.$this->lesson->id.'.')
             ->icon('heroicon-o-check-circle')
             ->iconColor('success')
             ->getDatabaseMessage() + [
@@ -44,14 +42,14 @@ class LessonConfirmedNotification extends Notification implements ShouldQueue
             ->setTimezone(config('booking.display_timezone'))
             ->format('d.m.Y H:i');
 
-        $message = (new MailMessage())
+        $message = (new MailMessage)
             ->subject('Урок подтвержден')
-            ->greeting('Здравствуйте, ' . $notifiable->name . '!')
+            ->greeting('Здравствуйте, '.$notifiable->name.'!')
             ->line('Репетитор подтвердил вашу запись.')
-            ->line('Дата и время: ' . $start . ' (Минск)');
+            ->line('Дата и время: '.$start.' (Минск)');
 
         if ($this->lesson->meeting_link) {
-            $message->line('Ссылка на встречу: ' . $this->lesson->meeting_link);
+            $message->line('Ссылка на встречу: '.$this->lesson->meeting_link);
         }
 
         return $message

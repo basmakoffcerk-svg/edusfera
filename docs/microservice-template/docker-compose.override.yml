@@ -1,0 +1,67 @@
+# ─────────────────────────────────────────────────────────────────────
+# Docker Compose override-шаблон для нового микросервиса edusfera
+# ─────────────────────────────────────────────────────────────────────
+#
+# Этот файл подключается как docker-compose.override.yml (или через
+# `-f` флаг) к основному docker-compose.yml проекта edusfera.
+#
+# Микросервис автоматически получает доступ к:
+#   - Redis (для подписки на Redis Streams события)
+#   - Ядру (HTTP Internal API через Docker-сеть)
+#   - JWKS endpoint ядра (для верификации JWT-токенов)
+#
+# Использование:
+#   1. Скопируйте этот файл в свой микросервис
+#   2. Замените <your-service-name> и <your-image> на свои значения
+#   3. Настройте переменные окружения
+#   4. docker compose -f docker-compose.yml -f docker-compose.override.yml up
+#
+
+services:
+  # ── Пример: ваш микросервис ──────────────────────────────────────
+  # Замените 'my-service' на реальное имя вашего микросервиса.
+  my-service:
+    build:
+      context: ./my-service
+      dockerfile: Dockerfile
+    # image: <your-registry>/my-service:latest   # или используйте image вместо build
+    restart: unless-stopped
+    ports:
+      - "8090:8080"   # внешний:внутренний порт
+    environment:
+      # ── Core API ──────────────────────────────────────────────────
+      # URL Internal API ядра (через Docker-сеть, без TLS).
+      CORE_API_URL: http://app:8000/api/internal/v1
+
+      # ── OAuth2 / Passport (client_credentials) ───────────────────
+      # Получить через: php artisan passport:client --client
+      CORE_OAUTH_TOKEN_URL: http://app:8000/oauth/token
+      CORE_CLIENT_ID: "${CORE_CLIENT_ID:-}"
+      CORE_CLIENT_SECRET: "${CORE_CLIENT_SECRET:-}"
+      # Scope-ы через пробел: lessons:read internal:metrics:read ...
+      CORE_CLIENT_SCOPES: "lessons:read"
+
+      # ── JWKS (для верификации JWT access-токенов) ────────────────
+      CORE_JWKS_URL: http://app:8000/.well-known/jwks.json
+
+      # ── Redis Streams (подписка на интеграционные события) ────────
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # ── Webhook (отправка событий в ядро) ────────────────────────
+      CORE_WEBHOOK_URL: http://app:8000/webhooks/my-service
+      CORE_WEBHOOK_SECRET: "${CORE_WEBHOOK_SECRET:-}"
+
+    depends_on:
+      - redis
+    networks:
+      - edusfera
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  edusfera:
+    external: true

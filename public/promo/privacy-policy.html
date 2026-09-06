@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Политика конфиденциальности | Edusfera</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ════════════════════════════════════════════════
+           ДИЗАЙН-СИСТЕМА EDUSFERA
+           ════════════════════════════════════════════════ */
+        :root {
+            --ed-violet: #7D39EB;
+            --ed-violet-hover: #6827d6;
+            --ed-violet-soft: #f3edff;
+            --ed-lime: #C6FF33;
+            --ed-lime-soft: #f4ffd0;
+            --ed-bg: #f6f6f9;
+            --ed-surface: #ffffff;
+            --dark-bg: #09090b;
+            --dark-card: rgba(255, 255, 255, .03);
+            --dark-border: rgba(255, 255, 255, .08);
+            --text-main: #0f1115;
+            --text-muted: #6b7280;
+            --text-dim: #9ca3af;
+            --border: #e5e7eb;
+            --r-xl: 24px;
+            --maxw: 1180px;
+            --shadow-md: 0 4px 12px rgba(17, 24, 39, .06);
+            --shadow-violet: 0 10px 30px rgba(125, 57, 235, .24);
+        }
+
+        @font-face {
+            font-family: 'Rimma Sans';
+            src: url('./fonts/Rimma_sans-Bold.ttf') format('truetype');
+            font-weight: 800;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--text-main);
+            background-color: var(--ed-bg);
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(125, 57, 235, .06) 0%, transparent 45%),
+                radial-gradient(circle at 100% 0%, rgba(198, 255, 51, .05) 0%, transparent 40%);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            padding-top: 110px;
+        }
+
+        .wrap {
+            max-width: var(--maxw);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        @media (max-width: 576px) {
+            .wrap {
+                padding: 0 16px;
+            }
+            body {
+                padding-top: 90px;
+            }
+        }
+
+        /* ═══ HEADER ═══ */
+        .hdr {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 0;
+            background: rgba(246, 246, 249, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            transition: all .3s ease;
+        }
+
+        .hdr.scrolled {
+            padding: 12px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            background: rgba(246, 246, 249, 0.95);
+        }
+
+        .hdr .wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Rimma Sans', 'Unbounded', 'Inter', sans-serif !important;
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -.04em;
+            text-transform: uppercase;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .logo svg {
+            width: 24px;
+            height: 24px;
+            color: var(--ed-lime);
+            transition: transform .7s ease;
+        }
+
+        .logo:hover svg {
+            transform: rotate(180deg);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color .2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+        }
+
+        .hdr-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+        }
+
+        /* Кнопки */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 0.8rem 1.6rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            transition: all .4s cubic-bezier(.16, 1, .3, 1);
+            text-decoration: none;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .btn-white {
+            background: #fff;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-white:hover {
+            border-color: var(--text-main);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                padding: 0.6rem 1.1rem;
+                font-size: 0.72rem;
+            }
+            .hdr {
+                padding: 16px 0;
+            }
+        }
+
+        /* Content block */
+        .policy-container {
+            margin-bottom: 80px;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, .7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, .5);
+            border-radius: var(--r-xl);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .03);
+            padding: 48px;
+        }
+
+        @media (max-width: 768px) {
+            .glass {
+                padding: 32px 24px;
+                border-radius: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .glass {
+                padding: 24px 16px;
+            }
+            h1 {
+                font-size: 1.22rem;
+                letter-spacing: -0.01em;
+            }
+        }
+
+        h1 {
+            font-family: 'Rimma Sans', 'Unbounded', 'Inter', sans-serif !important;
+            font-weight: 800;
+            font-size: clamp(1.4rem, 4vw, 2.6rem);
+            line-height: 1.1;
+            letter-spacing: -.03em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .meta-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 32px;
+        }
+
+        h2 {
+            font-family: 'Rimma Sans', 'Unbounded', 'Inter', sans-serif !important;
+            font-weight: 800;
+            font-size: clamp(1.15rem, 3vw, 1.4rem);
+            line-height: 1.2;
+            letter-spacing: -.02em;
+            text-transform: uppercase;
+            margin-top: 36px;
+            margin-bottom: 16px;
+            color: var(--ed-violet);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: #374151;
+            font-size: clamp(0.92rem, 2.5vw, 1rem);
+            line-height: 1.65;
+        }
+
+        ul {
+            margin-bottom: 18px;
+            padding-left: 20px;
+            color: #374151;
+        }
+
+        li {
+            margin-bottom: 8px;
+            font-size: clamp(0.9rem, 2.5vw, 0.98rem);
+        }
+
+        /* Адаптивный скролл-враппер для таблиц на мобилках */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 28px 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        table {
+            width: 100%;
+            min-width: 600px; /* Минимальная ширина для адекватного расположения столбцов */
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--ed-violet-soft);
+            padding: 14px 16px;
+            font-weight: 700;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            color: #4b5563;
+            vertical-align: top;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        a {
+            color: var(--ed-violet);
+            text-decoration: underline;
+            font-weight: 500;
+        }
+
+        a:hover {
+            color: var(--ed-violet-hover);
+        }
+
+        /* ═══ FOOTER ═══ */
+.ftr{background:#1e1f24;color:var(--text-dim);padding:64px 0 32px;border-top:1px solid rgba(255,255,255,0.08)}
+.ftr-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr;gap:40px;margin-bottom:48px}
+@media(max-width:860px){.ftr-grid{grid-template-columns:1fr 1fr;gap:32px}}
+@media(max-width:560px){.ftr-grid{grid-template-columns:1fr}}
+.ftr-brand .logo{color:#fff;margin-bottom:16px}
+.ftr-brand p{font-size:.9rem;line-height:1.7;margin-bottom:16px;max-width:340px}
+.status-pill{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;color:var(--ed-lime)}
+.status-pill .d{width:8px;height:8px;border-radius:50%;background:var(--ed-lime);position:relative}
+.status-pill .d::after{content:'';position:absolute;inset:0;border-radius:50%;background:var(--ed-lime);animation:ping 2s cubic-bezier(0,0,.2,1) infinite}
+@keyframes ping{75%,100%{transform:scale(2.2);opacity:0}}
+.ftr-col h4{color:#fff;font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.14em;margin-bottom:18px}
+.ftr-col a{display:block;font-size:.9rem;padding:5px 0;color:var(--text-dim);transition:color .2s}
+.ftr-col a:hover{color:var(--ed-lime)}
+.ftr-bottom{border-top:1px solid var(--dark-border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:.82rem}
+.ftr-bottom a{color:var(--text-dim)}
+.ftr-bottom a:hover{color:var(--ed-lime)}
+
+
+        </style>
+</head>
+<body>
+    <!-- HEADER (Единая шапка как на главной) -->
+    <header class="hdr" id="hdr">
+        <div class="wrap">
+            <a href="index.html#top" class="logo" aria-label="Edusfera — на главную">
+                EDUSFERA
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M12 2L22 12L12 22L2 12L12 2Z"/></svg>
+            </a>
+            <nav class="nav-links" aria-label="Основная навигация">
+                <a href="index.html#why">Выгоды</a>
+                <a href="index.html#tutors">Репетиторам</a>
+                <a href="index.html#calc">Калькулятор</a>
+                <a href="index.html#faq">Вопросы</a>
+            </nav>
+            <div class="hdr-actions">
+                <a href="index.html" class="btn btn-white" style="padding:8px 18px;font-size:0.85rem;border-radius:9999px;">← На главную</a>
+                <a href="index.html#beta" class="btn btn-lime btn-sm magnetic" style="background:#C6FF33;color:#0f1115;padding:8px 18px;border-radius:9999px;font-weight:800;font-size:0.75rem;text-decoration:none;letter-spacing:0.05em;display:inline-flex;align-items:center;">БЕТА-ТЕСТ ➔</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="wrap policy-container">
+        <main class="glass">
+            <h1>Политика конфиденциальности</h1>
+            <div class="meta-info">Редакция от 24 июня 2026 г. | Действует для промо-раздела Edusfera.by</div>
+
+            <p>Настоящая Политика определяет порядок обработки и защиты персональных данных пользователей в рамках рекламной кампании и сбора заявок на промо-лендинге Edusfera.by в соответствии с <strong>Законом Республики Беларусь от 7 мая 2021 г. № 99-З «О защите персональных данных»</strong>.</p>
+
+            <h2>1. Общие положения</h2>
+            <p>1.1. Оператором персональных данных является владелец платформы Edusfera.by (далее — Оператор): <strong>Общество с ограниченной ответственностью «Эдусфера»</strong>, УНП <strong>192854899</strong>, зарегистрированное по адресу: <strong>Республика Беларусь, г. Минск, 220100, ул. Веры Хоружей, д. 6А, пом. 29</strong>.</p>
+            <p>1.2. Настоящая Политика применяется исключительно к информации, собираемой через форму регистрации раннего доступа на веб-странице <a href="index.html">Edusfera.by/promo</a>.</p>
+            <p>1.3. Оператор обрабатывает персональные данные на основе принципов законности, конфиденциальности и безопасности.</p>
+
+            <h2>2. Какие данные мы собираем</h2>
+            <p>При заполнении формы заявки раннего доступа на лендинге мы собираем следующие персональные данные:</p>
+            <ul>
+                <li>Имя (для обращения в письмах и обратной связи);</li>
+                <li>Номер телефона (для подтверждения статуса и связи);</li>
+                <li>Адрес электронной почты (для отправки инвайт-кода и уведомлений);</li>
+                <li>Выбранная роль (ученик/родитель или репетитор);</li>
+                <li>Предмет интереса для обучения или преподавания.</li>
+            </ul>
+
+            <h2>3. Цели, правовые основания и сроки обработки данных</h2>
+            <!-- Обертка для скролла таблицы на мобильных -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Цель обработки</th>
+                            <th>Перечень данных</th>
+                            <th>Правовое основание</th>
+                            <th>Срок обработки</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Регистрация в списке раннего доступа (Early Birds), предоставление персонального инвайт-кода на скидку, обратная связь и информирование о запуске платформы</td>
+                            <td>Имя, email, номер телефона, роль, предмет интереса</td>
+                            <td>Согласие субъекта персональных данных (предоставляется путем отправки заполненной формы на сайте)</td>
+                            <td>До запуска платформы или до отзыва согласия субъектом</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2>4. Права субъектов персональных данных</h2>
+            <p>В соответствии с законодательством Республики Беларусь вы имеете право:</p>
+            <ul>
+                <li><strong>На отзыв согласия:</strong> Вы можете отозвать согласие на обработку ваших данных в любой момент без объяснения причин.</li>
+                <li><strong>На получение информации:</strong> Вы имеете право получить информацию о том, какие ваши данные обрабатываются и кому они передавались.</li>
+                <li><strong>На изменение данных:</strong> Вы можете потребовать исправить ваши данные, если они неполные или неточные.</li>
+                <li><strong>На прекращение обработки и удаление:</strong> Вы вправе потребовать полностью удалить ваши персональные данные.</li>
+                <li><strong>На обжалование:</strong> Вы имеете право обжаловать действия Оператора в Национальный центр защиты персональных данных Республики Беларусь.</li>
+            </ul>
+
+            <h2>5. Порядок реализации прав</h2>
+            <p>5.1. Для реализации любого из ваших прав вам необходимо направить Оператору заявление в письменной форме (почтовым отправлением) либо в виде электронного документа, подписанного электронной цифровой подписью (ЭЦП).</p>
+            <p>5.2. Письменные заявления направляются по адресу: <strong>Республика Беларусь, г. Минск, 220100, ул. Веры Хоружей, д. 6А, пом. 29</strong>. Электронные заявления направляются на почту: <a href="mailto:edusferaby@gmail.com">edusferaby@gmail.com</a>.</p>
+            <p>5.3. Заявление должно содержать: ФИО, адрес проживания, суть требования, вашу личную подпись (или ЭЦП).</p>
+
+            <h2>6. Безопасность и передача третьим лицам</h2>
+            <p>6.1. Все данные передаются по защищенному протоколу HTTPS и хранятся в защищенной базе данных и Google-таблице Оператора.</p>
+            <p>6.2. Мы не передаем ваши данные третьим лицам для рекламных целей. Передача данных осуществляется исключительно платежным или почтовым провайдерам для технического обеспечения отправки вам писем с инвайт-кодами.</p>
+
+            <h2>7. Заключительные положения</h2>
+            <p>7.1. Настоящая Политика вступает в силу с момента ее публикации на странице Edusfera.by/promo/privacy-policy.html.</p>
+            <p>7.2. Оператор имеет право вносить изменения в настоящую Политику в одностороннем порядке.</p>
+        </main>
+    </div>
+
+    <!-- FOOTER (Единый подвал сайта) -->
+    <footer class="ftr">
+  <div class="wrap">
+    <div class="ftr-grid">
+      <div class="ftr-brand">
+        <a href="index.html#top" class="logo">EDUSFERA.</a>
+        <p>Первая белорусская платформа для преподавания, запуска онлайн-курсов и приема платежей через ЕРИП.</p>
+        <span class="status-pill"><span class="d"></span> Платформа на стадии запуска</span>
+      </div>
+      <div class="ftr-col">
+        <h4>Платформа</h4>
+        <a href="index.html#why">Выгоды</a>
+        <a href="index.html#comparison">Сравнение</a>
+        <a href="index.html#tutors">Репетиторам</a>
+        <a href="index.html#calc">Калькулятор</a>
+        <a href="index.html#beta">Ранний доступ</a>
+      </div>
+      <div class="ftr-col">
+        <h4>Правовые документы</h4>
+        <a href="offer.html">Публичная оферта и тарифы</a>
+        <a href="privacy-policy.html">Конфиденциальность (Закон 99-З)</a>
+        <a href="payment-security.html">Правила оплаты и безопасность</a>
+        <a href="refund-policy.html">Правила возврата и отмены</a>
+      </div>
+      <div class="ftr-col">
+        <h4>Контакты и режим работы</h4>
+        <a href="contacts.html">Контакты</a>
+        <a href="mailto:edusferaby@gmail.com">edusferaby@gmail.com</a>
+        <a href="tel:+375295190821">+375 (29) 519-08-21</a>
+        <span style="font-size:0.78rem;color:var(--text-dim);margin-top:4px;display:block;">Режим работы: Пн-Пт 09:00 – 18:00 (Сб-Вс: выходной)</span>
+      </div>
+    </div>
+
+    <!-- Payment Systems & Acquiring Logos Strip -->
+    <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--dark-border);">
+      <p style="font-size: 0.72rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">
+        Принимаем к онлайн-оплате через интернет-эквайринг ЗАО «Альфа-Банк»
+      </p>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/alfa-bank.png" alt="Альфа-Банк" style="height: 24px; max-width: 110px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/belkart-internetparol.png" alt="БЕЛКАРТ" style="height: 24px; max-width: 90px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="logo/belkart-internetparol.svg" alt="Белкарт ИнтернетПароль" style="height: 24px; max-width: 90px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/visa.png" alt="VISA" style="height: 20px; max-width: 70px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/visa-secure.png" alt="Visa Secure" style="height: 24px; max-width: 85px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/mastercard.png" alt="MasterCard" style="height: 24px; max-width: 65px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/mastercard-id-check.png" alt="Mastercard Identity Check" style="height: 24px; max-width: 85px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/apple-pay.png" alt="Apple Pay" style="height: 20px; max-width: 60px; object-fit: contain;">
+        </div>
+        <div style="background: #fff; border-radius: 12px; padding: 6px 12px; display: flex; align-items: center; justify-content: center; height: 40px; border: 1px solid var(--dark-border);">
+          <img src="/logo/samsung-pay.png" alt="Samsung Pay" style="height: 20px; max-width: 80px; object-fit: contain;">
+        </div>
+      </div>
+    </div>
+
+    <div class="ftr-info" style="border-top: 1px solid var(--dark-border); padding-top: 24px; margin-top: 20px; font-size: 0.82rem; line-height: 1.6; color: var(--text-dim);">
+      <div>
+        <strong style="color: #fff; display: block; margin-bottom: 6px;">Юридическая информация</strong>
+        Наименование: Общество с ограниченной ответственностью «Эдусфера» (ООО «Эдусфера»)<br>
+        Гос. регистрация: Зарегистрировано Минским горисполкомом 04.05.2026 г., УНП 192854899<br>
+        Юридический адрес: Республика Беларусь, 220100, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29 (Страна нахождения: Республика Беларусь)<br>
+        Интернет-эквайринг: ЗАО «Альфа-Банк»<br>
+        Лицензирование: Деятельность не подлежит лицензированию в соответствии с законодательством Республики Беларусь.
+      </div>
+    </div>
+    <div class="ftr-bottom" style="margin-top: 16px;">
+      <div>© <span id="year">2026</span> ООО «Эдусфера». Все права защищены.</div>
+      <div>Минск, Беларусь · Сделано для преподавателей и абитуриентов</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('scroll', function() {
+    var hdr = document.getElementById('hdr');
+    if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 20);
+});
+</script>
+</body>
+</html>

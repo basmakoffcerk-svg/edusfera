@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="g1" cx="50%" cy="0%" r="60%">
+      <stop offset="0%" stop-color="#7D39EB" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#7D39EB" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="100%" cy="100%" r="60%">
+      <stop offset="0%" stop-color="#C6FF33" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#C6FF33" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#09090b"/>
+  <rect width="1200" height="630" fill="url(#g1)"/>
+  <rect width="1200" height="630" fill="url(#g2)"/>
+  <!-- Лого -->
+  <g transform="translate(96,96)">
+    <text x="0" y="56" font-family="Arial, sans-serif" font-size="56" font-weight="900" fill="#fff" letter-spacing="-2">EDUSFERA<tspan fill="#C6FF33">.</tspan></text>
+    <path d="M430 30L458 58L430 86L402 58L430 30Z" fill="none" stroke="#C6FF33" stroke-width="6"/>
+  </g>
+  <!-- Заголовок -->
+  <text x="96" y="300" font-family="Arial, sans-serif" font-size="78" font-weight="900" fill="#fff" letter-spacing="-2">Репетиторы ЦТ и ЦЭ,</text>
+  <text x="96" y="388" font-family="Arial, sans-serif" font-size="78" font-weight="900" fill="#C6FF33" letter-spacing="-2">которые работают легально</text>
+  <!-- Подзаголовок -->
+  <text x="96" y="470" font-family="Arial, sans-serif" font-size="32" fill="#9ca3af">Безопасная оплата · ИИ-диагностика · Белый доход без ИП</text>
+  <!-- CTA pill -->
+  <rect x="96" y="516" width="340" height="62" rx="31" fill="#C6FF33"/>
+  <text x="266" y="555" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#000">Записаться на бета-тест</text>
+</svg>

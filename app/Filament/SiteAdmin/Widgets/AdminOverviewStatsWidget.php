@@ -21,7 +21,7 @@ class AdminOverviewStatsWidget extends StatsOverviewWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->role === 'admin';
+        return (bool) auth()->user()?->isAdmin();
     }
 
     protected function getStats(): array
@@ -89,7 +89,7 @@ class AdminOverviewStatsWidget extends StatsOverviewWidget
                 ->description('Сохранённые baseline и повторные срезы')
                 ->descriptionIcon('heroicon-m-clipboard-document-check')
                 ->color($diagnosticsDone > 0 ? 'success' : 'gray'),
-            Stat::make('Домашка выполнена', $homeworkCompletionRate . '%')
+            Stat::make('Домашка выполнена', $homeworkCompletionRate.'%')
                 ->description('Доля completed по homework_assignments')
                 ->descriptionIcon('heroicon-m-check-badge')
                 ->color($homeworkCompletionRate >= 60 ? 'success' : 'warning'),

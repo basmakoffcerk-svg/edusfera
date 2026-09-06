@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\UserRole;
+
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -28,7 +31,11 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'phone',
+        'google_id',
+        'yandex_id',
+        'avatar',
         'offer_accepted_at',
+        'email_verified_at',
     ];
 
     /**
@@ -53,6 +60,7 @@ class User extends Authenticatable implements FilamentUser
             'offer_accepted_at' => 'datetime',
             'password' => 'hashed',
             'is_verified' => 'boolean',
+            'role' => UserRole::class,
         ];
     }
 
@@ -62,23 +70,69 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
-            return in_array($this->role, ['admin', 'tutor', 'student', 'parent'], true);
+            return in_array($this->role, UserRole::allPanelRoles(), true);
         }
 
         if ($panel->getId() === 'site-admin') {
             $technicalEmail = mb_strtolower((string) config('site_admin.email', ''));
 
-            return $this->role === 'admin'
+            return $this->role === UserRole::Admin
                 && $technicalEmail !== ''
                 && mb_strtolower($this->email) === $technicalEmail;
         }
 
-        return true;
+        return false;
+    }
+
+    public function isAdmin(): bool
+    {
+        if ($this->role instanceof UserRole) {
+            return $this->role === UserRole::Admin;
+        }
+
+        return $this->role === 'admin' || $this->role === UserRole::Admin->value;
+    }
+
+    public function isTutor(): bool
+    {
+        if ($this->role instanceof UserRole) {
+            return $this->role === UserRole::Tutor;
+        }
+
+        return $this->role === 'tutor' || $this->role === UserRole::Tutor->value;
+    }
+
+    public function isStudent(): bool
+    {
+        if ($this->role instanceof UserRole) {
+            return $this->role === UserRole::Student;
+        }
+
+        return $this->role === 'student' || $this->role === UserRole::Student->value;
+    }
+
+    public function isParent(): bool
+    {
+        if ($this->role instanceof UserRole) {
+            return $this->role === UserRole::Parent;
+        }
+
+        return $this->role === 'parent' || $this->role === UserRole::Parent->value;
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return \App\Services\MultiAccountService::roleLabel($this->role);
     }
 
     public function tutorProfile(): HasOne
     {
         return $this->hasOne(TutorProfile::class);
+    }
+
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(\App\Domain\Subscription\Models\Subscription::class, 'tutor_id');
     }
 
     public function tutorLessons(): HasMany

@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\User;
+
 return [
 
     /*
@@ -40,6 +42,21 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+        ],
+
+        // Guard для внутреннего S2S API (routes/internal.php, `auth:api`).
+        // Драйвер `passport` регистрируется PassportServiceProvider'ом
+        // (client_credentials + scope-проверки через middleware `scope`).
+        // Без этого guard'а каждый вызов /api/internal/v1/* падал с
+        // "Auth guard [api] is not defined".
+        'api' => [
+            'driver' => 'passport',
+            'provider' => 'users',
+        ],
     ],
 
     /*
@@ -62,7 +79,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => env('AUTH_MODEL', User::class),
         ],
 
         // 'users' => [

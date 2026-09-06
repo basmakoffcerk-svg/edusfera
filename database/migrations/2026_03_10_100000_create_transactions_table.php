@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('acquiring_fee', 10, 2);
             $table->decimal('net_amount', 10, 2);
             $table->char('currency', 3)->default('BYN');
-            $table->enum('status', ['pending', 'success', 'failed', 'refunded', 'partially_refunded'])->default('pending');
+            $table->enum('status', ['pending', 'authorized', 'success', 'failed', 'voided', 'refunded', 'partially_refunded', 'partially_completed'])->default('pending');
             $table->string('payment_method')->nullable();
             $table->string('gateway_transaction_id')->nullable();
             $table->json('gateway_response')->nullable();

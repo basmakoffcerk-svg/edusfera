@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\LessonRequestResource\Pages;
 use App\Models\Lesson;
 use App\Notifications\LessonCancelledNotification;
 use App\Notifications\LessonConfirmedNotification;
-use App\Support\BynMoneyFormatter;
 use App\Services\ChatService;
 use App\Services\Payment\PaymentService;
+use App\Support\BynMoneyFormatter;
 use Filament\Facades\Filament;
 use Filament\Forms;
-use Filament\Infolists;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -171,7 +171,7 @@ class LessonRequestResource extends Resource
         $query = parent::getEloquentQuery()->with(['student', 'tutor']);
         $user = auth()->user();
 
-        if ($user?->role === 'admin') {
+        if ($user?->role === UserRole::Admin) {
             return $query;
         }
 
@@ -180,16 +180,41 @@ class LessonRequestResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return Filament::getCurrentPanel()?->getId() === 'site-admin'
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->isAdmin())
             ? 'Заявки на уроки'
             : 'Заявки';
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return Filament::getCurrentPanel()?->getId() === 'site-admin'
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->isAdmin())
             ? 'Операции'
-            : 'Организация';
+            : 'Занятия';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 1;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $user = auth()->user();
+        if (! $user?->isTutor()) {
+            return null;
+        }
+
+        $count = \App\Models\Lesson::query()
+            ->where('tutor_id', $user->id)
+            ->where('status', \App\Models\Lesson::STATUS_PENDING)
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
     }
 
     public static function getModelLabel(): string
@@ -205,12 +230,7 @@ class LessonRequestResource extends Resource
     public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->user();
-        $panelId = Filament::getCurrentPanel()?->getId();
 
-        if ($panelId === 'site-admin') {
-            return $user?->role === 'admin';
-        }
-
-        return $user?->role === 'tutor';
+        return $user !== null && ($user->isTutor() || $user->isAdmin());
     }
 }

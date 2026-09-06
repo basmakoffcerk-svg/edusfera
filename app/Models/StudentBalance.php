@@ -12,6 +12,7 @@ class StudentBalance extends Model
 {
     protected $fillable = [
         'user_id',
+        'ledger_wallet_id',
         'available_amount',
         'locked_amount',
         'total_topped_up',

@@ -9,7 +9,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
+    <script src="{{ $webSdkUrl }}"></script>
     <style>
+        .alfa-sdk-field{width:100%;height:48px;border-radius:.75rem;border:1px solid var(--border);background:#f8fafc;display:flex;align-items:center;transition:border-color .2s,box-shadow .2s}
+        .alfa-sdk-field--focus{border-color:var(--violet)!important;background:#fff!important;box-shadow:0 0 0 3px rgba(125,57,235,.15)!important}
+        .alfa-sdk-field--valid{border-color:#10b981!important}
+        .alfa-sdk-field--invalid{border-color:#ef4444!important}
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         :root{
             --lime:#C6FF33;--lime-hover:#d8ff66;--lime-glow:rgba(198,255,51,0.35);
@@ -353,17 +358,100 @@ SVG;
                             @error('payment_method')
                                 <div class="co-error" style="margin-top:.5rem;">{{ $message }}</div>
                             @enderror
+
+
                         </div>
 
-                        <label class="co-checkbox" id="remember-card-box">
-                            <input type="checkbox" name="remember_card" value="1" @checked(old('remember_card','1') === '1')>
-                            <span>Сохранить карту для быстрой оплаты следующих занятий.</span>
-                        </label>
+                        <div id="alfa-sdk-card-panel" style="display: none;" class="mt-4 p-4 border border-slate-200 rounded-2xl bg-white shadow-sm space-y-3">
+                            <div class="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                                    <span class="text-xs font-bold text-slate-800">Безопасный ввод карты (Альфа-Банк Web SDK)</span>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">3-D Secure 2.0</span>
+                            </div>
+
+                            <div id="alfa-sdk-bindings-wrap" style="display: none;">
+                                <label for="select-binding" class="text-xs font-semibold text-slate-600 mb-1 block">Выбор карты</label>
+                                <select class="w-full h-11 px-3 border border-slate-200 rounded-xl text-sm" id="select-binding">
+                                    <option value="new_card">Оплатить новой картой</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="pan" class="text-xs font-semibold text-slate-600 mb-1 block">Номер карты</label>
+                                <div id="pan" class="alfa-sdk-field"></div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label for="expiry" class="text-xs font-semibold text-slate-600 mb-1 block">Срок действия</label>
+                                    <div id="expiry" class="alfa-sdk-field"></div>
+                                </div>
+                                <div>
+                                    <label for="cvc" class="text-xs font-semibold text-slate-600 mb-1 block">CVC / CVV</label>
+                                    <div id="cvc" class="alfa-sdk-field"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="cardholder-name" class="text-xs font-semibold text-slate-600 mb-1 block">Имя держателя карты (латиницей)</label>
+                                <input type="text" id="cardholder-name" placeholder="IVAN IVANOV" class="w-full h-11 px-3 border border-slate-200 rounded-xl text-sm font-mono uppercase bg-slate-50">
+                            </div>
+
+                            <div id="alfa-sdk-save-card-wrap" style="display: none;" class="pt-1">
+                                <label class="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                                    <input type="checkbox" id="save-card" class="rounded accent-violet-600">
+                                    <span>Сохранить карту для быстрых оплат</span>
+                                </label>
+                            </div>
+
+                            <div id="alfa-sdk-error-box" class="p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl" style="display: none;"></div>
+                        </div>
+
+                        <div class="mt-4 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                Интернет-эквайринг ЗАО «Альфа-Банк»
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <div class="bg-white rounded-lg px-2 py-1 flex items-center justify-center border border-slate-200 shadow-sm h-7">
+                                    <img src="/logo/alfa-bank.svg" alt="Альфа-Банк" class="h-4 max-w-[70px] object-contain">
+                                </div>
+                                <div class="bg-white rounded-lg px-2 py-1 flex items-center justify-center border border-slate-200 shadow-sm h-7">
+                                    <img src="/logo/belkart.svg" alt="БЕЛКАРТ" class="h-4 max-w-[55px] object-contain">
+                                </div>
+                                <div class="bg-white rounded-lg px-2 py-1 flex items-center justify-center border border-slate-200 shadow-sm h-7">
+                                    <img src="/logo/belkart-internetparol.svg" alt="Белкарт ИнтернетПароль" class="h-4 max-w-[55px] object-contain">
+                                </div>
+                                <div class="bg-white rounded-lg px-2 py-1 flex items-center justify-center border border-slate-200 shadow-sm h-7">
+                                    <img src="/logo/visa.svg" alt="VISA" class="h-3.5 max-w-[45px] object-contain">
+                                </div>
+                                <div class="bg-white rounded-lg px-2 py-1 flex items-center justify-center border border-slate-200 shadow-sm h-7">
+                                    <img src="/logo/visa-secure.svg" alt="Visa Secure" class="h-4 max-w-[55px] object-contain">
+                                </div>
+                                <div class="bg-white rounded-lg px-2 py-1 flex items-center justify-center border border-slate-200 shadow-sm h-7">
+                                    <img src="/logo/mastercard.svg" alt="MasterCard" class="h-4 max-w-[45px] object-contain">
+                                </div>
+                                <div class="bg-white rounded-lg px-2 py-1 flex items-center justify-center border border-slate-200 shadow-sm h-7">
+                                    <img src="/logo/mastercard-id-check.svg" alt="Mastercard Identity Check" class="h-4 max-w-[55px] object-contain">
+                                </div>
+                                <div class="bg-white rounded-lg px-2 py-1 flex items-center justify-center border border-slate-200 shadow-sm h-7">
+                                    <img src="/logo/apple-pay.svg" alt="Apple Pay" class="h-3.5 max-w-[40px] object-contain">
+                                </div>
+                                <div class="bg-white rounded-lg px-2 py-1 flex items-center justify-center border border-slate-200 shadow-sm h-7">
+                                    <img src="/logo/samsung-pay.svg" alt="Samsung Pay" class="h-3.5 max-w-[50px] object-contain">
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-2 leading-tight">
+                                Защита платежей по стандарту PCI DSS Level 1 и 3D-Secure 2.0. Электронный чек отправляется на ваш email.
+                            </p>
+                        </div>
 
                         <button type="submit" class="btn btn-primary" id="checkout-submit">Оплатить {!! $selectedButtonLabel !!}</button>
                         <div class="co-fineprint">
                             Нажимая кнопку, вы соглашаетесь с
-                            <a href="{{ route('legal.offer') }}">условиями оферты</a>
+                            <a href="{{ route('legal.offer') }}">условиями оферты</a>,
+                            <a href="{{ route('legal.payment-security') }}">правилами оплаты</a>
                             и
                             <a href="{{ route('legal.refund') }}">правилами возврата</a>.
                         </div>
@@ -373,6 +461,7 @@ SVG;
             </section>
         </section>
     </main>
+    @include('partials.site-footer')
 
     <div class="co-popup" id="checkout-popup">
         <div class="co-popup-card">
@@ -454,11 +543,11 @@ SVG;
                 return `${normalized}&nbsp;${bynIconSvg}`;
             };
 
-            const disableWalletForPackage = (selectedPackageCode) => {
+            const disableWalletForPackage = (selectedAmount) => {
                 if (!walletRadio) return;
 
                 const walletLabel = walletRadio.closest('.co-method');
-                const walletAllowed = selectedPackageCode === 'single';
+                const walletAllowed = walletBalance >= selectedAmount;
                 walletRadio.disabled = !walletAllowed;
 
                 if (walletLabel) {
@@ -483,56 +572,214 @@ SVG;
                 const selectedPackageCode = selectedNode.value;
                 const selectedAmount = Number.parseFloat(selectedNode.dataset.totalAmount || '0');
                 const buttonLabel = selectedNode.dataset.buttonLabel ?? defaultButtonLabel;
-                const fullyCoveredByWallet = selectedPackageCode === 'single' && walletBalance >= selectedAmount && Boolean(walletRadio);
-                const canUsePartialWallet = selectedPackageCode === 'single' && walletBalance > 0 && walletBalance < selectedAmount;
+
+                disableWalletForPackage(selectedAmount);
+                totalNode.innerHTML = buttonLabel;
+
+                const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+                const isWalletSelected = selectedMethod === 'wallet';
+
+                const canUsePartialWallet = walletBalance > 0 && walletBalance < selectedAmount;
                 const usePartialWallet = canUsePartialWallet && Boolean(useWalletCheckbox?.checked);
                 const topUpAmount = Math.max(selectedAmount - walletBalance, 0);
 
-                disableWalletForPackage(selectedPackageCode);
-                totalNode.innerHTML = buttonLabel;
+                paymentMethodsBox.style.display = 'block';
 
-                if (fullyCoveredByWallet) {
-                    if (walletRadio) {
-                        walletRadio.checked = true;
-                    }
+                if (isWalletSelected) {
                     if (oneClickCopyNode) {
                         oneClickCopyNode.innerHTML = `К оплате: ${buttonLabel}. На вашем балансе: ${walletBalanceLabel}.`;
                     }
                     oneClickBox.style.display = 'flex';
                     partialBox.style.display = 'none';
-                    paymentMethodsBox.style.display = 'none';
                     rememberCardBox.style.display = 'none';
                     submitNode.innerHTML = `Подтвердить запись за ${buttonLabel}`;
+                } else {
+                    oneClickBox.style.display = 'none';
 
+                    if (canUsePartialWallet) {
+                        partialBox.style.display = 'flex';
+                        if (partialCopyNode) {
+                            partialCopyNode.innerHTML = `Использовать ${formatMoneyHtml(walletBalance)} с баланса. К доплате: ${formatMoneyHtml(topUpAmount)}.`;
+                        }
+                    } else {
+                        partialBox.style.display = 'none';
+                        if (useWalletCheckbox) {
+                            useWalletCheckbox.checked = false;
+                        }
+                    }
+
+                    if (usePartialWallet) {
+                        submitNode.innerHTML = `Доплатить ${formatMoneyHtml(topUpAmount)}`;
+                    } else {
+                        submitNode.innerHTML = `Оплатить ${buttonLabel}`;
+                    }
+
+                    updateRememberCardVisibility();
+                }
+
+                initAlfaWebSdk();
+            };
+
+            let currentWebSdkForm = null;
+            let currentMdOrder = null;
+            let isSdkInitializing = false;
+
+            const initAlfaWebSdk = async () => {
+                const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+                const alfaPanel = document.getElementById('alfa-sdk-card-panel');
+                if (selectedMethod !== 'card') {
+                    if (alfaPanel) alfaPanel.style.display = 'none';
                     return;
                 }
 
-                oneClickBox.style.display = 'none';
-                paymentMethodsBox.style.display = 'block';
+                if (alfaPanel) alfaPanel.style.display = 'block';
 
-                if (canUsePartialWallet) {
-                    partialBox.style.display = 'flex';
-                    if (partialCopyNode) {
-                        partialCopyNode.innerHTML = `Использовать ${formatMoneyHtml(walletBalance)} с баланса. К доплате: ${formatMoneyHtml(topUpAmount)}.`;
-                    }
-                } else {
-                    partialBox.style.display = 'none';
-                    if (useWalletCheckbox) {
-                        useWalletCheckbox.checked = false;
-                    }
+                if (!window.PaymentForm) {
+                    console.info('Alfa-Bank PaymentForm library loading...');
+                    return;
                 }
 
-                if (usePartialWallet) {
-                    if (walletRadio?.checked && cardRadio) {
-                        cardRadio.checked = true;
-                    }
-                    submitNode.innerHTML = `Доплатить ${formatMoneyHtml(topUpAmount)}`;
-                } else {
-                    submitNode.innerHTML = `Оплатить ${buttonLabel}`;
-                }
+                if (isSdkInitializing) return;
+                isSdkInitializing = true;
 
-                updateRememberCardVisibility();
+                try {
+                    const selectedPkg = document.querySelector('input[name="package_code"]:checked')?.value || 'single';
+                    const res = await fetch('{{ route("checkout.alfa-sdk.init", $lesson) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            package_code: selectedPkg,
+                            use_wallet_balance: useWalletCheckbox?.checked ? 1 : 0
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (!data.success || !data.mdOrder) {
+                        throw new Error(data.message || 'Не удалось инициализировать сессию оплаты.');
+                    }
+
+                    if (currentMdOrder === data.mdOrder && currentWebSdkForm) {
+                        isSdkInitializing = false;
+                        return;
+                    }
+
+                    currentMdOrder = data.mdOrder;
+
+                    if (currentWebSdkForm) {
+                        try { currentWebSdkForm.destroy(); } catch (e) {}
+                        currentWebSdkForm = null;
+                    }
+
+                    currentWebSdkForm = new window.PaymentForm({
+                        mdOrder: data.mdOrder,
+                        containerClassName: 'alfa-sdk-field',
+                        apiContext: '{{ $apiContext }}',
+                        language: 'ru',
+                        autoFocus: true,
+                        showPanIcon: true,
+                        panIconStyle: {
+                            height: '18px',
+                            top: 'calc(50% - 9px)',
+                            right: '10px'
+                        },
+                        bindingPanFormat: 'dddd **** **** dddd',
+                        fields: {
+                            pan: { container: document.querySelector('#pan'), placeholder: '0000 0000 0000 0000' },
+                            expiry: { container: document.querySelector('#expiry'), placeholder: 'ММ / ГГ' },
+                            cvc: { container: document.querySelector('#cvc'), placeholder: 'CVC / CVV' }
+                        },
+                        styles: {
+                            base: {
+                                color: '#1a1a2e',
+                                padding: '0px 14px',
+                                fontSize: '15px',
+                                fontFamily: "'Space Grotesk', -apple-system, monospace"
+                            },
+                            focus: { color: '#7D39EB' },
+                            valid: { color: '#10B981' },
+                            invalid: { color: '#EF4444' }
+                        }
+                    });
+
+                    const initRes = await currentWebSdkForm.init();
+                    const session = initRes?.orderSession;
+                    if (session?.bindings && session.bindings.length) {
+                        const bindingsWrap = document.getElementById('alfa-sdk-bindings-wrap');
+                        const selectBinding = document.getElementById('select-binding');
+                        if (bindingsWrap && selectBinding) {
+                            bindingsWrap.style.display = 'block';
+                            selectBinding.innerHTML = '<option value="new_card">Оплатить новой картой</option>';
+                            session.bindings.forEach(b => {
+                                selectBinding.options.add(new Option(b.pan || 'Сохраненная карта', b.id));
+                            });
+                            selectBinding.onchange = (e) => {
+                                if (e.target.value !== 'new_card') {
+                                    currentWebSdkForm.selectBinding(e.target.value);
+                                } else {
+                                    currentWebSdkForm.selectBinding(null);
+                                }
+                            };
+                        }
+                    }
+
+                    if (session?.bindingEnabled) {
+                        const saveWrap = document.getElementById('alfa-sdk-save-card-wrap');
+                        if (saveWrap) saveWrap.style.display = 'block';
+                    }
+                } catch (err) {
+                    console.warn('[AlfaBankWebSdk] init error:', err);
+                    currentWebSdkForm = null;
+                } finally {
+                    isSdkInitializing = false;
+                }
             };
+
+            const checkoutForm = document.getElementById('checkout-form');
+            if (checkoutForm) {
+                checkoutForm.addEventListener('submit', async (e) => {
+                    const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+                    if (selectedMethod === 'card' && currentWebSdkForm) {
+                        e.preventDefault();
+                        submitNode.disabled = true;
+                        const originalBtnHtml = submitNode.innerHTML;
+                        submitNode.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Безопасная оплата картой...';
+                        const errBox = document.getElementById('alfa-sdk-error-box');
+                        if (errBox) errBox.style.display = 'none';
+
+                        try {
+                            const cardholderInput = document.getElementById('cardholder-name');
+                            const res = await currentWebSdkForm.doPayment({
+                                cardholderName: cardholderInput?.value?.trim()?.toUpperCase() || undefined,
+                                email: '{{ auth()->user()->email ?? "" }}',
+                                jsonParams: {
+                                    lesson_id: {{ $lesson->id }},
+                                    user_id: {{ auth()->id() ?? 0 }}
+                                }
+                            });
+
+                            if (res && res.redirectUrl) {
+                                window.location.href = res.redirectUrl;
+                                return;
+                            }
+
+                            if (res?.finishedPaymentInfo?.successUrl || res?.finishedPaymentInfo?.backUrl) {
+                                window.location.href = res.finishedPaymentInfo.successUrl || res.finishedPaymentInfo.backUrl;
+                                return;
+                            }
+
+                            window.location.href = '{{ route("checkout.success", $lesson) }}';
+                        } catch (err) {
+                            console.warn('[AlfaBankWebSdk] doPayment error, falling back to form submit:', err);
+                            // Fallback to standard form submission so payment always completes cleanly
+                            checkoutForm.submit();
+                        }
+                    }
+                });
+            }
 
             packageNodes.forEach((node) => node.addEventListener('change', syncPackageSummary));
             paymentMethodNodes.forEach((node) => node.addEventListener('change', syncPackageSummary));
@@ -558,6 +805,7 @@ SVG;
                     popupOpened = true;
                 }
             });
+
         })();
     </script>
 </body>
