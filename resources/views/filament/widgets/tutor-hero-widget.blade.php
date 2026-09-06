@@ -11,10 +11,90 @@
         joinAvailable: {{ $meetingJoinAvailable ? 'true' : 'false' }},
     })">
 
-    {{-- Приветствие: один герой-заголовок экрана --}}
+    {{-- Приветствие: один герой-заголовок экрана и бейдж подписки --}}
     <div class="tutor-hero-top">
-        <h2 class="tutor-hero-title">{{ $greeting }}, {{ $firstName }} 👋</h2>
-        <p class="tutor-hero-date">{{ $dateLine }}</p>
+        <div>
+            <h2 class="tutor-hero-title">{{ $greeting }}, {{ $firstName }} 👋</h2>
+            <p class="tutor-hero-date">{{ $dateLine }}</p>
+        </div>
+        <a href="/admin/tutor-subscription-page" class="tutor-hero-sub-pill {{ $isInGrace ? 'tutor-hero-sub-pill--grace' : ($isTrial ? 'tutor-hero-sub-pill--trial' : 'tutor-hero-sub-pill--active') }}" title="Управление подпиской">
+            @if($isTrial)
+                <span>🌱</span>
+            @elseif($isInGrace)
+                <span>⚠️</span>
+            @else
+                <span>⚡</span>
+            @endif
+            <span>{{ $subPillText }}</span>
+        </a>
+    </div>
+
+    {{-- Ненавязчивое предупреждение об окончании / льготном периоде --}}
+    @if ($isInGrace)
+        <div class="tutor-hero-sub-alert tutor-hero-sub-alert--grace">
+            <div class="tutor-hero-sub-alert-content">
+                <svg class="tutor-hero-sub-alert-icon" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <div>
+                    <strong>Платёж за подписку не прошёл.</strong>
+                    <span>Действует льготный период (осталось {{ $graceDaysRemaining }} {{ trans_choice('день|дня|дней', $graceDaysRemaining) }}). Обновите карту во избежание блокировки класса.</span>
+                </div>
+            </div>
+            <a href="/admin/tutor-subscription-page" class="tutor-hero-sub-alert-btn tutor-hero-sub-alert-btn--danger">
+                Обновить карту
+            </a>
+        </div>
+    @elseif ($isExpiringSoon)
+        <div class="tutor-hero-sub-alert tutor-hero-sub-alert--expiring">
+            <div class="tutor-hero-sub-alert-content">
+                <svg class="tutor-hero-sub-alert-icon" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <div>
+                    @if ($isTrial)
+                        <strong>Пробный период завершается через {{ $daysRemaining }} {{ trans_choice('день|дня|дней', $daysRemaining) }}.</strong>
+                        <span>Подключите тариф, чтобы продолжить преподавать.</span>
+                    @else
+                        <strong>Подписка истекает через {{ $daysRemaining }} {{ trans_choice('день|дня|дней', $daysRemaining) }}.</strong>
+                        <span>Продлите тариф во избежание приостановки доступа.</span>
+                    @endif
+                </div>
+            </div>
+            <a href="/admin/tutor-subscription-page" class="tutor-hero-sub-alert-btn">
+                Перейти к тарифу
+            </a>
+        </div>
+    @endif
+
+    {{-- Персональная ссылка для записи --}}
+    <div class="tutor-hero-booking-bar" x-data="{ copied: false }">
+        <div class="tutor-hero-booking-left">
+            <svg class="tutor-hero-booking-icon" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+            </svg>
+            <span class="tutor-hero-booking-label">Ссылка для записи:</span>
+            <a href="{{ $bookingUrl }}" target="_blank" class="tutor-hero-booking-url">{{ $bookingUrl }}</a>
+        </div>
+        <button 
+            type="button" 
+            class="tutor-hero-copy-btn" 
+            :class="{ 'tutor-hero-copy-btn--copied': copied }"
+            @click="navigator.clipboard.writeText('{{ $bookingUrl }}'); copied = true; setTimeout(() => copied = false, 2500)"
+        >
+            <template x-if="!copied">
+                <span style="display:inline-flex; align-items:center; gap:6px;">
+                    <svg style="width:15px; height:15px;" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9 9 9 0 0 0-9 9v.375c0 .621.504 1.125 1.125 1.125H6.75m9 6.75v-3.75A2.25 2.25 0 0 0 13.5 12h-3a2.25 2.25 0 0 0-2.25 2.25v3.75m9 0H7.5"/></svg>
+                    <span>Скопировать</span>
+                </span>
+            </template>
+            <template x-if="copied">
+                <span style="display:inline-flex; align-items:center; gap:6px;">
+                    <svg style="width:15px; height:15px;" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>
+                    <span>Скопировано!</span>
+                </span>
+            </template>
+        </button>
     </div>
 
     @if ($lesson)

@@ -114,7 +114,7 @@ class ChatService
                 ]);
             }
 
-            $contactsUnlocked = $this->hasUnlockedContacts($conversation);
+            $contactsUnlocked = true;
 
             if ($hasUnlockableContactAttempt && ! $contactsUnlocked) {
                 $message = $this->maskUnlockableContacts($message);
@@ -237,7 +237,7 @@ class ChatService
 
     public function hasUnlockedContactsForConversation(Conversation $conversation): bool
     {
-        return $this->hasUnlockedContacts($conversation);
+        return true;
     }
 
     private function containsBlockedWords(string $message): bool
@@ -260,11 +260,7 @@ class ChatService
 
     private function hasUnlockedContacts(Conversation $conversation): bool
     {
-        return Lesson::query()
-            ->where('tutor_id', $conversation->tutor_id)
-            ->where('student_id', $conversation->student_id)
-            ->where('payment_status', Lesson::PAYMENT_PAID)
-            ->exists();
+        return true;
     }
 
     private function containsByPatterns(string $message, array $patterns): bool
@@ -278,14 +274,13 @@ class ChatService
         return false;
     }
 
+    public function maskContactInfo(string $message): string
+    {
+        return $message;
+    }
+
     private function maskUnlockableContacts(string $message): string
     {
-        $message = preg_replace('/(?:\+?\s*375|8\s*0\s*(?:25|29|33|44))[\d\-\s\(\)]{5,}/u', '[контакты скрыты]', $message) ?? $message;
-        $message = preg_replace('/\+?\d[\d\-\s\(\)]{8,}/u', '[контакты скрыты]', $message) ?? $message;
-        $message = preg_replace('/[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}/iu', '[контакты скрыты]', $message) ?? $message;
-        $message = preg_replace('/(?:https?:\/\/)?(?:t\.me|telegram|tg|viber|wa\.me|whatsapp|instagram|inst|insta|vk\.com|vkontakte)[^\s]*/iu', '[контакты скрыты]', $message) ?? $message;
-        $message = preg_replace('/(?:(?:плюс|ноль|нуль|один|два|три|четыре|пять|шесть|семь|восемь|девять)\s*){5,}/iu', '[контакты скрыты]', $message) ?? $message;
-
         return $message;
     }
 

@@ -6,79 +6,92 @@ namespace App\Domain\Subscription\Enums;
 
 enum SubscriptionPlan: string
 {
-    case BASIC = 'basic';
+    case START = 'start';
     case PRO = 'pro';
+    case BASIC = 'basic';
     case PREMIUM = 'premium';
 
     public function title(): string
     {
         return match ($this) {
-            self::BASIC => 'Basic',
-            self::PRO => 'Pro',
-            self::PREMIUM => 'Premium',
+            self::START, self::BASIC => 'Старт',
+            self::PRO, self::PREMIUM => 'Pro',
         };
     }
 
     public function monthlyPriceKopecks(): int
     {
         return match ($this) {
-            self::BASIC => 2000,
-            self::PRO => 4000,
-            self::PREMIUM => 6000,
+            self::START, self::BASIC => 2900,
+            self::PRO, self::PREMIUM => 5900,
         };
     }
 
     public function monthlyPriceByn(): int
     {
-        return $this->monthlyPriceKopecks() / 100;
+        return (int) ($this->monthlyPriceKopecks() / 100);
+    }
+
+    public function yearlyMonthlyEquivalent(): float
+    {
+        return round($this->yearlyPriceByn() / 12, 2);
     }
 
     /**
-     * 20% discount on yearly subscription (pay for 10 months).
+     * 2 months free on yearly subscription (pay for 10 months).
      */
     public function yearlyPriceKopecks(): int
     {
         return match ($this) {
-            self::BASIC => 19200, // 16 BYN/mo * 12 = 192 BYN
-            self::PRO => 38400,   // 32 BYN/mo * 12 = 384 BYN
-            self::PREMIUM => 57600, // 48 BYN/mo * 12 = 576 BYN
+            self::START, self::BASIC => 29000,
+            self::PRO, self::PREMIUM => 59000,
         };
     }
 
     public function yearlyPriceByn(): int
     {
-        return $this->yearlyPriceKopecks() / 100;
+        return (int) ($this->yearlyPriceKopecks() / 100);
     }
 
     public function maxResponsesPerMonth(): ?int
     {
+        return null;
+    }
+
+    public function features(): array
+    {
         return match ($this) {
-            self::BASIC => 0,
-            self::PRO => 10,
-            self::PREMIUM => null, // unlimited
+            self::START, self::BASIC => [
+                'Виртуальный класс (SFU)',
+                'Интерактивная доска (Workspace)',
+                'CRM и расписание уроков',
+                'Неограниченно учеников',
+                'Персональная ссылка для записи',
+            ],
+            self::PRO, self::PREMIUM => [
+                'Все возможности тарифа «Старт»',
+                'ИИ-диагностика знаний (тесты РИКЗ)',
+                'ИИ-помощник (конспекты, ДЗ, тесты)',
+                'Авто-НПД (чеки МНС РБ)',
+                'Персональный брендинг комнат',
+            ],
         };
     }
 
     public function allowsVideoCalls(): bool
     {
-        return match ($this) {
-            self::BASIC, self::PRO => false,
-            self::PREMIUM => true,
-        };
+        return true;
     }
 
     public function allowsCalendarSync(): bool
     {
-        return match ($this) {
-            self::BASIC, self::PRO => false,
-            self::PREMIUM => true,
-        };
+        return true;
     }
 
     public function allowsAnalytics(): bool
     {
         return match ($this) {
-            self::BASIC => false,
+            self::START, self::BASIC => false,
             self::PRO, self::PREMIUM => true,
         };
     }
@@ -86,9 +99,8 @@ enum SubscriptionPlan: string
     public function searchRankWeight(): int
     {
         return match ($this) {
-            self::BASIC => 1,
-            self::PRO => 5,
-            self::PREMIUM => 10,
+            self::START, self::BASIC => 1,
+            self::PRO, self::PREMIUM => 5,
         };
     }
 }

@@ -66,6 +66,37 @@ class TutorHeroWidget extends Widget
             ->where('status', Lesson::STATUS_PENDING)
             ->count();
 
+        // Подписка репетитора
+        $subscription = $user->subscription;
+        if (! $subscription) {
+            /** @var \App\Domain\Subscription\Services\SubscriptionService $subService */
+            $subService = app(\App\Domain\Subscription\Services\SubscriptionService::class);
+            $subscription = $subService->startTrial($user, \App\Domain\Subscription\Enums\SubscriptionPlan::PRO);
+        }
+
+        $isTrial = $subscription->status === \App\Domain\Subscription\Enums\SubscriptionStatus::TRIAL;
+        $isActive = $subscription->status === \App\Domain\Subscription\Enums\SubscriptionStatus::ACTIVE;
+        $isInGrace = $subscription->isInGracePeriod();
+        $daysRemaining = $subscription->daysRemaining();
+        $graceDaysRemaining = $subscription->graceDaysRemaining();
+        $isExpiringSoon = ($isTrial || $isActive) && $daysRemaining <= 3 && $daysRemaining > 0;
+
+        if ($isTrial) {
+            $subPillText = "Пробный период: {$daysRemaining} " . trans_choice('день|дня|дней', $daysRemaining) . " бесплатно";
+        } elseif ($isActive) {
+            $subPillText = "Тариф: " . $subscription->plan->title();
+        } elseif ($isInGrace) {
+            $subPillText = "Льготный период (" . $graceDaysRemaining . " " . trans_choice('день|дня|дней', $graceDaysRemaining) . ")";
+        } else {
+            $subPillText = "Тариф: " . $subscription->plan->title();
+        }
+
+        // Персональная ссылка для записи
+        $tutorProfile = $user->tutorProfile;
+        $bookingUrl = $tutorProfile
+            ? route('tutors.show', $tutorProfile)
+            : url('/tutors/' . $user->id);
+
         return [
             'greeting' => $greeting,
             'firstName' => explode(' ', trim((string) $user->name))[0] ?? $user->name,
@@ -78,6 +109,15 @@ class TutorHeroWidget extends Widget
             'meetingJoinAvailable' => $meetingJoinAvailable,
             'classroomUrl' => $classroomUrl,
             'newRequestsCount' => $newRequestsCount,
+            'subscription' => $subscription,
+            'subPillText' => $subPillText,
+            'isTrial' => $isTrial,
+            'isActive' => $isActive,
+            'isInGrace' => $isInGrace,
+            'isExpiringSoon' => $isExpiringSoon,
+            'daysRemaining' => $daysRemaining,
+            'graceDaysRemaining' => $graceDaysRemaining,
+            'bookingUrl' => $bookingUrl,
         ];
     }
 }

@@ -120,14 +120,14 @@ class BookingService
                 'price' => number_format($price, 2, '.', ''),
                 'platform_commission' => '0.00',
                 'net_amount' => number_format($netAmount, 2, '.', ''),
-                'status' => Lesson::STATUS_PENDING,
-                'payment_status' => Lesson::PAYMENT_UNPAID,
+                'status' => Lesson::STATUS_CONFIRMED,
+                'payment_status' => Lesson::PAYMENT_PAID,
                 'package_code' => $package['code'],
                 'package_lessons' => $package['lessons'],
                 'package_lessons_remaining' => $package['lessons'],
                 'package_total' => number_format($package['total'], 2, '.', ''),
                 'package_discount' => number_format($package['discount'], 2, '.', ''),
-                'payment_lock_expires_at' => now('UTC')->addMinutes(15),
+                'payment_lock_expires_at' => null,
                 'checkout_started_at' => now('UTC'),
                 'notes' => $notes,
             ]);
@@ -289,7 +289,7 @@ class BookingService
 
             $payableAmount = $package['total'];
             $netAmount = $payableAmount;
-            $paymentLockExpiresAt = now('UTC')->addMinutes(15);
+            $paymentLockExpiresAt = null;
             $checkoutStartedAt = now('UTC');
             $firstStart = $starts->first();
 
@@ -303,19 +303,19 @@ class BookingService
                 'price' => number_format($price, 2, '.', ''),
                 'platform_commission' => '0.00',
                 'net_amount' => number_format($netAmount, 2, '.', ''),
-                'status' => Lesson::STATUS_PENDING,
-                'payment_status' => Lesson::PAYMENT_UNPAID,
+                'status' => Lesson::STATUS_CONFIRMED,
+                'payment_status' => Lesson::PAYMENT_PAID,
                 'package_code' => $package['code'],
                 'package_lessons' => $package['lessons'],
                 'package_lessons_remaining' => $package['lessons'],
                 'package_total' => number_format($package['total'], 2, '.', ''),
                 'package_discount' => number_format($package['discount'], 2, '.', ''),
-                'payment_lock_expires_at' => $paymentLockExpiresAt,
+                'payment_lock_expires_at' => null,
                 'checkout_started_at' => $checkoutStartedAt,
                 'notes' => $notes,
             ]);
 
-            $starts->skip(1)->each(function (CarbonImmutable $startLocal) use ($booker, $duration, $package, $parentLesson, $paymentLockExpiresAt, $price, $tutorProfile): void {
+            $starts->skip(1)->each(function (CarbonImmutable $startLocal) use ($booker, $duration, $package, $parentLesson, $price, $tutorProfile): void {
                 Lesson::query()->forceCreate([
                     'tutor_id' => $tutorProfile->user_id,
                     'student_id' => $booker->id,
@@ -326,15 +326,15 @@ class BookingService
                     'price' => number_format($price, 2, '.', ''),
                     'platform_commission' => '0.00',
                     'net_amount' => '0.00',
-                    'status' => Lesson::STATUS_PENDING,
-                    'payment_status' => Lesson::PAYMENT_UNPAID,
+                    'status' => Lesson::STATUS_CONFIRMED,
+                    'payment_status' => Lesson::PAYMENT_PAID,
                     'package_code' => $package['code'],
                     'package_lessons' => 1,
                     'package_lessons_remaining' => null,
                     'package_parent_lesson_id' => $parentLesson->id,
                     'package_total' => null,
                     'package_discount' => '0.00',
-                    'payment_lock_expires_at' => $paymentLockExpiresAt,
+                    'payment_lock_expires_at' => null,
                     'checkout_started_at' => $parentLesson->checkout_started_at,
                 ]);
             });
@@ -446,6 +446,24 @@ class BookingService
     public function minBookableDate(): CarbonImmutable
     {
         return CarbonImmutable::now($this->displayTimezone())->addDay()->startOfDay();
+    }
+
+    public function generateTutorBookingUrl(User $tutor): string
+    {
+        $profileId = $tutor->tutorProfile?->id ?? TutorProfile::query()->where('user_id', $tutor->id)->value('id') ?? $tutor->id;
+
+        return url("/tutors/{$profileId}#book");
+    }
+
+    public function confirmBooking(Lesson $lesson): Lesson
+    {
+        $lesson->update([
+            'status' => Lesson::STATUS_CONFIRMED,
+            'payment_status' => Lesson::PAYMENT_PAID,
+            'payment_lock_expires_at' => null,
+        ]);
+
+        return $lesson->fresh();
     }
 
     public function displayTimezone(): string

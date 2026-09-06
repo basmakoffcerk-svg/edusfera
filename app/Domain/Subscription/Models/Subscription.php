@@ -28,6 +28,7 @@ class Subscription extends Model
         'grace_period_ends_at',
         'canceled_at',
         'responses_used_this_month',
+        'payment_token',
     ];
 
     protected function casts(): array
@@ -57,25 +58,43 @@ class Subscription extends Model
 
     public function isActive(): bool
     {
-        if ($this->status === SubscriptionStatus::TRIAL) {
-            return $this->trial_ends_at === null || $this->trial_ends_at->isFuture();
+        if ($this->isInTrial()) {
+            return true;
         }
 
         if ($this->status === SubscriptionStatus::ACTIVE) {
             return $this->current_period_ends_at === null || $this->current_period_ends_at->isFuture();
         }
 
-        if ($this->status === SubscriptionStatus::PAST_DUE) {
-            return $this->grace_period_ends_at !== null && $this->grace_period_ends_at->isFuture();
+        if ($this->isInGracePeriod()) {
+            return true;
         }
 
         return false;
     }
 
+    public function isInTrial(): bool
+    {
+        return $this->status === SubscriptionStatus::TRIAL &&
+            ($this->trial_ends_at === null || $this->trial_ends_at->isFuture());
+    }
+
+    public function isInGracePeriod(): bool
+    {
+        return $this->status === SubscriptionStatus::PAST_DUE &&
+            $this->grace_period_ends_at !== null &&
+            $this->grace_period_ends_at->isFuture();
+    }
+
     public function daysRemaining(): int
     {
         $now = CarbonImmutable::now();
-        $target = $this->status === SubscriptionStatus::TRIAL ? $this->trial_ends_at : $this->current_period_ends_at;
+        $target = match ($this->status) {
+            SubscriptionStatus::TRIAL => $this->trial_ends_at,
+            SubscriptionStatus::ACTIVE => $this->current_period_ends_at,
+            SubscriptionStatus::PAST_DUE => $this->grace_period_ends_at,
+            default => null,
+        };
 
         if (! $target) {
             return 0;
@@ -83,4 +102,30 @@ class Subscription extends Model
 
         return (int) max(0, $now->diffInDays($target, false));
     }
+
+    public function isPro(): bool
+    {
+        return $this->plan === SubscriptionPlan::PRO;
+    }
+
+    public function isOperational(): bool
+    {
+        return $this->isActive();
+    }
+
+    public function graceDaysRemaining(): int
+    {
+        if (! $this->grace_period_ends_at) {
+            return 0;
+        }
+
+        $now = CarbonImmutable::now();
+        return (int) max(0, ceil($now->diffInHours($this->grace_period_ends_at, false) / 24));
+    }
+
+    public function isExpiringSoon(): bool
+    {
+        return $this->isActive() && $this->daysRemaining() <= 3 && $this->daysRemaining() > 0;
+    }
 }
+

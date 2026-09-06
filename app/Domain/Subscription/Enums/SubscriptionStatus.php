@@ -23,8 +23,16 @@ enum SubscriptionStatus: string
         };
     }
 
-    public function isOperational(): bool
+    public function isOperational(?\DateTimeInterface $gracePeriodEndsAt = null): bool
     {
-        return in_array($this, [self::TRIAL, self::ACTIVE, self::PAST_DUE], true);
+        if ($this === self::TRIAL || $this === self::ACTIVE) {
+            return true;
+        }
+
+        if ($this === self::PAST_DUE) {
+            return $gracePeriodEndsAt === null || $gracePeriodEndsAt > now();
+        }
+
+        return false;
     }
 }

@@ -126,7 +126,7 @@ class LessonContractsTest extends TestCase
         $this->assertInstanceOf(LessonDto::class, $dto);
         $this->assertSame($tutor->id, $dto->tutorId);
         $this->assertSame($student->id, $dto->studentId);
-        $this->assertSame(Lesson::STATUS_PENDING, $dto->status);
+        $this->assertSame(Lesson::STATUS_CONFIRMED, $dto->status);
         $this->assertDatabaseHas('lessons', [
             'id' => $dto->id,
             'tutor_id' => $tutor->id,

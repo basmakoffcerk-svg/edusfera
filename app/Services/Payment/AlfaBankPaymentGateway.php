@@ -366,6 +366,91 @@ class AlfaBankPaymentGateway implements PaymentGatewayInterface
     }
 
     /**
+     * Безакцептное / рекуррентное списание по сохранённому связочному токену карты.
+     * paymentOrderBinding.do
+     */
+    public function chargeRecurring(
+        string $bindingId,
+        int $amountKopecks,
+        array $metadata = []
+    ): array {
+        if ($this->testMode || empty($this->userName)) {
+            if ($bindingId === 'invalid' || $bindingId === 'fail' || $bindingId === 'expired') {
+                Log::channel('payments')->warning('Alfa-Bank sandbox recurring payment failed (mock failure)', [
+                    'bindingId' => $bindingId,
+                    'amountKopecks' => $amountKopecks,
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Платёж по сохранённой карте отклонён банком',
+                ];
+            }
+
+            $mockOrderId = 'alfa_recur_'.bin2hex(random_bytes(8));
+            Log::channel('payments')->info('Alfa-Bank sandbox recurring payment authorized', [
+                'bindingId' => $bindingId,
+                'amountKopecks' => $amountKopecks,
+                'mockOrderId' => $mockOrderId,
+            ]);
+
+            return [
+                'success' => true,
+                'gateway_transaction_id' => $mockOrderId,
+                'order_id' => $mockOrderId,
+                'amount_kopecks' => $amountKopecks,
+            ];
+        }
+
+        $endpoint = $this->apiUrl.'/paymentOrderBinding.do';
+        $orderNumber = 'sub_rec_'.($metadata['subscription_id'] ?? time()).'_'.time();
+
+        $params = [
+            'mdOrder' => $metadata['order_id'] ?? '',
+            'bindingId' => $bindingId,
+            'amount' => $amountKopecks,
+            'currency' => $this->currencyCode,
+        ];
+
+        if (! empty($this->token)) {
+            $params['token'] = $this->token;
+        } else {
+            $params['userName'] = $this->userName;
+            $params['password'] = $this->password;
+        }
+
+        try {
+            $response = Http::asForm()->timeout(30)->post($endpoint, $params);
+            if ($response->successful()) {
+                $json = $response->json();
+                $errorCode = (int) ($json['errorCode'] ?? 0);
+                if ($errorCode === 0) {
+                    return [
+                        'success' => true,
+                        'gateway_transaction_id' => (string) ($json['orderId'] ?? $orderNumber),
+                        'order_id' => (string) ($json['orderId'] ?? $orderNumber),
+                        'payload' => $json,
+                    ];
+                }
+
+                Log::channel('payments')->error('Alfa-Bank paymentOrderBinding API error', [
+                    'errorCode' => $errorCode,
+                    'errorMessage' => $json['errorMessage'] ?? '',
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::channel('payments')->error('Alfa-Bank chargeRecurring exception', [
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Не удалось провести рекуррентный платёж через ЗАО «Альфа-Банк»',
+        ];
+    }
+
+    /**
      * URL для получения вебхуков / нотификаций от Альфа-Банка.
      */
     public function getCallbackUrl(): string

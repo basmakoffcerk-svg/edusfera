@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Services\Classroom;
 
 use App\Contracts\Classroom\ClassroomTokenIssuer;
+use App\Domain\Subscription\Services\SubscriptionFeatureGate;
 use App\Exceptions\LessonAccessDeniedException;
 use App\Exceptions\LessonNotFoundException;
 use App\Http\Api\V1\Resources\Dto\ClassroomTokenDto;
 use App\Models\Lesson;
 use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Application-сервис, обслуживающий эндпоинт
@@ -26,6 +28,7 @@ final class ClassroomTokenService
 {
     public function __construct(
         private readonly ClassroomTokenIssuer $issuer,
+        private readonly ?SubscriptionFeatureGate $featureGate = null,
     ) {}
 
     /**
@@ -33,6 +36,7 @@ final class ClassroomTokenService
      *
      * @throws LessonNotFoundException если урок с таким id не существует (→ 404)
      * @throws LessonAccessDeniedException если у пользователя нет доступа к уроку (→ 403)
+     * @throws ValidationException если у репетитора не активна подписка (→ 422)
      */
     public function issueForUser(int $lessonId, int $userId): ClassroomTokenDto
     {
@@ -55,6 +59,20 @@ final class ClassroomTokenService
             throw new LessonAccessDeniedException(
                 "Cannot enter classroom for cancelled or unpaid lesson {$lessonId}."
             );
+        }
+
+        $tutor = $lesson->tutor ?? User::find($lesson->tutor_id);
+        $gate = $this->featureGate ?? app(SubscriptionFeatureGate::class);
+
+        if ($tutor !== null && ! $gate->canAccessClassroom($tutor)) {
+            $isStudent = ($user->id !== $tutor->id);
+            $message = $isStudent
+                ? 'Для входа в виртуальный класс необходимо продлить подписку на платформу Edusfera. Виртуальный класс преподавателя временно неактивен.'
+                : 'Для входа в виртуальный класс необходимо продлить подписку на платформу Edusfera.';
+
+            throw ValidationException::withMessages([
+                'subscription' => $message,
+            ]);
         }
 
         $token = $this->issuer->issue($lesson, $user);

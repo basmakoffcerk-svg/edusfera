@@ -169,6 +169,201 @@
     .dark .tutor-hero-alert .tutor-alert-note { color: #9CA3AF; }
     .tutor-hero-alert .tutor-alert-chevron { margin-left: auto; width: 16px; height: 16px; color: #9CA3AF; }
 
+    /* ═══ Subscription Pill in Hero ═══════════════════════════════ */
+    .tutor-hero-sub-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        line-height: 1;
+        text-decoration: none;
+        transition: opacity .15s ease, transform .12s ease;
+    }
+    .tutor-hero-sub-pill:hover { opacity: .88; transform: translateY(-1px); }
+    .tutor-hero-sub-pill--trial {
+        background: rgba(5, 150, 105, .12);
+        color: #059669;
+        border: 1px solid rgba(5, 150, 105, .25);
+    }
+    .dark .tutor-hero-sub-pill--trial {
+        background: rgba(5, 150, 105, .22);
+        color: #34D399;
+        border-color: rgba(5, 150, 105, .4);
+    }
+    .tutor-hero-sub-pill--active {
+        background: rgba(125, 57, 235, .1);
+        color: #7D39EB;
+        border: 1px solid rgba(125, 57, 235, .25);
+    }
+    .dark .tutor-hero-sub-pill--active {
+        background: rgba(125, 57, 235, .2);
+        color: #A78BFA;
+        border-color: rgba(125, 57, 235, .4);
+    }
+    .tutor-hero-sub-pill--grace {
+        background: rgba(220, 38, 38, .12);
+        color: #DC2626;
+        border: 1px solid rgba(220, 38, 38, .3);
+        animation: tutor-dot-pulse 1.6s ease-in-out infinite;
+    }
+    .dark .tutor-hero-sub-pill--grace {
+        background: rgba(220, 38, 38, .2);
+        color: #F87171;
+    }
+
+    /* ═══ Personal Booking Link Bar ═══════════════════════════════ */
+    .tutor-hero-booking-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 18px;
+        background: #F9FAFB;
+        border: 1px solid #ECEEF1;
+        border-radius: 16px;
+    }
+    .dark .tutor-hero-booking-bar {
+        background: #111827;
+        border-color: #1F2937;
+    }
+    .tutor-hero-booking-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+    .tutor-hero-booking-icon {
+        width: 18px;
+        height: 18px;
+        color: #7D39EB;
+        flex-shrink: 0;
+    }
+    .dark .tutor-hero-booking-icon { color: #A78BFA; }
+    .tutor-hero-booking-label {
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #9CA3AF;
+        margin-right: 6px;
+    }
+    .tutor-hero-booking-url {
+        font-size: .875rem;
+        font-weight: 700;
+        color: #1F2937;
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .dark .tutor-hero-booking-url { color: #E5E7EB; }
+    .tutor-hero-booking-url:hover { text-decoration: underline; color: #7D39EB; }
+
+    .tutor-hero-copy-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: 10px;
+        font-size: .8125rem;
+        font-weight: 700;
+        border: 1px solid #E5E7EB;
+        background: #FFFFFF;
+        color: #374151;
+        cursor: pointer;
+        transition: all .15s ease;
+        user-select: none;
+    }
+    .dark .tutor-hero-copy-btn {
+        background: #1F2937;
+        border-color: #374151;
+        color: #D1D5DB;
+    }
+    .tutor-hero-copy-btn:hover {
+        border-color: #7D39EB;
+        color: #7D39EB;
+    }
+    .tutor-hero-copy-btn--copied {
+        border-color: #059669 !important;
+        background: rgba(5, 150, 105, .08) !important;
+        color: #059669 !important;
+    }
+
+    /* ═══ Subscription Alerts in Hero ═════════════════════════════ */
+    .tutor-hero-sub-alert {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 18px;
+        border-radius: 16px;
+        font-size: .875rem;
+        line-height: 1.4;
+    }
+    .tutor-hero-sub-alert--grace {
+        background: #FEF2F2;
+        border: 1.5px solid #FCA5A5;
+        color: #991B1B;
+    }
+    .dark .tutor-hero-sub-alert--grace {
+        background: rgba(220, 38, 38, .12);
+        border-color: rgba(220, 38, 38, .35);
+        color: #FCA5A5;
+    }
+    .tutor-hero-sub-alert--expiring {
+        background: #FFFBEB;
+        border: 1.5px solid #FCD34D;
+        color: #92400E;
+    }
+    .dark .tutor-hero-sub-alert--expiring {
+        background: rgba(245, 158, 11, .12);
+        border-color: rgba(245, 158, 11, .35);
+        color: #FCD34D;
+    }
+    .tutor-hero-sub-alert-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 240px;
+    }
+    .tutor-hero-sub-alert-icon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+    .tutor-hero-sub-alert-btn {
+        display: inline-flex;
+        align-items: center;
+        height: 34px;
+        padding: 0 14px;
+        border-radius: 10px;
+        font-size: .8125rem;
+        font-weight: 800;
+        text-decoration: none;
+        background: #1F2937;
+        color: #FFFFFF;
+        transition: opacity .15s ease;
+        white-space: nowrap;
+    }
+    .dark .tutor-hero-sub-alert-btn {
+        background: #FFFFFF;
+        color: #111827;
+    }
+    .tutor-hero-sub-alert-btn--danger {
+        background: #DC2626 !important;
+        color: #FFFFFF !important;
+    }
+    .tutor-hero-sub-alert-btn:hover { opacity: .9; }
+
     /* ═══ Финансовая лента ════════════════════════════════════════ */
 
     .tutor-finance { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

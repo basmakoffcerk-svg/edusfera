@@ -5,26 +5,28 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Domain\Subscription\Services\SubscriptionService;
+use App\Services\Payment\AlfaBankPaymentGateway;
 use Illuminate\Console\Command;
 
 class ProcessSubscriptionBillingCommand extends Command
 {
     protected $signature = 'edusfera:subscriptions-process-billing';
 
-    protected $description = 'Process daily SaaS subscription billing cycle (T-3 invoices, grace periods, deactivations)';
+    protected $description = 'Process daily SaaS subscription billing cycle (auto-charges, grace periods, deactivations)';
 
-    public function handle(SubscriptionService $service): int
+    public function handle(SubscriptionService $service, AlfaBankPaymentGateway $gateway): int
     {
         $this->info('Starting SaaS subscription billing cycle check...');
 
-        $stats = $service->processDailyBillingCycle();
+        $stats = $service->processDailyBillingCycle($gateway);
 
         $this->table(
             ['Metric', 'Count'],
             [
-                ['Invoices Created (T-3 / Renewals)', $stats['invoices_created']],
-                ['Moved to Grace Period (Overdue)', $stats['moved_to_grace']],
-                ['Deactivated Subscriptions (Expired)', $stats['expired']],
+                ['Renewed / Charged Automatically', $stats['charged'] ?? 0],
+                ['Invoices Created', $stats['invoices_created'] ?? 0],
+                ['Moved to Grace Period (Overdue / Failed)', $stats['moved_to_grace'] ?? 0],
+                ['Deactivated Subscriptions (Expired)', $stats['expired'] ?? 0],
             ]
         );
 

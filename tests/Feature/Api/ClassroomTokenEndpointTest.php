@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Domain\Subscription\Enums\SubscriptionPlan;
+use App\Domain\Subscription\Enums\SubscriptionStatus;
+use App\Domain\Subscription\Models\Subscription;
 use App\Models\Lesson;
 use App\Models\User;
 use Firebase\JWT\JWT;
@@ -31,12 +34,22 @@ class ClassroomTokenEndpointTest extends TestCase
 
     private User $student;
 
+    private Subscription $subscription;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->tutor = User::factory()->create(['role' => 'tutor']);
         $this->student = User::factory()->create(['role' => 'student']);
+
+        $this->subscription = Subscription::query()->create([
+            'tutor_id' => $this->tutor->id,
+            'plan' => SubscriptionPlan::PREMIUM,
+            'status' => SubscriptionStatus::ACTIVE,
+            'current_period_starts_at' => now()->subDay(),
+            'current_period_ends_at' => now()->addMonth(),
+        ]);
     }
 
     private function makeLesson(): Lesson
@@ -139,5 +152,45 @@ class ClassroomTokenEndpointTest extends TestCase
 
         $response->assertStatus(404);
         $response->assertJsonPath('error.code', 'not_found');
+    }
+
+    public function test_returns_422_when_tutor_subscription_is_expired(): void
+    {
+        $this->subscription->update([
+            'status' => SubscriptionStatus::CANCELED,
+            'current_period_ends_at' => now()->subDay(),
+        ]);
+
+        $lesson = $this->makeLesson();
+
+        $response = $this->withToken($this->tokenFor($this->tutor))
+            ->getJson("/api/v1/lessons/{$lesson->id}/classroom-token");
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['subscription']);
+        $this->assertStringContainsString(
+            'Для входа в виртуальный класс необходимо продлить подписку на платформу Edusfera.',
+            $response->json('errors.subscription.0')
+        );
+    }
+
+    public function test_returns_422_to_student_when_tutor_subscription_is_expired(): void
+    {
+        $this->subscription->update([
+            'status' => SubscriptionStatus::CANCELED,
+            'current_period_ends_at' => now()->subDay(),
+        ]);
+
+        $lesson = $this->makeLesson();
+
+        $response = $this->withToken($this->tokenFor($this->student))
+            ->getJson("/api/v1/lessons/{$lesson->id}/classroom-token");
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['subscription']);
+        $this->assertStringContainsString(
+            'Виртуальный класс преподавателя временно неактивен',
+            $response->json('errors.subscription.0')
+        );
     }
 }
