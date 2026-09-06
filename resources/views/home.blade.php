@@ -25,21 +25,8 @@
         window.EDUSFERA_CSRF_TOKEN = "{{ csrf_token() }}";
     </script>
 
-    @php
-        $manifestPath = public_path('build/manifest.json');
-        $useDirectManifest = !file_exists(public_path('hot')) && file_exists($manifestPath);
-        if ($useDirectManifest) {
-            $manifest = json_decode((string) file_get_contents($manifestPath), true) ?? [];
-            $cssFile = asset('build/' . ($manifest['resources/css/app.css']['file'] ?? 'assets/app-BJcy8vAv.css'));
-            $jsFile = asset('build/' . ($manifest['resources/js/app.jsx']['file'] ?? 'assets/app-CDk7OkqR.js'));
-        }
-    @endphp
-    @if ($useDirectManifest)
-        <link rel="stylesheet" href="{{ $cssFile }}">
-        <script type="module" src="{{ $jsFile }}"></script>
-    @else
-        @vite(['resources/css/app.css', 'resources/js/app.jsx'])
-    @endif
+    @viteReactRefresh
+    @vite(['resources/css/app.css', 'resources/js/app.jsx'])
 </head>
 <body class="nexum-body min-h-screen w-full antialiased font-geist bg-[#010101] text-white">
     <div id="app" class="w-full">

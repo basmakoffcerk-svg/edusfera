@@ -12,21 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
 
-    @php
-        $manifestPath = public_path('build/manifest.json');
-        $useDirectManifest = !file_exists(public_path('hot')) && file_exists($manifestPath);
-        if ($useDirectManifest) {
-            $manifest = json_decode((string) file_get_contents($manifestPath), true) ?? [];
-            $cssFile = asset('build/' . ($manifest['resources/css/app.css']['file'] ?? 'assets/app-BkbT0G7q.css'));
-            $jsFile = asset('build/' . ($manifest['resources/js/app.jsx']['file'] ?? 'assets/app-CcKPpAH3.js'));
-        }
-    @endphp
-    @if ($useDirectManifest)
-        <link rel="stylesheet" href="{{ $cssFile }}">
-        <script type="module" src="{{ $jsFile }}"></script>
-    @else
-        @vite(['resources/css/app.css', 'resources/js/app.jsx'])
-    @endif
+    @viteReactRefresh
+    @vite(['resources/css/app.css', 'resources/js/app.jsx'])
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
