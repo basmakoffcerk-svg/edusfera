@@ -24,19 +24,21 @@ var upgrader = websocket.Upgrader{
 }
 
 type Handler struct {
-	pool       *Pool
-	manager    *workspace.Manager
-	rdb        *redis.RedisClient
-	jwtSecret  string
-	logger     *slog.Logger
+	pool      *Pool
+	manager   *workspace.Manager
+	rdb       *redis.RedisClient
+	jwtSecret string
+	jwksURL   string
+	logger    *slog.Logger
 }
 
-func NewHandler(pool *Pool, manager *workspace.Manager, rdb *redis.RedisClient, jwtSecret string, logger *slog.Logger) *Handler {
+func NewHandler(pool *Pool, manager *workspace.Manager, rdb *redis.RedisClient, jwtSecret, jwksURL string, logger *slog.Logger) *Handler {
 	return &Handler{
 		pool:      pool,
 		manager:   manager,
 		rdb:       rdb,
 		jwtSecret: jwtSecret,
+		jwksURL:   jwksURL,
 		logger:    logger,
 	}
 }
@@ -66,7 +68,7 @@ func (h *Handler) HandleWS(w http.ResponseWriter, r *http.Request, roomId string
 			return
 		}
 
-		claims, err := auth.ValidateToken(tokenStr, h.jwtSecret)
+		claims, err := auth.ValidateToken(tokenStr, h.jwtSecret, h.jwksURL)
 		if err != nil {
 			h.logger.Warn("WebSocket connection rejected: invalid token", "roomId", roomId, "error", err)
 			http.Error(w, "Unauthorized: invalid token", http.StatusUnauthorized)

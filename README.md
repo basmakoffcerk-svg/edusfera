@@ -1,6 +1,6 @@
 # Edusfera
 
-Edusfera is a Laravel 12 platform for finding tutors, booking lessons, paying through the platform, and continuing communication in a moderated chat. The project includes a public catalog, checkout flow, tutor and student dashboards on Filament, and a technical admin panel.
+Edusfera is a modern Laravel 12 SaaS platform for tutors and exam preparation (CT/CE in Belarus). The platform operates on a **SaaS subscription model for tutors with 0% commission on conducted lessons**, providing an interactive Virtual Classroom, smart scheduling, automated NPD receipt generation (for self-employed tutors), AI diagnostic tools, and secure escrow payments via WebPAY / Alfa-Bank.
 
 ## Stack
 
@@ -12,15 +12,15 @@ Edusfera is a Laravel 12 platform for finding tutors, booking lessons, paying th
 - Mailhog
 - Vite
 
-## Main Flows
+## Business Model & Main Flows
 
-- public landing pages
-- tutor catalog with filters and profile pages
-- slot booking with 15-minute payment hold
-- checkout with lesson packages
-- mock payment gateway for local development
-- chat with contact masking before payment
-- tutor finance tracking and lesson settlement
+- **Tutor SaaS Subscriptions:** 30-day free trial (0 BYN), Basic (20 BYN/mo), Pro (40 BYN/mo), Premium (60 BYN/mo), and Founder status.
+- **0% Lesson Commission:** Tutors keep 100% of their hourly rates (minus standard bank card acquiring fee).
+- **Automated NPD Tax Receipts:** Generation of fiscal receipts and income registries for the Belarusian Ministry of Taxes and Duties ("ProfDohod" app).
+- **Escrow & Safe Checkout:** Student payments are held on a secure escrow account until successful lesson completion in the Virtual Classroom.
+- **Tutor Catalog & Trajectories:** Filterable public tutor catalog, diagnostics, and structured lesson packages.
+- **Moderated In-Platform Chat:** Protected communications and contact exchange safeguards.
+- **Tutor & Student Dashboards:** Full-featured management portals powered by Filament.
 
 ## Local Run
 
@@ -105,8 +105,9 @@ CI runs this suite on every push/PR via `.github/workflows/architecture-tests.ym
 
 ## Legal Pages
 
-- `/offer` - public offer
-- `/refund-policy` - refund rules
+- `/offer` - public offer (SaaS terms & 0% lesson commission)
+- `/payment-security` - payment security & WebPAY rules
+- `/refund-policy` - refund policy & SaaS guarantee
 - `/privacy-policy` - privacy policy
 
 ## Support

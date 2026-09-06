@@ -39,5 +39,6 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="WORKSPACE_INTERNAL_SECRET" value="workspace_internal_secret_key"/>
+        <env name="PAYMENT_GATEWAY" value="mock"/>
     </php>
 </phpunit>

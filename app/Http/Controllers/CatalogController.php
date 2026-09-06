@@ -18,12 +18,27 @@ class CatalogController extends Controller
 
     public function index(Request $request)
     {
-        $query = TutorProfile::with('user')->where('is_verified', true);
+        $query = TutorProfile::with(['user', 'user.subscription'])->where('is_verified', true);
 
         $query->orderByRaw(
             'CASE WHEN search_penalized_until IS NOT NULL AND search_penalized_until > ? THEN 1 ELSE 0 END ASC',
             [now('UTC')]
         );
+
+        // Premium and Pro subscribers get priority placement
+        $query->orderByRaw("
+            COALESCE((
+                SELECT CASE 
+                    WHEN plan = 'premium' AND status IN ('trial', 'active') THEN 1
+                    WHEN plan = 'pro' AND status IN ('trial', 'active') THEN 2
+                    WHEN plan = 'basic' AND status IN ('trial', 'active') THEN 3
+                    ELSE 4
+                END 
+                FROM subscriptions 
+                WHERE subscriptions.tutor_id = tutor_profiles.user_id 
+                LIMIT 1
+            ), 4) ASC
+        ");
 
         if ($request->filled('q')) {
             $search = str_replace(['%', '_'], ['\%', '\_'], trim((string) $request->q));

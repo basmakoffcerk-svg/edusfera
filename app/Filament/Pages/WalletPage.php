@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
 use App\Models\StudentBalance;
 use App\Models\StudentBalanceLedgerEntry;
+use App\Models\Transaction;
+use App\Models\WalletTopup;
 use App\Services\Finance\StudentBalanceService;
 use App\Services\Payment\PaymentGatewayInterface;
 use App\Support\BynMoneyFormatter;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\DB;
 
 class WalletPage extends Page
 {
@@ -20,9 +24,9 @@ class WalletPage extends Page
 
     protected static string $view = 'filament.pages.wallet-page';
 
-    protected static ?string $navigationLabel = 'Мой баланс';
+    protected static ?string $navigationLabel = 'Учёт денег';
 
-    protected static ?string $title = 'Мой баланс';
+    protected static ?string $title = 'Учёт денег и история оплат';
 
     protected static ?int $navigationSort = 41;
 
@@ -34,12 +38,12 @@ class WalletPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
+        return in_array(auth()->user()?->role, [UserRole::Student, UserRole::Parent], true);
     }
 
     public static function canAccess(): bool
     {
-        return in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
+        return in_array(auth()->user()?->role, [UserRole::Student, UserRole::Parent], true);
     }
 
     public static function getNavigationGroup(): ?string
@@ -51,14 +55,19 @@ class WalletPage extends Page
     {
         $user = auth()->user();
 
-        if (! $user || ! in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
+        if (! $user || ! in_array($user->role, [UserRole::Student, UserRole::Parent], true)) {
             return null;
         }
 
         $balance = StudentBalance::query()->firstWhere('user_id', $user->id);
-        $amount = (float) ($balance?->available_amount ?? 0);
+        $spent = (float) ($balance?->total_spent ?? 0);
 
-        return number_format($amount, 2, '.', ' ');
+        return number_format($spent, 2, '.', ' ').' BYN';
+    }
+
+    public function mount(): void
+    {
+        $this->checkPendingTopups();
     }
 
     public function choosePresetAmount(float|int $amount): void
@@ -85,7 +94,7 @@ class WalletPage extends Page
     {
         $user = auth()->user();
 
-        if (! $user || ! in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
+        if (! $user || ! in_array($user->role, [UserRole::Student, UserRole::Parent], true)) {
             abort(403);
         }
 
@@ -111,15 +120,23 @@ class WalletPage extends Page
         if (! ($response['success'] ?? false)) {
             Notification::make()
                 ->title('Пополнение не прошло')
+                ->body($response['message'] ?? 'Неизвестная ошибка платежного шлюза')
                 ->danger()
                 ->send();
 
             return;
         }
 
-        if (($response['status'] ?? '') === 'pending' && isset($response['redirect_url'])) {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $amount, $response) {
-                \App\Models\WalletTopup::query()->create([
+        // WebPAY возвращает status=authorized (холд до ввода карты/3-D Secure
+        // ещё не подтверждён) — деньги при этом НЕ получены. Кредитуем баланс
+        // только после подтверждения (webhook / checkPendingTopups).
+        // Мгновенное зачисление допустимо лишь для синхронных шлюзов (mock),
+        // которые возвращают status=success.
+        $responseStatus = (string) ($response['status'] ?? '');
+
+        if ($responseStatus !== 'success') {
+            DB::transaction(function () use ($user, $amount, $response) {
+                WalletTopup::query()->create([
                     'user_id' => $user->id,
                     'amount' => $amount,
                     'currency' => 'BYN',
@@ -129,12 +146,23 @@ class WalletPage extends Page
                 ]);
             });
 
-            $this->redirect($response['redirect_url']);
+            if (isset($response['redirect_url'])) {
+                $this->redirect($response['redirect_url']);
+
+                return;
+            }
+
+            Notification::make()
+                ->title('Платёж инициирован')
+                ->body('Баланс будет пополнен после подтверждения платежа системой.')
+                ->info()
+                ->send();
+
             return;
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($user, $amount, $response) {
-            \App\Models\WalletTopup::query()->create([
+        DB::transaction(function () use ($user, $amount, $response) {
+            WalletTopup::query()->create([
                 'user_id' => $user->id,
                 'amount' => $amount,
                 'currency' => 'BYN',
@@ -159,7 +187,7 @@ class WalletPage extends Page
 
         Notification::make()
             ->title('Баланс пополнен')
-            ->body('Средства уже доступны для оплаты уроков в один клик.')
+            ->body('Средства уже доступны для оплаты уроков.')
             ->success()
             ->send();
     }
@@ -167,7 +195,7 @@ class WalletPage extends Page
     public function getViewData(): array
     {
         $user = auth()->user();
-        abort_unless($user && in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true), 403);
+        abort_unless($user && in_array($user->role, [UserRole::Student, UserRole::Parent], true), 403);
 
         $balance = app(StudentBalanceService::class)->getOrCreate($user->id);
 
@@ -175,16 +203,85 @@ class WalletPage extends Page
             ->with(['lesson.tutor'])
             ->where('user_id', $user->id)
             ->latest()
-            ->limit(25)
+            ->limit(50)
             ->get();
 
+        $transactions = Transaction::query()
+            ->where('user_id', $user->id)
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        $totalSpent = (float) $balance->total_spent;
+        $totalRefunded = (float) $balance->total_refunded;
+
         return [
+            'totalSpent' => $totalSpent,
+            'totalRefunded' => $totalRefunded,
+            'totalSpentHtml' => BynMoneyFormatter::format((string) $balance->total_spent)->toHtml(),
+            'totalRefundedHtml' => BynMoneyFormatter::format((string) $balance->total_refunded)->toHtml(),
+            'availableAmount' => (float) $balance->available_amount,
+            'lockedAmount' => (float) $balance->locked_amount,
             'availableHtml' => BynMoneyFormatter::format((string) $balance->available_amount)->toHtml(),
             'lockedHtml' => BynMoneyFormatter::format((string) $balance->locked_amount)->toHtml(),
             'entries' => $entries,
-            'presetAmounts' => self::PRESET_AMOUNTS,
-            'selectedTopUpAmount' => $this->selectedTopUpAmount,
+            'transactions' => $transactions,
         ];
+    }
+
+    private function checkPendingTopups(): void
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return;
+        }
+
+        $pendingTopups = WalletTopup::query()
+            ->where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->get();
+
+        if ($pendingTopups->isEmpty()) {
+            return;
+        }
+
+        $gateway = app(PaymentGatewayInterface::class);
+
+        foreach ($pendingTopups as $topup) {
+            if ($topup->gateway_transaction_id && $gateway->verifyPayment($topup->gateway_transaction_id)) {
+                DB::transaction(function () use ($topup, $user) {
+                    // Атомарная смена статуса — защита от двойного зачисления
+                    // при гонке с webhook (кто первый перевёл pending→success,
+                    // тот и кредитует баланс).
+                    $claimed = WalletTopup::query()
+                        ->whereKey($topup->id)
+                        ->where('status', 'pending')
+                        ->update(['status' => 'success']);
+
+                    if ($claimed === 0) {
+                        return;
+                    }
+
+                    app(StudentBalanceService::class)->credit(
+                        balance: app(StudentBalanceService::class)->getOrCreate($user->id),
+                        amount: number_format((float) $topup->amount, 2, '.', ''),
+                        currency: $topup->currency ?: 'BYN',
+                        type: StudentBalanceLedgerEntry::TYPE_TOPUP,
+                        meta: [
+                            'source' => 'auto_verification',
+                            'gateway_transaction_id' => $topup->gateway_transaction_id,
+                            'wallet_topup_id' => $topup->id,
+                        ],
+                    );
+                });
+
+                Notification::make()
+                    ->title('Платеж подтвержден!')
+                    ->body('Баланс успешно пополнен на '.number_format((float) $topup->amount, 2, '.', ' ').' BYN')
+                    ->success()
+                    ->send();
+            }
+        }
     }
 
     private function resolveTopUpAmount(): float

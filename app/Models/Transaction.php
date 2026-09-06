@@ -14,13 +14,19 @@ class Transaction extends Model
 
     public const STATUS_PENDING = 'pending';
 
+    public const STATUS_AUTHORIZED = 'authorized';
+
     public const STATUS_SUCCESS = 'success';
 
     public const STATUS_FAILED = 'failed';
 
+    public const STATUS_VOIDED = 'voided';
+
     public const STATUS_REFUNDED = 'refunded';
 
     public const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
+
+    public const STATUS_PARTIALLY_COMPLETED = 'partially_completed';
 
     protected $fillable = [
         'lesson_id',

@@ -33,6 +33,25 @@ class MockPaymentGateway implements PaymentGatewayInterface
         return true;
     }
 
+    public function capturePayment(string $transactionId, float $amount): bool
+    {
+        Log::channel('payments')->info('Mock payment captured', [
+            'gateway_transaction_id' => $transactionId,
+            'amount' => number_format($amount, 2, '.', ''),
+        ]);
+
+        return true;
+    }
+
+    public function voidPayment(string $transactionId): bool
+    {
+        Log::channel('payments')->info('Mock payment voided', [
+            'gateway_transaction_id' => $transactionId,
+        ]);
+
+        return true;
+    }
+
     public function refundPayment(string $transactionId, float $amount): bool
     {
         Log::channel('payments')->info('Mock payment refunded', [

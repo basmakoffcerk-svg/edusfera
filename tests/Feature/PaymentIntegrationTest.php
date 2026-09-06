@@ -38,8 +38,8 @@ class PaymentIntegrationTest extends TestCase
             'package_lessons_remaining' => 4,
             'package_total' => '152.00',
             'package_discount' => '8.00',
-            'platform_commission' => '15.20',
-            'net_amount' => '133.16',
+            'platform_commission' => '0.00',
+            'net_amount' => '148.36',
             'status' => Lesson::STATUS_PENDING,
             'payment_status' => Lesson::PAYMENT_UNPAID,
             'payment_lock_expires_at' => $now->addMinutes(15),
@@ -105,7 +105,7 @@ class PaymentIntegrationTest extends TestCase
             ->assertSuccessful();
 
         $balance = TutorBalance::query()->where('user_id', $tutor->id)->firstOrFail();
-        $this->assertSame('133.16', (string) $balance->available_amount);
+        $this->assertSame('148.36', (string) $balance->available_amount);
         $this->assertSame('0.00', (string) $balance->pending_amount);
     }
 
@@ -137,8 +137,8 @@ class PaymentIntegrationTest extends TestCase
             'price' => '40.00',
             'package_code' => 'single',
             'package_lessons' => 1,
-            'platform_commission' => '4.00',
-            'net_amount' => '34.82',
+            'platform_commission' => '0.00',
+            'net_amount' => '38.82',
             'status' => Lesson::STATUS_PENDING,
             'payment_status' => Lesson::PAYMENT_UNPAID,
             'payment_lock_expires_at' => $now->addMinutes(15),
@@ -155,10 +155,10 @@ class PaymentIntegrationTest extends TestCase
             ->assertSuccessful();
 
         $balance = TutorBalance::query()->where('user_id', $tutor->id)->firstOrFail();
-        // single net: 40 - 4 commission - 1.18 acq = 34.82
-        // package net: 133.16
-        // total: 34.82 + 133.16 = 167.98
-        $this->assertSame('167.98', (string) $balance->available_amount);
+        // single net: 40 - 0 commission - 1.18 acq = 38.82
+        // package net: 148.36
+        // total: 38.82 + 148.36 = 187.18
+        $this->assertSame('187.18', (string) $balance->available_amount);
     }
 
     public function test_backfill_creates_one_record_per_legacy_settled_package(): void
@@ -313,8 +313,8 @@ class PaymentIntegrationTest extends TestCase
             'package_lessons_remaining' => 4,
             'package_total' => '152.00',
             'package_discount' => '8.00',
-            'platform_commission' => '15.20',
-            'net_amount' => '133.16',
+            'platform_commission' => '0.00',
+            'net_amount' => '148.36',
             'status' => Lesson::STATUS_PENDING,
             'payment_status' => Lesson::PAYMENT_UNPAID,
             'payment_lock_expires_at' => $now->addMinutes(15),
@@ -352,16 +352,16 @@ class PaymentIntegrationTest extends TestCase
         $parent->refresh();
         $children = array_map(fn ($c) => $c->refresh(), $children);
 
-        // Settle parent lesson (tutor gets 33.29)
+        // Settle parent lesson (tutor gets 37.09)
         $parent->update(['status' => Lesson::STATUS_COMPLETED]);
         app(PaymentService::class)->settleCompletedLesson($parent->fresh());
 
-        // Settle child 1 lesson (tutor gets 33.29, total 66.58)
+        // Settle child 1 lesson (tutor gets 37.09, total 74.18)
         $children[0]->update(['status' => Lesson::STATUS_COMPLETED]);
         app(PaymentService::class)->settleCompletedLesson($children[0]->fresh());
 
         $balance = TutorBalance::query()->where('user_id', $tutor->id)->firstOrFail();
-        $this->assertSame('66.58', (string) $balance->available_amount);
+        $this->assertSame('74.18', (string) $balance->available_amount);
 
         // Refund child 2 lesson
         app(PaymentService::class)->refundLessonPayment($children[1]->fresh(), 'student_cancelled');
@@ -370,7 +370,7 @@ class PaymentIntegrationTest extends TestCase
         app(PaymentService::class)->refundLessonPayment($children[2]->fresh(), 'student_cancelled');
 
         $balance->refresh();
-        $this->assertSame('66.58', (string) $balance->available_amount);
+        $this->assertSame('74.18', (string) $balance->available_amount);
         $this->assertSame('0.00', (string) $balance->pending_amount);
 
         $transaction->refresh();

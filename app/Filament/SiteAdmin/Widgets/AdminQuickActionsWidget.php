@@ -20,7 +20,9 @@ class AdminQuickActionsWidget extends Widget
 
     public static function canView(): bool
     {
-        return auth()->user()?->role === 'admin';
+        $role = auth()->user()?->role;
+
+        return $role === \App\Enums\UserRole::Admin || (is_object($role) ? $role->value : $role) === 'admin';
     }
 
     protected function getViewData(): array

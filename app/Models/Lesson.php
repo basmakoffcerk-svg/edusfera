@@ -90,6 +90,20 @@ class Lesson extends Model
             && $this->payment_lock_expires_at->isFuture();
     }
 
+    public function isSettled(): bool
+    {
+        if ($this->relationLoaded('settlement')) {
+            return $this->settlement?->isSettled() ?? false;
+        }
+
+        return $this->settlement()->whereNotNull('settled_at')->exists();
+    }
+
+    public function hasStarted(): bool
+    {
+        return $this->start_time !== null && $this->start_time->isPast();
+    }
+
     public function tutor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'tutor_id');

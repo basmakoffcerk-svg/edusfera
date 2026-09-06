@@ -4,18 +4,26 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\ClassroomChatMessage;
 use App\Models\ClassroomFile;
 use App\Models\ClassroomNote;
+use App\Models\ClassroomSession;
 use App\Models\DiagnosticAttempt;
 use App\Models\HomeworkAssignment;
-use App\Support\Formatters;
 use App\Models\Lesson;
 use App\Models\ProgressSnapshot;
 use App\Models\SkillGap;
 use App\Models\StudentGoal;
+use App\Services\Classroom\AiService;
 use App\Services\ClassroomService;
+use App\Services\Payment\PaymentService;
+use App\Support\Formatters;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -79,7 +87,7 @@ class ClassroomController extends Controller
         ]);
     }
 
-    public function end(Lesson $lesson, Request $request): \Illuminate\Http\RedirectResponse
+    public function end(Lesson $lesson, Request $request): RedirectResponse
     {
         $user = $request->user();
 
@@ -93,8 +101,21 @@ class ClassroomController extends Controller
             $this->classroomService->endClassroom($session);
         }
 
-        if ($lesson->status === Lesson::STATUS_CONFIRMED) {
+        if ($lesson->status === Lesson::STATUS_CONFIRMED && ($lesson->hasStarted() || ($lesson->end_time?->isPast() ?? false))) {
             $lesson->update(['status' => Lesson::STATUS_COMPLETED]);
+
+            // Завершение урока должно запускать сеттлмент (перевод доли
+            // репетитора из pending в available + захват холда в шлюзе).
+            // Раньше статус менялся напрямую, урок выпадал из планировщика
+            // lessons:complete (он выбирает только CONFIRMED), и деньги
+            // репетитора зависали в pending навсегда.
+            try {
+                app(PaymentService::class)->settleCompletedLesson($lesson->fresh());
+            } catch (\Throwable $e) {
+                Log::warning('Classroom lesson settlement failed: '.$e->getMessage(), [
+                    'lesson_id' => $lesson->id,
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', 'Виртуальный класс завершён.');
@@ -109,7 +130,9 @@ class ClassroomController extends Controller
         }
 
         $validated = $request->validate([
-            'content' => ['required', 'string'],
+            // Фронтенд отправляет { text }, API-контракт — content: принимаем оба.
+            'content' => ['nullable', 'string', 'required_without:text'],
+            'text' => ['nullable', 'string', 'required_without:content'],
             'is_shared' => ['nullable', 'boolean'],
         ]);
 
@@ -124,7 +147,7 @@ class ClassroomController extends Controller
         $note = ClassroomNote::query()->create([
             'classroom_session_id' => $session->id,
             'author_id' => $user->id,
-            'content' => trim($validated['content']),
+            'content' => trim((string) ($validated['content'] ?? $validated['text'])),
             'is_shared' => (bool) ($validated['is_shared'] ?? false),
         ]);
 
@@ -180,22 +203,13 @@ class ClassroomController extends Controller
             abort(403);
         }
 
-        $session = $lesson->activeClassroom;
+        $sessionIds = $lesson->classroomSessions()->pluck('id');
 
-        if (! $session || $file->classroom_session_id !== $session->id) {
+        if (! $sessionIds->contains($file->classroom_session_id)) {
             abort(404, 'Файл не найден.');
         }
 
-        $filePath = storage_path("app/{$file->path}");
-
-        $realPath = realpath($filePath);
-        $storageBase = realpath(storage_path('app'));
-
-        if ($realPath === false || $storageBase === false || ! str_starts_with($realPath, $storageBase)) {
-            abort(404, 'Файл не найден.');
-        }
-
-        if (! file_exists($filePath)) {
+        if (! Storage::disk('local')->exists($file->path)) {
             abort(404, 'Файл не найден.');
         }
 
@@ -203,9 +217,7 @@ class ClassroomController extends Controller
         $safeName = str_replace(["\r", "\n"], '', $file->original_name);
         $safeName = preg_replace('/[^\w.\-]/', '_', $safeName);
 
-        return response()->streamDownload(function () use ($filePath): void {
-            readfile($filePath);
-        }, $safeName, [
+        return Storage::disk('local')->download($file->path, $safeName, [
             'Content-Type' => $file->mime_type,
         ]);
     }
@@ -221,15 +233,19 @@ class ClassroomController extends Controller
         $validated = $request->validate([
             'summary' => ['required', 'string'],
             'focus' => ['required', 'string'],
-            'next_step' => ['required', 'string'],
+            // Фронтенд отправляет next_steps (множественное), API — next_step.
+            'next_step' => ['nullable', 'string', 'required_without:next_steps'],
+            'next_steps' => ['nullable', 'string'],
             'homework_summary' => ['nullable', 'string'],
             'score' => ['nullable', 'integer', 'min:1', 'max:10'],
         ]);
 
+        $nextStep = trim((string) ($validated['next_step'] ?? $validated['next_steps'] ?? ''));
+
         $lesson->update([
             'tutor_report_summary' => trim($validated['summary']),
             'tutor_report_focus' => trim($validated['focus']),
-            'tutor_next_step' => trim($validated['next_step']),
+            'tutor_next_step' => $nextStep,
             'tutor_homework_summary' => isset($validated['homework_summary']) && trim($validated['homework_summary']) !== ''
                 ? trim($validated['homework_summary'])
                 : null,
@@ -245,7 +261,9 @@ class ClassroomController extends Controller
 
     public function getNotes(Lesson $lesson, Request $request): JsonResponse
     {
-        if (! $this->classroomService->canAccess($lesson, $request->user())) {
+        $user = $request->user();
+
+        if (! $this->classroomService->canAccess($lesson, $user)) {
             abort(403);
         }
 
@@ -254,8 +272,18 @@ class ClassroomController extends Controller
             return response()->json([]);
         }
 
+        // Приватные заметки (is_shared=false) видит только их автор и
+        // репетитор. Раньше студент получал ВСЕ заметки, включая личные
+        // заметки репетитора о занятии.
+        $isTutor = $user->id === $lesson->tutor_id;
+
         $notes = ClassroomNote::query()
             ->where('classroom_session_id', $session->id)
+            ->when(! $isTutor, function ($query) use ($user): void {
+                $query->where(function ($inner) use ($user): void {
+                    $inner->where('is_shared', true)->orWhere('author_id', $user->id);
+                });
+            })
             ->latest('id')
             ->get()
             ->map(fn ($note) => [
@@ -273,13 +301,13 @@ class ClassroomController extends Controller
             abort(403);
         }
 
-        $session = $lesson->activeClassroom;
-        if (! $session) {
+        $sessionIds = $lesson->classroomSessions()->pluck('id');
+        if ($sessionIds->isEmpty()) {
             return response()->json([]);
         }
 
         $files = ClassroomFile::query()
-            ->where('classroom_session_id', $session->id)
+            ->whereIn('classroom_session_id', $sessionIds)
             ->latest('id')
             ->get()
             ->map(fn ($file) => [
@@ -303,7 +331,7 @@ class ClassroomController extends Controller
             return response()->json([]);
         }
 
-        $messages = \App\Models\ClassroomChatMessage::query()
+        $messages = ClassroomChatMessage::query()
             ->where('classroom_session_id', $session->id)
             ->oldest('id')
             ->get()
@@ -335,7 +363,7 @@ class ClassroomController extends Controller
             'message' => ['required', 'string', 'max:1000'],
         ]);
 
-        $message = \App\Models\ClassroomChatMessage::query()->create([
+        $message = ClassroomChatMessage::query()->create([
             'classroom_session_id' => $session->id,
             'sender_id' => $user->id,
             'message' => trim($validated['message']),
@@ -370,8 +398,6 @@ class ClassroomController extends Controller
         return response()->json($homework);
     }
 
-
-
     public function assignHomework(Lesson $lesson, Request $request): JsonResponse
     {
         $user = $request->user();
@@ -382,20 +408,32 @@ class ClassroomController extends Controller
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:160'],
+            // Фронтенд отправляет description и due_date (YYYY-MM-DD),
+            // API-контракт — instructions и due_at (datetime). Принимаем оба.
             'instructions' => ['nullable', 'string'],
-            'due_at' => ['nullable', 'date', 'after:now'],
+            'description' => ['nullable', 'string'],
+            'due_at' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date'],
         ]);
+
+        $instructions = trim((string) ($validated['instructions'] ?? $validated['description'] ?? ''));
+        $dueAt = $validated['due_at'] ?? null;
+
+        if ($dueAt === null && isset($validated['due_date'])) {
+            // Дата без времени — дедлайн до конца указанного дня.
+            $dueAt = Carbon::parse($validated['due_date'])->setTime(23, 59, 0);
+        }
 
         $homework = HomeworkAssignment::query()->create([
             'lesson_id' => $lesson->id,
             'student_id' => $lesson->student_id,
             'tutor_id' => $lesson->tutor_id,
             'title' => trim($validated['title']),
-            'instructions' => isset($validated['instructions']) ? trim($validated['instructions']) : null,
+            'instructions' => $instructions !== '' ? $instructions : null,
             'source' => 'tutor',
             'status' => 'assigned',
             'assigned_at' => now('UTC'),
-            'due_at' => $validated['due_at'] ?? null,
+            'due_at' => $dueAt,
         ]);
 
         return response()->json([
@@ -464,11 +502,13 @@ class ClassroomController extends Controller
         $authHeader = $request->header('Authorization', '');
         $internalSecret = config('classroom.internal_secret');
 
-        if ($internalSecret === '' || ! hash_equals('Bearer '.$internalSecret, $authHeader)) {
+        // empty(), а не === '': при null (env не задан) строгое сравнение
+        // пропускало дальше, и 'Bearer ' с пустым секретом проходил проверку.
+        if (! is_string($internalSecret) || $internalSecret === '' || ! hash_equals('Bearer '.$internalSecret, $authHeader)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $session = \App\Models\ClassroomSession::query()->where('room_id', $roomId)->first();
+        $session = ClassroomSession::query()->where('room_id', $roomId)->first();
         if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
@@ -483,7 +523,7 @@ class ClassroomController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function chatAi(Lesson $lesson, Request $request, \App\Services\Classroom\AiService $aiService): JsonResponse
+    public function chatAi(Lesson $lesson, Request $request, AiService $aiService): JsonResponse
     {
         if (! $this->classroomService->canAccess($lesson, $request->user())) {
             abort(403);

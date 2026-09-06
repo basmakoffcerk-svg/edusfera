@@ -26,7 +26,7 @@ class TutorProfileResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
-    protected static ?string $navigationLabel = 'Профиль Репетитора';
+    protected static ?string $navigationLabel = 'Анкета преподавателя';
 
     protected static ?int $navigationSort = 1;
 
@@ -40,12 +40,12 @@ class TutorProfileResource extends Resource
 
         return self::isAdminContext()
             ? 'Анкеты репетиторов'
-            : 'Профиль Репетитора';
+            : 'Анкета преподавателя';
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || Auth::user()?->role === UserRole::Admin)
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || self::isAdminContext())
             ? 'Модерация'
             : 'Профиль';
     }
@@ -54,14 +54,14 @@ class TutorProfileResource extends Resource
     {
         return self::isAdminContext()
             ? 'Анкета репетитора'
-            : 'Профиль репетитора';
+            : 'Анкета преподавателя';
     }
 
     public static function getPluralModelLabel(): string
     {
         return self::isAdminContext()
             ? 'Анкеты репетиторов'
-            : 'Профили репетиторов';
+            : 'Анкеты преподавателей';
     }
 
     /**
@@ -125,7 +125,9 @@ class TutorProfileResource extends Resource
 
     private static function isAdminContext(): bool
     {
-        return Auth::user()?->role === UserRole::Admin;
+        $user = Auth::user();
+
+        return (bool) ($user?->isAdmin() || Filament::getCurrentPanel()?->getId() === 'site-admin');
     }
 
     /**
@@ -288,6 +290,16 @@ class TutorProfileResource extends Resource
                                 'none' => 'Нет статуса (Физ. лицо)',
                             ])
                             ->required(),
+                        Forms\Components\TextInput::make('unp')
+                            ->label('УНП (9 цифр)')
+                            ->length(9)
+                            ->regex('/^\d{9}$/')
+                            ->required()
+                            ->helperText('Используется для сплитования выплат через WebPAY. Обязательно верифицируется.'),
+                        Forms\Components\TextInput::make('payout_account')
+                            ->label('Расчетный счет / Номер карты для выплат')
+                            ->required()
+                            ->helperText('Реквизиты для перечисления 85% стоимости уроков.'),
                         Forms\Components\FileUpload::make('diploma_path')
                             ->label('Диплом / сертификат')
                             ->directory('diplomas')
@@ -305,7 +317,7 @@ class TutorProfileResource extends Resource
             ])->submitAction(new HtmlString('<button type="submit" class="fi-btn relative grid-flow-col items-center justify-center font-semibold outline-none transition duration-75 focus-visible:ring-2 rounded-lg fi-color-custom fi-btn-color-primary fi-size-md fi-btn-size-md gap-1.5 px-3 py-2 text-sm inline-grid shadow-sm bg-custom-600 text-white hover:bg-custom-500 dark:bg-custom-500 dark:hover:bg-custom-400 focus-visible:ring-custom-500/50 dark:focus-visible:ring-custom-400/50 fi-ac-btn-action" style="--c-400:var(--primary-400);--c-500:var(--primary-500);--c-600:var(--primary-600);"><span class="fi-btn-label">Сохранить</span></button>'))->columnSpanFull(),
 
             Forms\Components\Section::make('Модерация (Только для Админов)')
-                ->visible(fn () => Auth::user()?->role === UserRole::Admin)
+                ->visible(fn () => self::isAdminContext())
                 ->schema([
                     Forms\Components\Toggle::make('is_verified')
                         ->label('Верифицирован'),
@@ -586,11 +598,15 @@ class TutorProfileResource extends Resource
         $query = parent::getEloquentQuery();
         $user = Auth::user();
 
-        if ($user?->role === 'tutor') {
+        if (self::isAdminContext()) {
+            return $query;
+        }
+
+        if ($user?->isTutor()) {
             return $query->where('user_id', $user->id);
         }
 
-        return $query;
+        return $query->whereRaw('1 = 0');
     }
 
     public static function getPages(): array
@@ -606,6 +622,6 @@ class TutorProfileResource extends Resource
     {
         $user = Auth::user();
 
-        return $user?->role === 'tutor' || $user?->role === 'admin';
+        return (bool) ($user?->isTutor() || $user?->isAdmin() || Filament::getCurrentPanel()?->getId() === 'site-admin');
     }
 }

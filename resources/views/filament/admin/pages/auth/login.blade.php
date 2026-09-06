@@ -1,10 +1,7 @@
-<x-filament-panels::page.simple>
+<div class="w-full">
     @php
-        $asideTheme   = 'minimal';
-        $cardTitle    = 'Вход в Edusfera';
-        $cardSubtitle = 'Введите ваш e-mail и пароль для входа в кабинет';
-        $switchLabel  = filament()->hasRegistration() ? 'Регистрация' : '';
-        $switchHref   = filament()->hasRegistration() ? filament()->getRegistrationUrl() : '#';
+        $cardTitle    = $this->getHeading() ?: 'Вход в систему';
+        $cardSubtitle = $this->getSubheading() ?: 'Введите ваш e-mail и пароль для входа в кабинет';
     @endphp
 
     @php
@@ -13,16 +10,14 @@
 
     {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE, scopes: $this->getRenderHookScopes()) }}
 
-    <div class="ed-auth-form">
-        <x-filament-panels::form id="form" wire:submit="authenticate">
-            {{ $this->form }}
+    <x-filament-panels::form id="form" wire:submit="authenticate">
+        {{ $this->form }}
 
-            <x-filament-panels::form.actions
-                :actions="$this->getCachedFormActions()"
-                :full-width="$this->hasFullWidthFormActions()"
-            />
-        </x-filament-panels::form>
-    </div>
+        <x-filament-panels::form.actions
+            :actions="$this->getCachedFormActions()"
+            :full-width="$this->hasFullWidthFormActions()"
+        />
+    </x-filament-panels::form>
 
     {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, scopes: $this->getRenderHookScopes()) }}
 
@@ -36,12 +31,10 @@
     @endphp
 
     @include('filament.admin.pages.auth._auth-design', [
-        'asideTheme' => $asideTheme,
         'cardTitle' => $cardTitle,
         'cardSubtitle' => $cardSubtitle,
-        'switchLabel' => $switchLabel,
-        'switchHref' => $switchHref,
         'formSlot' => $formSlot,
         'footerSlot' => $footerSlot,
+        'maxWidth' => 'max-w-md',
     ])
-</x-filament-panels::page.simple>
+</div>

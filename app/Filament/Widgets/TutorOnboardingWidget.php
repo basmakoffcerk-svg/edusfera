@@ -21,7 +21,7 @@ class TutorOnboardingWidget extends Widget
     {
         $user = auth()->user();
 
-        if ($user?->role !== 'tutor') {
+        if (! $user?->isTutor()) {
             return false;
         }
 

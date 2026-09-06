@@ -15,9 +15,9 @@ class ApplyRoleSessionLifetime
         $user = $request->user();
 
         if ($user) {
-            $lifetime = in_array($user->role, ['tutor', 'admin'], true)
-                ? 60 * 24 * 7
-                : 60 * 24 * 30;
+            $lifetime = ($user->isTutor() || $user->isAdmin())
+                ? 60 * 24 // 24 часа для администраторов и репетиторов
+                : 60 * 24 * 7; // 7 дней для студентов
 
             config(['session.lifetime' => $lifetime]);
         }

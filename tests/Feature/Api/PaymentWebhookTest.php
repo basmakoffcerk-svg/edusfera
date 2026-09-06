@@ -7,7 +7,6 @@ namespace Tests\Feature\Api;
 use App\Models\Lesson;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Services\Payment\PaymentService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -21,8 +20,7 @@ class PaymentWebhookTest extends TestCase
     private User $tutor;
     private Lesson $lesson;
     private Transaction $transaction;
-    private string $webhookSecret = 'test_webhook_secret';
-    private string $bepaidSecret = 'test_bepaid_secret';
+    private string $webpaySecret = 'test_webpay_secret';
 
     protected function setUp(): void
     {
@@ -35,6 +33,9 @@ class PaymentWebhookTest extends TestCase
             'price_per_hour' => '40.00',
             'experience_years' => 5,
             'legal_status' => 'self_employed',
+            'unp' => '123456789',
+            'webpay_billing_id' => 'billing_123',
+            'webpay_account_id' => 'account_123',
             'bio' => 'Подготовка к экзаменам.',
             'is_verified' => true,
             'verification_status' => 'approved',
@@ -50,21 +51,20 @@ class PaymentWebhookTest extends TestCase
             'end_time' => CarbonImmutable::now('UTC')->addDay()->addHour(),
             'duration_minutes' => 60,
             'price' => '40.00',
-            'platform_commission' => '4.00',
-            'net_amount' => '34.82',
+            'platform_commission' => '6.00',
+            'net_amount' => '34.00',
             'status' => Lesson::STATUS_PENDING,
             'payment_status' => Lesson::PAYMENT_UNPAID,
             'payment_lock_expires_at' => CarbonImmutable::now('UTC')->addMinutes(15),
         ]);
 
-        // Создаем pending транзакцию
         $this->transaction = Transaction::query()->create([
             'lesson_id' => $this->lesson->id,
             'user_id' => $this->student->id,
             'amount' => '40.00',
-            'platform_commission' => '4.00',
-            'acquiring_fee' => '1.18',
-            'net_amount' => '34.82',
+            'platform_commission' => '6.00',
+            'acquiring_fee' => '0.00',
+            'net_amount' => '34.00',
             'currency' => 'BYN',
             'status' => Transaction::STATUS_PENDING,
             'payment_method' => 'card',
@@ -72,32 +72,25 @@ class PaymentWebhookTest extends TestCase
             'gateway_response' => ['charged_amount' => '40.00'],
         ]);
 
-        Config::set('payments.webhook_secret', $this->webhookSecret);
-        Config::set('payments.bepaid.secret_key', $this->bepaidSecret);
-        Config::set('payments.webhook_require_signature', true);
+        Config::set('payments.webpay.secret_key', $this->webpaySecret);
+        Config::set('payments.webpay.allowed_ips', ['127.0.0.1', '178.163.225.84']);
         Config::set('payments.webhook_require_ip_allowlist', false);
     }
 
-    public function test_it_successfully_processes_bepaid_success_webhook_with_valid_signature(): void
+    public function test_it_successfully_processes_webpay_success_webhook(): void
     {
-        Config::set('payments.gateway', 'bepaid');
+        Config::set('payments.gateway', 'webpay');
 
         $payload = [
-            'transaction' => [
-                'checkout_token' => 'checkout-token-12345',
-                'status' => 'successful',
-                'amount' => 4000,
-                'currency' => 'BYN',
-                'uid' => 'bepaid-tr-999',
-            ]
+            'transaction_id' => 'checkout-token-12345',
+            'payment_type' => 'completion',
+            'status' => 'completed',
+            'amount' => '40.00',
+            'currency' => 'BYN',
         ];
+        $payload['ws_signature'] = $this->signPayload($payload);
 
-        $jsonPayload = json_encode($payload);
-        $signature = hash_hmac('sha256', $jsonPayload, $this->bepaidSecret);
-
-        $response = $this->postJson('/payments/webhook', $payload, [
-            'Content-Signature' => $signature,
-        ]);
+        $response = $this->postJson('/webhooks/webpay', $payload);
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -110,68 +103,18 @@ class PaymentWebhookTest extends TestCase
         $this->assertSame(Lesson::STATUS_CONFIRMED, $this->lesson->status);
     }
 
-    public function test_it_rejects_bepaid_webhook_with_invalid_signature(): void
+    public function test_it_marks_transaction_failed_on_webpay_failed_webhook(): void
     {
-        Config::set('payments.gateway', 'bepaid');
+        Config::set('payments.gateway', 'webpay');
 
         $payload = [
-            'transaction' => [
-                'checkout_token' => 'checkout-token-12345',
-                'status' => 'successful',
-            ]
+            'transaction_id' => 'checkout-token-12345',
+            'payment_type' => 'failed',
+            'status' => 'failed',
         ];
+        $payload['ws_signature'] = $this->signPayload($payload);
 
-        $response = $this->postJson('/payments/webhook', $payload, [
-            'Content-Signature' => 'invalid_signature_value',
-        ]);
-
-        $response->assertStatus(403);
-        $this->transaction->refresh();
-        $this->assertSame(Transaction::STATUS_PENDING, $this->transaction->status);
-    }
-
-    public function test_it_successfully_processes_legacy_webhook_with_valid_signature(): void
-    {
-        Config::set('payments.gateway', 'mock');
-
-        $payload = [
-            'gateway_transaction_id' => 'checkout-token-12345',
-            'event' => 'payment.success',
-        ];
-
-        $jsonPayload = json_encode($payload);
-        $signature = hash_hmac('sha256', $jsonPayload, $this->webhookSecret);
-
-        $response = $this->postJson('/payments/webhook', $payload, [
-            'X-Webhook-Signature' => $signature,
-        ]);
-
-        $response->assertStatus(200);
-        $response->assertJson(['success' => true]);
-
-        $this->transaction->refresh();
-        $this->transaction->lesson->refresh();
-
-        $this->assertSame(Transaction::STATUS_SUCCESS, $this->transaction->status);
-    }
-
-    public function test_it_marks_transaction_failed_on_bepaid_failed_webhook(): void
-    {
-        Config::set('payments.gateway', 'bepaid');
-
-        $payload = [
-            'transaction' => [
-                'checkout_token' => 'checkout-token-12345',
-                'status' => 'failed',
-            ]
-        ];
-
-        $jsonPayload = json_encode($payload);
-        $signature = hash_hmac('sha256', $jsonPayload, $this->bepaidSecret);
-
-        $response = $this->postJson('/payments/webhook', $payload, [
-            'Content-Signature' => $signature,
-        ]);
+        $response = $this->postJson('/webhooks/webpay', $payload);
 
         $response->assertStatus(200);
 
@@ -180,6 +123,22 @@ class PaymentWebhookTest extends TestCase
 
         $this->assertSame(Transaction::STATUS_FAILED, $this->transaction->status);
         $this->assertSame(Lesson::PAYMENT_UNPAID, $this->lesson->payment_status);
+    }
+
+    private function signPayload(array $payload): string
+    {
+        $batch = ($payload['batch_timestamp'] ?? '').
+                 ($payload['currency_id'] ?? $payload['currency'] ?? '').
+                 ($payload['amount'] ?? '').
+                 ($payload['payment_method'] ?? '').
+                 ($payload['order_id'] ?? '').
+                 ($payload['site_order_id'] ?? '').
+                 ($payload['transaction_id'] ?? '').
+                 ($payload['payment_type'] ?? '').
+                 ($payload['rrn'] ?? '').
+                 $this->webpaySecret;
+
+        return md5($batch);
     }
 
     public function test_checkout_success_page_verifies_payment_synchronously_to_resolve_race_condition(): void

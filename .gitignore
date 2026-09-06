@@ -40,8 +40,19 @@ cookies*.txt
 scratch/
 test_script.php
 codegraph.html
+*.zip
+screenshots/
+.user.ini
+/Документы на платформу/
+/Документы/
+*.code-workspace
+ORIGINAL_REQUEST.md
+*.docx
+Требования, примеры, логотипы.pdf
+
 
 # Go microservice binaries
 /edusfera-ledger/edusfera-ledger
 /edusfera-media/loadtest
 /edusfera-workspace/server
+

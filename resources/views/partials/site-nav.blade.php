@@ -37,13 +37,16 @@
                         <div class="ed-nav__menu-separator"></div>
                         <div class="ed-nav__menu-meta">Другие аккаунты</div>
                         @foreach($linked as $account)
-                            <a href="{{ route('account.switch', $account['id']) }}" class="ed-nav__linked-account">
-                                <span class="ed-nav__linked-avatar">{{ mb_substr($account['name'], 0, 1) }}</span>
-                                <span class="ed-nav__linked-content">
-                                    <span class="ed-nav__linked-name">{{ $account['name'] }}</span>
-                                    <span class="ed-nav__linked-role">{{ \App\Services\MultiAccountService::roleLabel($account['role']) }}</span>
-                                </span>
-                            </a>
+                            <form method="POST" action="{{ route('account.switch', $account['id']) }}" style="margin:0;">
+                                @csrf
+                                <button type="submit" class="ed-nav__linked-account" style="color:var(--text, #111);">
+                                    <span class="ed-nav__linked-avatar">{{ mb_substr($account['name'], 0, 1) }}</span>
+                                    <span class="ed-nav__linked-content">
+                                        <span class="ed-nav__linked-name">{{ $account['name'] }}</span>
+                                        <span class="ed-nav__linked-role">{{ \App\Services\MultiAccountService::roleLabel($account['role']) }}</span>
+                                    </span>
+                                </button>
+                            </form>
                         @endforeach
                     @endif
 

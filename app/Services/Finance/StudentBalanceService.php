@@ -176,10 +176,18 @@ class StudentBalanceService
         }
 
         return DB::transaction(function () use ($balance, $amount, $currency, $lesson, $transaction, $meta, $ledgerTxId, $skipLedger) {
-            // Обновляем локальный баланс
-            $balance->update([
-                'available_amount' => $this->sub((string) $balance->available_amount, $amount),
-                'locked_amount' => $this->add((string) $balance->locked_amount, $amount),
+            // Topic 14: Race Condition — блокировка строки баланса для защиты от конкурентных списаний
+            $lockedBalance = StudentBalance::query()->where('id', $balance->id)->lockForUpdate()->first() ?? $balance;
+
+            if (bccomp((string) $lockedBalance->available_amount, $amount, 2) === -1) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Недостаточно средств на внутреннем балансе.',
+                ]);
+            }
+
+            $lockedBalance->update([
+                'available_amount' => $this->sub((string) $lockedBalance->available_amount, $amount),
+                'locked_amount' => $this->add((string) $lockedBalance->locked_amount, $amount),
             ]);
 
             $mergedMeta = array_merge($meta ?? [], [
@@ -236,27 +244,36 @@ class StudentBalanceService
         }
 
         return DB::transaction(function () use ($balance, $amount, $currency, $lesson, $transaction, $meta, $skipLedger) {
-            $balance->update([
-                'locked_amount' => $this->maxZero($this->sub((string) $balance->locked_amount, $amount)),
-                'available_amount' => $this->add((string) $balance->available_amount, $amount),
+            $lockedBalance = StudentBalance::query()->where('id', $balance->id)->lockForUpdate()->first() ?? $balance;
+
+            $currentLocked = (string) $lockedBalance->locked_amount;
+            if (bccomp($currentLocked, '0.00', 2) <= 0) {
+                return $lockedBalance;
+            }
+
+            $releaseAmount = bccomp($currentLocked, $amount, 2) === -1 ? $currentLocked : $amount;
+
+            $lockedBalance->update([
+                'locked_amount' => $this->maxZero($this->sub($currentLocked, $releaseAmount)),
+                'available_amount' => $this->add((string) $lockedBalance->available_amount, $releaseAmount),
             ]);
 
             StudentBalanceLedgerEntry::query()->create([
-                'student_balance_id' => $balance->id,
-                'user_id' => $balance->user_id,
+                'student_balance_id' => $lockedBalance->id,
+                'user_id' => $lockedBalance->user_id,
                 'lesson_id' => $lesson->id,
                 'transaction_id' => $transaction?->id,
                 'type' => StudentBalanceLedgerEntry::TYPE_RELEASE,
-                'amount' => $amount,
+                'amount' => $releaseAmount,
                 'currency' => $currency,
                 'meta' => $meta,
             ]);
 
-            if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
-                $this->syncBalance($balance);
+            if ($this->ledgerClient->isEnabled() && $lockedBalance->ledger_wallet_id && !$skipLedger) {
+                $this->syncBalance($lockedBalance);
             }
 
-            return $balance->fresh();
+            return $lockedBalance->fresh();
         });
     }
 

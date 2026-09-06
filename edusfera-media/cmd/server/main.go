@@ -28,8 +28,10 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	if cfg.JWTSecret == "" {
-		logger.Error("JWT_SECRET environment variable is required")
+	// Для HS256-токенов нужен JWT_SECRET; RS256-токены проверяются через JWKS.
+	// Достаточно одного из двух механизмов.
+	if cfg.JWTSecret == "" && cfg.JWKSURL == "" {
+		logger.Error("either JWT_SECRET (HS256) or JWKS_URL (RS256) is required")
 		os.Exit(1)
 	}
 

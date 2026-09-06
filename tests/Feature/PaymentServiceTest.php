@@ -48,8 +48,8 @@ class PaymentServiceTest extends TestCase
             'end_time' => CarbonImmutable::now('UTC')->addDay()->addHour(),
             'duration_minutes' => 60,
             'price' => '40.00',
-            'platform_commission' => '4.00',
-            'net_amount' => '34.82',
+            'platform_commission' => '0.00',
+            'net_amount' => '38.82',
             'status' => Lesson::STATUS_PENDING,
             'payment_status' => Lesson::PAYMENT_UNPAID,
             'payment_lock_expires_at' => CarbonImmutable::now('UTC')->addMinutes(15),
@@ -59,9 +59,9 @@ class PaymentServiceTest extends TestCase
 
         $this->assertSame(Transaction::STATUS_SUCCESS, $transaction->status);
         $this->assertSame('40.00', $transaction->amount);
-        $this->assertSame('4.00', $transaction->platform_commission);
+        $this->assertSame('0.00', $transaction->platform_commission);
         $this->assertSame('1.18', $transaction->acquiring_fee);
-        $this->assertSame('34.82', $transaction->net_amount);
+        $this->assertSame('38.82', $transaction->net_amount);
 
         $lesson->refresh();
 
@@ -97,7 +97,7 @@ class PaymentServiceTest extends TestCase
         $balance = TutorBalance::query()->where('user_id', $tutor->id)->first();
 
         $this->assertNotNull($balance);
-        $this->assertSame('34.82', $balance->pending_amount);
+        $this->assertSame('38.82', $balance->pending_amount);
         $this->assertSame('0.00', $balance->available_amount);
     }
 
@@ -182,8 +182,8 @@ class PaymentServiceTest extends TestCase
             'package_lessons' => 4,
             'package_total' => '152.00',
             'package_discount' => '8.00',
-            'platform_commission' => '15.20',
-            'net_amount' => '133.16',
+            'platform_commission' => '0.00',
+            'net_amount' => '148.36',
             'status' => Lesson::STATUS_PENDING,
             'payment_status' => Lesson::PAYMENT_UNPAID,
             'payment_lock_expires_at' => CarbonImmutable::now('UTC')->addMinutes(15),
@@ -192,9 +192,9 @@ class PaymentServiceTest extends TestCase
         $transaction = app(PaymentService::class)->processPayment($lesson->id, $student->id, 'card', true);
 
         $this->assertSame('152.00', $transaction->amount);
-        $this->assertSame('15.20', $transaction->platform_commission);
+        $this->assertSame('0.00', $transaction->platform_commission);
         $this->assertSame('3.64', $transaction->acquiring_fee);
-        $this->assertSame('133.16', $transaction->net_amount);
+        $this->assertSame('148.36', $transaction->net_amount);
         $this->assertTrue(($transaction->gateway_response['remember_payment_method'] ?? false) === true);
         $this->assertSame('pack_4', $transaction->gateway_response['package_code'] ?? null);
         $this->assertSame(4, $transaction->gateway_response['package_lessons'] ?? null);

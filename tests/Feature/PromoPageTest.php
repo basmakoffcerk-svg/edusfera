@@ -82,13 +82,13 @@ class PromoPageTest extends TestCase
 
         $this->assertStringContainsString('192854899', $content); // УНП
         $this->assertStringContainsString('ООО «Эдусфера»', $content);
-        $this->assertStringContainsString('25.10.2023', $content);
+        $this->assertStringContainsString('04.05.2026', $content);
         $this->assertStringContainsString('+375 (29) 519-08-21', $content);
         $this->assertStringContainsString('Visa', $content);
         $this->assertStringContainsString('Mastercard', $content);
         $this->assertStringContainsString('БЕЛКАРТ', $content);
-        $this->assertStringContainsString('bePaid', $content);
-        $this->assertStringContainsString('payment-logos-full.svg', $content);
+        $this->assertStringContainsString('Альфа-Банк', $content);
+        $this->assertStringNotContainsString('payment-logos-full.svg', $content);
         $this->assertStringContainsString('offer.html', $content);
         $this->assertStringContainsString('privacy-policy.html', $content);
         $this->assertStringContainsString('payment-security.html', $content);

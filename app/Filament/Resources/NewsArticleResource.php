@@ -25,7 +25,7 @@ class NewsArticleResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->role === UserRole::Admin;
+        return (bool) auth()->user()?->isAdmin();
     }
 
     public static function form(Form $form): Form
@@ -147,8 +147,6 @@ class NewsArticleResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        $user = auth()->user();
-
-        return $user?->role === UserRole::Admin;
+        return (bool) auth()->user()?->isAdmin();
     }
 }

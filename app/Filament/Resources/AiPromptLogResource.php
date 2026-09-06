@@ -11,6 +11,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class AiPromptLogResource extends Resource
 {
@@ -19,6 +20,36 @@ class AiPromptLogResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-document-magnifying-glass';
 
     protected static ?int $navigationSort = 20;
+
+    public static function canAccess(): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canCreate(): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
 
     public static function form(Form $form): Form
     {
@@ -121,6 +152,6 @@ class AiPromptLogResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->role === 'admin';
+        return (bool) auth()->user()?->isAdmin();
     }
 }

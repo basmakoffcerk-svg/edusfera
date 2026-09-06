@@ -51,6 +51,12 @@ final class ClassroomTokenService
             );
         }
 
+        if (in_array($lesson->status, [Lesson::STATUS_CANCELLED], true) || $lesson->payment_status === Lesson::PAYMENT_UNPAID) {
+            throw new LessonAccessDeniedException(
+                "Cannot enter classroom for cancelled or unpaid lesson {$lessonId}."
+            );
+        }
+
         $token = $this->issuer->issue($lesson, $user);
 
         return new ClassroomTokenDto(

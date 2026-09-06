@@ -9,6 +9,7 @@ function loadEnv() {
         __DIR__ . '/.env'
     ];
     
+    $appName = 'Edusfera';
     foreach ($paths as $path) {
         if (file_exists($path)) {
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -20,14 +21,19 @@ function loadEnv() {
                 if (count($parts) === 2) {
                     $key = trim($parts[0]);
                     $value = trim($parts[1]);
-                    // Убираем внешние кавычки
                     $value = trim($value, '"\'');
                     
-                    if (!array_key_exists($key, $_SERVER) && !array_key_exists($key, $_ENV)) {
-                        putenv("{$key}={$value}");
-                        $_ENV[$key] = $value;
-                        $_SERVER[$key] = $value;
+                    if ($key === 'APP_NAME' && !empty($value)) {
+                        $appName = $value;
                     }
+                    
+                    // Резолвим плейсхолдеры вроде ${APP_NAME}
+                    $value = str_replace('${APP_NAME}', $appName, $value);
+                    
+                    // Перезаписываем или устанавливаем значения в $_ENV, $_SERVER и getenv
+                    putenv("{$key}={$value}");
+                    $_ENV[$key] = $value;
+                    $_SERVER[$key] = $value;
                 }
             }
             break; // Останавливаемся на первом найденном файле
@@ -36,16 +42,27 @@ function loadEnv() {
 }
 loadEnv();
 
-// Конфигурация с fallback значениями (по умолчанию)
-$googleScriptUrl = getenv('PROMO_GOOGLE_SCRIPT_URL') ?: 'https://script.google.com/macros/s/AKfycbyJv0SYgfdYbvzoygAjnQWV3ufonH8L2p1QuHVFSjWyYdbt4M_t2EXEuKwq5DX3IJmS/exec';
+$getEnvVar = function($key, $default = '') {
+    if (!empty($_ENV[$key])) return $_ENV[$key];
+    if (!empty($_SERVER[$key])) return $_SERVER[$key];
+    $val = getenv($key);
+    return ($val !== false && $val !== '') ? $val : $default;
+};
 
-$smtpHost = getenv('MAIL_HOST') ?: 'smtp.gmail.com';
-$smtpPort = getenv('MAIL_PORT') ?: 465;
-$smtpSecure = getenv('MAIL_ENCRYPTION') ?: 'ssl';
-$smtpUser = getenv('MAIL_USERNAME') ?: 'edusferaby@gmail.com';
-$smtpPass = getenv('MAIL_PASSWORD') ?: '';
-$smtpFromEmail = getenv('MAIL_FROM_ADDRESS') ?: 'edusferaby@gmail.com';
-$smtpFromName = getenv('MAIL_FROM_NAME') ?: 'Edusfera';
+// Конфигурация с fallback значениями
+$googleScriptUrl = $getEnvVar('PROMO_GOOGLE_SCRIPT_URL', 'https://script.google.com/macros/s/AKfycbyJv0SYgfdYbvzoygAjnQWV3ufonH8L2p1QuHVFSjWyYdbt4M_t2EXEuKwq5DX3IJmS/exec');
+
+$smtpHost = $getEnvVar('MAIL_HOST', 'smtp.gmail.com');
+$smtpPort = (int)$getEnvVar('MAIL_PORT', 465);
+$smtpSecure = $getEnvVar('MAIL_ENCRYPTION', 'ssl');
+$smtpUser = $getEnvVar('MAIL_USERNAME', 'edusferaby@gmail.com');
+$smtpPass = $getEnvVar('MAIL_PASSWORD', '');
+$smtpFromEmail = $getEnvVar('MAIL_FROM_ADDRESS', 'edusferaby@gmail.com');
+$smtpFromName = $getEnvVar('MAIL_FROM_NAME', 'Edusfera');
+if ($smtpFromName === '${APP_NAME}') {
+    $smtpFromName = $getEnvVar('APP_NAME', 'Edusfera');
+}
+// -------------------------------------------------------------
 // -------------------------------------------------------------
 
 // Подключаем автономный PHPMailer
@@ -200,21 +217,19 @@ try {
         $htmlContent = str_replace('{{name}}', htmlspecialchars($name), $htmlContent);
         $htmlContent = str_replace('{{inviteCode}}', $inviteCode, $htmlContent);
         $mail->Body = $htmlContent;
+        
+        // Текстовая альтернатива для алгоритмов антиспама (Gmail require AltBody)
+        $mail->AltBody = "Здравствуйте, {$name}!\n\nСпасибо за интерес к Edusfera.\nВаш личный инвайт-код: {$inviteCode}\n\nОфициальный сайт: https://edusfera.by/";
     } else {
         // Резервный текстовый контент, если файл шаблона не найден
         $mail->isHTML(false);
         $mail->Body = "Здравствуйте, {$name}!\n\nСпасибо за регистрацию. Ваш инвайт-код: {$inviteCode}";
     }
 
-    // Служебные заголовки для уменьшения спам-рейтинга
-    $mail->addCustomHeader('List-Unsubscribe', '<mailto:support@edusfera.by>, <https://edusfera.by>');
-    $mail->addCustomHeader('Precedence', 'bulk');
-    $mail->addCustomHeader('X-Auto-Response-Suppress', 'OOF, AutoReply');
-
     $mail->send();
 } catch (Exception $e) {
-    // Записываем только общие сведения без конфиденциальной отладки соединения
-    error_log('Ошибка отправки email через PHPMailer');
+    // Записываем подробную информацию об ошибке в системный лог
+    error_log('Ошибка отправки email через PHPMailer: ' . $e->getMessage());
 }
 
 // Записываем время успешной отправки для Rate Limiting

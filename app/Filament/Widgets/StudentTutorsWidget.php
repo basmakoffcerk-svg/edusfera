@@ -19,10 +19,17 @@ class StudentTutorsWidget extends Widget
 
     public static function canView(): bool
     {
-        /** @var \App\Models\User $user */
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
-        return $user && in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
+        if (! $user) {
+            return false;
+        }
+
+        $role = $user->role;
+        $val = is_object($role) ? $role->value : $role;
+
+        return in_array($role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true) || in_array($val, ['student', 'parent'], true);
     }
 
     protected function getViewData(): array

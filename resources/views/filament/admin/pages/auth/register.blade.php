@@ -1,10 +1,7 @@
-<x-filament-panels::page.simple>
+<div class="w-full">
     @php
-        $asideTheme   = 'minimal';
-        $cardTitle    = 'Регистрация в Edusfera';
+        $cardTitle    = 'Регистрация';
         $cardSubtitle = 'Заполните 3 простых шага для создания аккаунта';
-        $switchLabel  = filament()->hasLogin() ? 'Войти' : '';
-        $switchHref   = filament()->hasLogin() ? filament()->getLoginUrl() : '#';
     @endphp
 
     @php
@@ -13,11 +10,9 @@
 
     {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::AUTH_REGISTER_FORM_BEFORE, scopes: $this->getRenderHookScopes()) }}
 
-    <div class="ed-auth-form">
-        <x-filament-panels::form id="form" wire:submit="register">
-            {{ $this->form }}
-        </x-filament-panels::form>
-    </div>
+    <x-filament-panels::form id="form" wire:submit="register">
+        {{ $this->form }}
+    </x-filament-panels::form>
 
     {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::AUTH_REGISTER_FORM_AFTER, scopes: $this->getRenderHookScopes()) }}
 
@@ -31,12 +26,10 @@
     @endphp
 
     @include('filament.admin.pages.auth._auth-design', [
-        'asideTheme' => $asideTheme,
         'cardTitle' => $cardTitle,
         'cardSubtitle' => $cardSubtitle,
-        'switchLabel' => $switchLabel,
-        'switchHref' => $switchHref,
         'formSlot' => $formSlot,
         'footerSlot' => $footerSlot,
+        'maxWidth' => 'max-w-xl',
     ])
-</x-filament-panels::page.simple>
+</div>

@@ -16,15 +16,18 @@ class TutorAvailabilityPage extends Page
 
     protected static string $view = 'filament.pages.tutor-availability-page';
 
-    protected static ?string $navigationLabel = 'Доступность';
+    protected static ?string $navigationLabel = 'Рабочие часы';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 3;
 
     public array $availability = [];
 
     public function mount(): void
     {
-        abort_unless(in_array(auth()->user()?->role, ['admin', 'tutor'], true), 403);
+        $role = auth()->user()?->role;
+        $roleVal = is_object($role) ? $role->value : (string) $role;
+
+        abort_unless(in_array($roleVal, ['admin', 'tutor'], true), 403);
 
         $existing = TutorAvailability::query()
             ->where('user_id', auth()->id())
@@ -159,6 +162,11 @@ class TutorAvailabilityPage extends Page
             ->all();
     }
 
+    public function resetAvailability(): void
+    {
+        $this->clearCalendar();
+    }
+
     public function getUpcomingCalendarProperty(): array
     {
         $today = CarbonImmutable::now(config('booking.display_timezone'))->startOfDay();
@@ -194,13 +202,15 @@ class TutorAvailabilityPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
+        $user = auth()->user();
+
         return Filament::getCurrentPanel()?->getId() === 'admin'
-            && auth()->user()?->role === 'tutor';
+            && ($user?->isTutor() || $user?->isAdmin());
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Организация';
+        return 'Занятия';
     }
 
     private function weekDays(): array

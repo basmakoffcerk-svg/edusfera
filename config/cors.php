@@ -15,7 +15,7 @@ return [
 
     'paths' => ['api/*', 'webhooks/*', 'metrics'],
 
-    'allowed_methods' => ['*'],
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
     'allowed_origins' => [
         env('APP_URL', 'https://edusfera.by'),
@@ -23,7 +23,7 @@ return [
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => ['Content-Type', 'X-Requested-With', 'Authorization', 'X-CSRF-TOKEN', 'Accept', 'X-Idempotency-Key'],
 
     'exposed_headers' => [],
 

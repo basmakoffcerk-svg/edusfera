@@ -60,8 +60,8 @@ class PaymentServiceSettlementAndRefundTest extends TestCase
             'package_lessons_remaining' => 4,
             'package_total' => '152.00',
             'package_discount' => '8.00',
-            'platform_commission' => '15.20',
-            'net_amount' => '133.16',
+            'platform_commission' => '0.00',
+            'net_amount' => '148.36',
             'status' => Lesson::STATUS_PENDING,
             'payment_status' => Lesson::PAYMENT_UNPAID,
             'payment_lock_expires_at' => $now->addMinutes(15),
@@ -115,13 +115,13 @@ class PaymentServiceSettlementAndRefundTest extends TestCase
         app(PaymentService::class)->settleCompletedLesson($parent->fresh());
 
         $balance = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
-        // net_amount = 133.16. Share = floor(133.16 / 4, 2) = 33.29
-        $this->assertSame('33.29', (string) $balance->available_amount);
-        $this->assertSame('99.87', (string) $balance->pending_amount); // 133.16 - 33.29
+        // net_amount = 148.36. Share = floor(148.36 / 4, 2) = 37.09
+        $this->assertSame('37.09', (string) $balance->available_amount);
+        $this->assertSame('111.27', (string) $balance->pending_amount); // 148.36 - 37.09
         
         $settlement = $parent->refresh()->settlement;
         $this->assertNotNull($settlement);
-        $this->assertSame('33.29', (string) $settlement->net_share);
+        $this->assertSame('37.09', (string) $settlement->net_share);
         $this->assertSame('38.00', (string) $settlement->gross_share); // 152 / 4
     }
 
@@ -135,8 +135,8 @@ class PaymentServiceSettlementAndRefundTest extends TestCase
         app(PaymentService::class)->settleCompletedLesson($child->fresh());
 
         $balance = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
-        $this->assertSame('33.29', (string) $balance->available_amount);
-        $this->assertSame('99.87', (string) $balance->pending_amount);
+        $this->assertSame('37.09', (string) $balance->available_amount);
+        $this->assertSame('111.27', (string) $balance->pending_amount);
     }
 
     public function test_settle_last_package_lesson_uses_residual(): void
@@ -156,13 +156,13 @@ class PaymentServiceSettlementAndRefundTest extends TestCase
         }
 
         $balance = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
-        // 133.16 exactly
-        $this->assertSame('133.16', (string) $balance->available_amount);
+        // 148.36 exactly
+        $this->assertSame('148.36', (string) $balance->available_amount);
         $this->assertSame('0.00', (string) $balance->pending_amount);
 
         // Verification of residual share:
-        // Shares 1, 2, 3: 33.29 each. Sum = 99.87.
-        // Residual share on 4th lesson: 133.16 - 99.87 = 33.29. (here it is exactly equal, but let's check another math)
+        // Shares 1, 2, 3: 37.09 each. Sum = 111.27.
+        // Residual share on 4th lesson: 148.36 - 111.27 = 37.09.
     }
 
     public function test_settle_package_idempotency(): void
@@ -191,8 +191,8 @@ class PaymentServiceSettlementAndRefundTest extends TestCase
         app(PaymentService::class)->refundLessonPayment($child->fresh(), 'student_cancelled');
 
         $balance = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
-        // pending: 133.16 - 33.29 = 99.87
-        $this->assertSame('99.87', (string) $balance->pending_amount);
+        // pending: 148.36 - 37.09 = 111.27
+        $this->assertSame('111.27', (string) $balance->pending_amount);
         $this->assertSame('0.00', (string) $balance->available_amount);
 
         $child->refresh();

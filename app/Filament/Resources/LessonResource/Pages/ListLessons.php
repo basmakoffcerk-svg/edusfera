@@ -72,7 +72,7 @@ class ListLessons extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        $role = auth()->user()?->role;
+        $user = auth()->user();
 
         return [
             Actions\Action::make('book_lesson')
@@ -80,17 +80,17 @@ class ListLessons extends ListRecords
                 ->icon('heroicon-o-magnifying-glass')
                 ->color('primary')
                 ->url('/tutors')
-                ->visible(fn (): bool => in_array($role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)),
+                ->visible(fn (): bool => $user !== null && ($user->isStudent() || $user->role === \App\Enums\UserRole::Parent)),
             Actions\Action::make('availability')
                 ->label('Открыть расписание')
                 ->icon('heroicon-o-calendar')
                 ->url(fn (): string => route('filament.admin.pages.tutor-availability-page'))
-                ->visible(fn (): bool => $role === 'tutor'),
+                ->visible(fn (): bool => $user?->isTutor() ?? false),
             Actions\Action::make('payments')
-                ->label($role === 'tutor' ? 'Финансы' : 'Оплаты')
+                ->label(($user?->isTutor() ?? false) ? 'Финансы' : 'Оплаты')
                 ->icon('heroicon-o-banknotes')
                 ->url('/admin/transactions')
-                ->visible(fn (): bool => in_array($role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)),
+                ->visible(fn (): bool => $user !== null && ($user->isTutor() || $user->isStudent() || $user->role === \App\Enums\UserRole::Parent)),
         ];
     }
 }

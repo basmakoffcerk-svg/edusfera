@@ -263,7 +263,7 @@ class MessagesPage extends Page
         $panelId = Filament::getCurrentPanel()?->getId();
 
         if ($panelId === 'site-admin') {
-            return $user?->role === 'admin';
+            return $user?->isAdmin() ?? false;
         }
 
         return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
@@ -273,12 +273,12 @@ class MessagesPage extends Page
     {
         return Filament::getCurrentPanel()?->getId() === 'site-admin'
             ? 'Коммуникация'
-            : 'Основное';
+            : 'Связь';
     }
 
     public static function getNavigationSort(): ?int
     {
-        return 2;
+        return 1;
     }
 
     public static function getNavigationBadge(): ?string
@@ -378,7 +378,7 @@ class MessagesPage extends Page
 
         $query = Conversation::query();
 
-        if ($user?->role === 'admin') {
+        if ($user?->isAdmin()) {
             return $query;
         }
 
@@ -433,7 +433,7 @@ class MessagesPage extends Page
 
     private function quickReplies(): array
     {
-        if (auth()->user()?->role !== 'tutor') {
+        if (! (auth()->user()?->isTutor() ?? false)) {
             return [];
         }
 
@@ -474,10 +474,10 @@ class MessagesPage extends Page
             }
         }
 
-        if ($user->role === 'tutor') {
+        if ($user->isTutor()) {
             return [
-                'label' => 'Предложить время',
-                'url' => '/admin/availability',
+                'label' => 'Моё расписание',
+                'url' => route('filament.admin.pages.tutor-availability-page'),
                 'external' => false,
                 'variant' => 'ghost',
             ];

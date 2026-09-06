@@ -18,6 +18,7 @@ use App\Services\ChatService;
 use App\Services\Finance\StudentBalanceService;
 use App\Services\StudentGoalService;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -83,36 +84,81 @@ class PaymentService
                 $chargeAmount = $this->maxZero($this->sub($chargeAmount, $walletContribution));
             }
 
-            $platformCommission = $this->multiply($payableAmount, (string) config('payments.commission_rate', '0.15'));
-            $acquiringFee = $this->add(
-                $this->multiply($payableAmount, (string) config('payments.acquiring_rate', '0.022')),
-                $this->money((string) config('payments.acquiring_fixed', '0.30')),
-            );
-            $netAmount = $this->sub($this->sub($payableAmount, $platformCommission), $acquiringFee);
-
             if ($effectivePaymentMethod === 'wallet' || bccomp($chargeAmount, '0', 2) !== 1) {
                 if (bccomp($chargeAmount, '0', 2) !== 1) {
                     $effectivePaymentMethod = 'wallet';
                 }
+            }
 
+            // Проверяем существующую транзакцию для предотвращения подвисших холдов и взаимных блокировок
+            $existingTransaction = $lesson->transaction;
+
+            if (
+                $existingTransaction !== null
+                && $existingTransaction->gateway_transaction_id !== null
+                && in_array($existingTransaction->status, [Transaction::STATUS_AUTHORIZED, Transaction::STATUS_PENDING], true)
+            ) {
+                $existingCharged = (string) ($existingTransaction->gateway_response['charged_amount'] ?? $existingTransaction->amount);
+
+                // Если метод оплаты, общая сумма и сумма к списанию совпадают — переиспользуем активную сессию
+                if (
+                    $existingTransaction->payment_method === $effectivePaymentMethod
+                    && bccomp((string) $existingTransaction->amount, (string) $payableAmount, 2) === 0
+                    && bccomp($existingCharged, (string) $chargeAmount, 2) === 0
+                ) {
+                    return $existingTransaction->fresh(['lesson', 'user']);
+                }
+
+                // Если метод оплаты или сумма изменились (например, переключились на кошелёк),
+                // отменяем предыдущий холд в банке во избежание «зависших» блокировок средств
+                if ($existingTransaction->payment_method !== 'wallet') {
+                    try {
+                        $this->gateway->voidPayment((string) $existingTransaction->gateway_transaction_id);
+                    } catch (\Throwable $e) {
+                        Log::channel('payments')->warning('Failed to void superseded transaction', [
+                            'transaction_id' => $existingTransaction->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                $existingTransaction->update([
+                    'status' => Transaction::STATUS_VOIDED,
+                ]);
+            }
+
+            $platformCommission = '0.00';
+            $acquiringFee = $this->add(
+                $this->multiply($payableAmount, (string) config('payments.acquiring_rate', '0.022')),
+                $this->money((string) config('payments.acquiring_fixed', '0.30')),
+            );
+            $netAmount = $this->sub($payableAmount, $acquiringFee);
+
+            if ($effectivePaymentMethod === 'wallet') {
                 $gatewayResponse = [
                     'success' => true,
                     'source' => bccomp($walletContribution, '0', 2) === 1 ? 'wallet_partial' : 'wallet',
                     'charged_amount' => $payableAmount,
                 ];
             } else {
+                $tutorProfile = $lesson->tutor?->tutorProfile;
                 $gatewayResponse = $this->gateway->createPayment([
                     'lesson_id' => $lesson->id,
                     'user_id' => $userId,
                     'amount' => $chargeAmount,
                     'currency' => $currency,
                     'payment_method' => $effectivePaymentMethod,
+                    'tutor_id' => $lesson->tutor_id,
+                    'tutor_unp' => $tutorProfile?->unp ?? '000000000',
+                    'tutor_name' => $lesson->tutor?->name ?? 'Репетитор-принципал',
                 ]);
             }
 
-            $status = ($gatewayResponse['status'] ?? 'success') === 'pending' 
-                ? Transaction::STATUS_PENDING 
-                : Transaction::STATUS_SUCCESS;
+            $status = match ($gatewayResponse['status'] ?? 'success') {
+                'pending' => Transaction::STATUS_PENDING,
+                'authorized' => Transaction::STATUS_AUTHORIZED,
+                default => Transaction::STATUS_SUCCESS,
+            };
 
             $transaction = Transaction::query()->updateOrCreate(
                 ['lesson_id' => $lesson->id],
@@ -143,13 +189,12 @@ class PaymentService
                 $lesson->update(['payment_status' => Lesson::PAYMENT_UNPAID]);
 
                 throw ValidationException::withMessages([
-                    'payment' => 'Ошибка инициализации платежа: ' . ($gatewayResponse['message'] ?? 'Неизвестная ошибка'),
+                    'payment' => 'Ошибка инициализации платежа: '.($gatewayResponse['message'] ?? 'Неизвестная ошибка'),
                 ]);
             }
 
-            if ($status === Transaction::STATUS_PENDING) {
-                // Async gateway (e.g. bePaid): just return the pending transaction.
-                // It contains the redirect_url in its gateway_response.
+            if ($status === Transaction::STATUS_PENDING || $status === Transaction::STATUS_AUTHORIZED) {
+                // Async / Hold gateway (e.g. WebPAY hold): return the transaction with redirect_url / status
                 return $transaction->fresh(['lesson', 'user']);
             }
 
@@ -158,7 +203,6 @@ class PaymentService
         });
     }
 
-    
     public function capturePendingPayment(Transaction $transaction): Transaction
     {
         return DB::transaction(function () use ($transaction): Transaction {
@@ -166,6 +210,36 @@ class PaymentService
             $lesson = Lesson::query()->with(['tutor', 'student', 'parent'])->lockForUpdate()->findOrFail($transaction->lesson_id);
 
             if ($lesson->payment_status === Lesson::PAYMENT_PAID) {
+                return $transaction->fresh(['lesson', 'user']);
+            }
+
+            // Урок отменён после авторизации (таймаут резерва, отмена репетитором
+            // или админом) — деньги не захватываем. Прежний код «воскрешал»
+            // отменённый урок до CONFIRMED/PAID, из-за чего один слот мог быть
+            // продан дважды. Холд снимаем, транзакцию помечаем voided.
+            if ($lesson->status === Lesson::STATUS_CANCELLED) {
+                if ($transaction->payment_method !== 'wallet' && $transaction->gateway_transaction_id !== null) {
+                    try {
+                        $this->gateway->voidPayment((string) $transaction->gateway_transaction_id);
+                    } catch (\Throwable $e) {
+                        Log::channel('payments')->error('void_on_cancelled_lesson_failed', [
+                            'transaction_id' => $transaction->id,
+                            'gateway_transaction_id' => (string) $transaction->gateway_transaction_id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                $transaction->update([
+                    'status' => Transaction::STATUS_VOIDED,
+                ]);
+
+                $this->logFinancialOperation('capture_skipped_lesson_cancelled', [
+                    'lesson_id' => $lesson->id,
+                    'transaction_id' => $transaction->id,
+                    'gateway_transaction_id' => (string) $transaction->gateway_transaction_id,
+                ]);
+
                 return $transaction->fresh(['lesson', 'user']);
             }
 
@@ -179,13 +253,13 @@ class PaymentService
 
             $chargeAmount = $transaction->gateway_response['charged_amount'] ?? $payableAmount;
             $walletContribution = $transaction->gateway_response['wallet_contribution'] ?? '0.00';
-            
+
             $studentBalance = $this->studentBalanceService->getOrCreate($userId);
 
-            if ($effectivePaymentMethod !== 'wallet' && bccomp((string)$chargeAmount, '0', 2) === 1) {
+            if ($effectivePaymentMethod !== 'wallet' && bccomp((string) $chargeAmount, '0', 2) === 1) {
                 $this->studentBalanceService->credit(
                     balance: $studentBalance,
-                    amount: (string)$chargeAmount,
+                    amount: (string) $chargeAmount,
                     currency: $currency,
                     type: StudentBalanceLedgerEntry::TYPE_TOPUP,
                     lesson: $lesson,
@@ -193,21 +267,21 @@ class PaymentService
                     meta: [
                         'reason' => 'checkout_payment',
                         'package_code' => $lesson->package_code,
-                        'wallet_contribution' => (string)$walletContribution,
+                        'wallet_contribution' => (string) $walletContribution,
                     ],
                 );
             }
 
             $this->studentBalanceService->debitForLesson(
                 balance: $studentBalance->fresh(),
-                amount: (string)$payableAmount,
+                amount: (string) $payableAmount,
                 currency: $currency,
                 lesson: $lesson,
                 transaction: $transaction,
                 meta: [
                     'reason' => 'lesson_hold',
                     'package_code' => $lesson->package_code,
-                    'wallet_contribution' => (string)$walletContribution,
+                    'wallet_contribution' => (string) $walletContribution,
                 ],
             );
 
@@ -237,19 +311,19 @@ class PaymentService
             );
 
             $balance->update([
-                'pending_amount' => $this->add((string) $balance->pending_amount, (string)$netAmount),
+                'pending_amount' => $this->add((string) $balance->pending_amount, (string) $netAmount),
             ]);
 
             $this->logFinancialOperation('payment_processed', [
                 'lesson_id' => $lesson->id,
                 'user_id' => $userId,
                 'tutor_id' => $lesson->tutor_id,
-                'amount' => (string)$payableAmount,
-                'charged_amount' => (string)$chargeAmount,
-                'wallet_contribution' => (string)$walletContribution,
-                'platform_commission' => (string)$platformCommission,
-                'acquiring_fee' => (string)$acquiringFee,
-                'net_amount' => (string)$netAmount,
+                'amount' => (string) $payableAmount,
+                'charged_amount' => (string) $chargeAmount,
+                'wallet_contribution' => (string) $walletContribution,
+                'platform_commission' => (string) $platformCommission,
+                'acquiring_fee' => (string) $acquiringFee,
+                'net_amount' => (string) $netAmount,
                 'transaction_id' => $transaction->id,
             ]);
 
@@ -259,7 +333,7 @@ class PaymentService
                         'lesson_id' => $lesson->id,
                         'student_id' => $lesson->student_id,
                         'tutor_id' => $lesson->tutor_id,
-                        'amount' => (string)$payableAmount,
+                        'amount' => (string) $payableAmount,
                         'currency' => $currency,
                         'transaction_id' => $transaction->id,
                     ],
@@ -269,8 +343,16 @@ class PaymentService
 
             $this->studentGoalService->ensureGoalForPaidLesson($lesson->fresh(['tutor.tutorProfile', 'student']));
 
-            $lesson->student?->notify(new PaymentSucceededNotification($transaction));
-            $lesson->tutor?->notify(new PaymentSucceededNotification($transaction));
+            try {
+                $lesson->student?->notify(new PaymentSucceededNotification($transaction));
+            } catch (\Throwable $e) {
+                Log::warning('Payment notification to student failed: '.$e->getMessage());
+            }
+            try {
+                $lesson->tutor?->notify(new PaymentSucceededNotification($transaction));
+            } catch (\Throwable $e) {
+                Log::warning('Payment notification to tutor failed: '.$e->getMessage());
+            }
             app(ChatService::class)->unlockContactsForLesson($lesson);
 
             $transaction->update([
@@ -308,6 +390,12 @@ class PaymentService
             $isSingle = $packageLessons <= 1 && $lesson->package_parent_lesson_id === null;
 
             if ($isSingle) {
+                if ($lesson->status === Lesson::STATUS_COMPLETED || $lesson->isSettled()) {
+                    throw ValidationException::withMessages([
+                        'payment' => 'Урок уже проведён, возврат недоступен.',
+                    ]);
+                }
+
                 $this->refundSingleLesson($lesson, $transaction, $reason);
 
                 return;
@@ -325,6 +413,12 @@ class PaymentService
      */
     private function refundSingleLesson(Lesson $lesson, Transaction $transaction, ?string $reason): void
     {
+        if ($lesson->status === Lesson::STATUS_COMPLETED || $lesson->isSettled()) {
+            throw ValidationException::withMessages([
+                'payment' => 'Урок уже проведён, возврат недоступен.',
+            ]);
+        }
+
         $gatewayTransactionId = $transaction->gateway_transaction_id ?? (string) $transaction->id;
         $chargedAmount = (string) ($transaction->gateway_response['charged_amount'] ?? $transaction->amount);
         $isWalletPayment = $transaction->payment_method === 'wallet';
@@ -452,8 +546,8 @@ class PaymentService
 
         $existing = $settlements->firstWhere('lesson_id', $lesson->id);
 
-        // A settled lesson cannot be refunded.
-        if ($existing !== null && $existing->settled_at !== null) {
+        // A settled or completed lesson cannot be refunded.
+        if ($lesson->status === Lesson::STATUS_COMPLETED || ($existing !== null && $existing->settled_at !== null)) {
             throw ValidationException::withMessages([
                 'payment' => 'Урок уже проведён, возврат недоступен.',
             ]);
@@ -626,7 +720,7 @@ class PaymentService
      * real amount in their net_share/gross_share column; refunded rows keep
      * net_share/gross_share at 0 and store the real amount under meta.
      *
-     * @param  \Illuminate\Support\Collection<int, LessonSettlement>  $settlements
+     * @param  Collection<int, LessonSettlement>  $settlements
      */
     private function sumClosedShares($settlements, string $column, string $metaKey): string
     {
@@ -772,6 +866,11 @@ class PaymentService
                 ],
             );
 
+            // Trigger Gateway Completion / Capture API
+            if ($tx->gateway_transaction_id && $tx->payment_method !== 'wallet') {
+                $this->gateway->capturePayment((string) $tx->gateway_transaction_id, (float) $grossShare);
+            }
+
             // 3.7 — On the lesson that closes the package, mark the transaction
             // settled for backward-compat / audit. This is NOT the idempotency
             // source of truth — LessonSettlement is.
@@ -842,7 +941,7 @@ class PaymentService
      * Sum a decimal share column across a collection of settlements using
      * bcadd with scale 2.
      *
-     * @param  \Illuminate\Support\Collection<int, LessonSettlement>  $settlements
+     * @param  Collection<int, LessonSettlement>  $settlements
      */
     private function sumShares($settlements, string $column): string
     {
@@ -886,6 +985,86 @@ class PaymentService
             ]);
 
             return $balance;
+        });
+    }
+
+    /**
+     * Частичный или полный Complete (списание холда) за проведенное занятие в WebPAY.
+     */
+    public function captureLessonPayment(Lesson $lesson, ?float $amount = null): bool
+    {
+        return DB::transaction(function () use ($lesson, $amount): bool {
+            $transaction = Transaction::query()
+                ->where('lesson_id', $lesson->id)
+                ->whereIn('status', [Transaction::STATUS_AUTHORIZED, Transaction::STATUS_PENDING])
+                ->first();
+
+            if (! $transaction || empty($transaction->gateway_transaction_id)) {
+                return false;
+            }
+
+            $captureAmount = $amount ?? (float) ($lesson->price ?? $transaction->amount);
+            $captured = $this->gateway->capturePayment($transaction->gateway_transaction_id, $captureAmount);
+
+            if ($captured) {
+                $transaction->update([
+                    'status' => Transaction::STATUS_SUCCESS,
+                    'paid_at' => now('UTC'),
+                ]);
+
+                $lesson->update([
+                    'payment_status' => Lesson::PAYMENT_PAID,
+                ]);
+
+                $this->logFinancialOperation('webpay_lesson_captured', [
+                    'lesson_id' => $lesson->id,
+                    'transaction_id' => $transaction->gateway_transaction_id,
+                    'amount' => $captureAmount,
+                ]);
+
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+    /**
+     * Снятие холда (Void) при отмене урока.
+     */
+    public function voidLessonPayment(Lesson $lesson): bool
+    {
+        return DB::transaction(function () use ($lesson): bool {
+            $transaction = Transaction::query()
+                ->where('lesson_id', $lesson->id)
+                ->whereIn('status', [Transaction::STATUS_AUTHORIZED, Transaction::STATUS_PENDING])
+                ->first();
+
+            if (! $transaction || empty($transaction->gateway_transaction_id)) {
+                return false;
+            }
+
+            $voided = $this->gateway->voidPayment($transaction->gateway_transaction_id);
+
+            if ($voided) {
+                $transaction->update([
+                    'status' => Transaction::STATUS_VOIDED,
+                ]);
+
+                $lesson->update([
+                    'payment_status' => Lesson::PAYMENT_UNPAID,
+                    'status' => Lesson::STATUS_CANCELLED,
+                ]);
+
+                $this->logFinancialOperation('webpay_lesson_voided', [
+                    'lesson_id' => $lesson->id,
+                    'transaction_id' => $transaction->gateway_transaction_id,
+                ]);
+
+                return true;
+            }
+
+            return false;
         });
     }
 

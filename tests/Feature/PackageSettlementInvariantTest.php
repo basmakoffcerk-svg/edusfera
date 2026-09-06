@@ -101,8 +101,8 @@ class PackageSettlementInvariantTest extends TestCase
             'package_lessons_remaining' => 4,
             'package_total' => '152.00',
             'package_discount' => '8.00',
-            'platform_commission' => '15.20',
-            'net_amount' => '136.80',
+            'platform_commission' => '0.00',
+            'net_amount' => '152.00',
             'status' => Lesson::STATUS_PENDING,
             'payment_status' => Lesson::PAYMENT_UNPAID,
             'payment_lock_expires_at' => $now->addMinutes(15),
@@ -142,7 +142,7 @@ class PackageSettlementInvariantTest extends TestCase
         // these constants must stay correct, otherwise the counterexample
         // becomes meaningless.
         $this->assertSame('152.00', (string) $transaction->amount);
-        $this->assertSame('133.16', (string) $transaction->net_amount);
+        $this->assertSame('148.36', (string) $transaction->net_amount);
 
         return [
             'tutor' => $tutor,
@@ -178,16 +178,16 @@ class PackageSettlementInvariantTest extends TestCase
         $balance = TutorBalance::query()->where('user_id', $ctx['tutor']->id)->firstOrFail();
 
         $this->assertSame(
-            '33.29',
+            '37.09',
             (string) $balance->available_amount,
-            'Settle of the first package lesson must credit ONLY floor(net_amount / package_lessons, 2) = 33.29 BYN, '
-            .'not the full transaction.net_amount (133.16). On UNFIXED code available_amount == 133.16 → bug confirmed.'
+            'Settle of the first package lesson must credit ONLY floor(net_amount / package_lessons, 2) = 37.09 BYN, '
+            .'not the full transaction.net_amount (148.36). On UNFIXED code available_amount == 148.36 → bug confirmed.'
         );
 
         $this->assertSame(
-            '99.87', // 133.16 - 33.29 = 99.87 (3 shares still pending)
+            '111.27', // 148.36 - 37.09 = 111.27 (3 shares still pending)
             (string) $balance->pending_amount,
-            'Pending must retain (N-1) shares = 99.87 BYN after first settle. '
+            'Pending must retain (N-1) shares = 111.27 BYN after first settle. '
             .'On UNFIXED code pending_amount == 0.00.'
         );
     }
@@ -223,16 +223,16 @@ class PackageSettlementInvariantTest extends TestCase
         $pendingDelta = bcsub((string) $balanceAfter->pending_amount, $pendingBefore, 2);
 
         $this->assertSame(
-            '33.29',
+            '37.09',
             $availableDelta,
-            'Settle of a child package lesson must credit floor(133.16 / 4, 2) = 33.29 BYN. '
+            'Settle of a child package lesson must credit floor(148.36 / 4, 2) = 37.09 BYN. '
             .'On UNFIXED code child has no own Transaction → settle is a no-op → delta = 0.00 → bug confirmed.'
         );
 
         $this->assertSame(
-            '-33.29',
+            '-37.09',
             $pendingDelta,
-            'Pending must decrease by exactly one share (33.29 BYN) on a child settle. '
+            'Pending must decrease by exactly one share (37.09 BYN) on a child settle. '
             .'On UNFIXED code pending stays unchanged.'
         );
     }
@@ -276,10 +276,10 @@ class PackageSettlementInvariantTest extends TestCase
         $studentLockedDelta = bcsub((string) $studentBalanceAfter->locked_amount, $studentLockedBefore, 2);
 
         $this->assertSame(
-            '-33.29',
+            '-37.09',
             $pendingDelta,
             'Refund of an unsettled child package lesson must reduce tutor.pending_amount by exactly one '
-            .'net share (33.29 BYN). On UNFIXED code child has no transaction → refund early-returns after '
+            .'net share (37.09 BYN). On UNFIXED code child has no transaction → refund early-returns after '
             .'setting status = cancelled → pending delta = 0.00 → bug confirmed.'
         );
 
@@ -337,7 +337,7 @@ class PackageSettlementInvariantTest extends TestCase
         $studentAvailableDelta = bcsub((string) $studentBalanceAfter->available_amount, $studentAvailableBefore, 2);
         $studentLockedDelta = bcsub((string) $studentBalanceAfter->locked_amount, $studentLockedBefore, 2);
 
-        $this->assertSame('-33.29', $pendingDelta);
+        $this->assertSame('-37.09', $pendingDelta);
         $this->assertSame('38.00', $studentAvailableDelta, 'Gross share of the refunded lesson must go to student wallet because wallet was partially used.');
         $this->assertSame('-38.00', $studentLockedDelta);
 

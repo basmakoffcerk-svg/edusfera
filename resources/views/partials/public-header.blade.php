@@ -3,7 +3,7 @@
     $user = auth()->user();
     $notificationsCount = $user ? app(\App\Services\ChatUnreadCounter::class)->countForUser($user) : 0;
     $dashboardUrl = '/admin';
-    $secondaryDashboardUrl = $user?->role === 'tutor' ? '/admin/transactions' : '/admin/lessons';
+    $secondaryDashboardUrl = ($user?->isTutor() ?? false) ? '/admin/transactions' : '/admin/lessons';
     $baseClass = $dark
         ? 'border-white/15 bg-black text-white'
         : 'border-gray-200 bg-white text-gray-900';
@@ -53,7 +53,7 @@
                             Личный кабинет
                         </a>
                         <a href="{{ $secondaryDashboardUrl }}" class="flex min-h-10 items-center rounded-xl px-3 text-sm font-semibold transition hover:bg-gray-100">
-                            {{ $user->role === 'tutor' ? 'Мои финансы' : 'Мои занятия' }}
+                            {{ ($user->isTutor() ?? false) ? 'Мои финансы' : 'Мои занятия' }}
                         </a>
                         <a href="/admin/messages" class="flex min-h-10 items-center rounded-xl px-3 text-sm font-semibold transition hover:bg-gray-100">
                             Сообщения

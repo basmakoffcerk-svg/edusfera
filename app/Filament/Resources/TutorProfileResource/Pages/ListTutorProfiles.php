@@ -18,7 +18,7 @@ class ListTutorProfiles extends ListRecords
                 ->visible(function (): bool {
                     $user = auth()->user();
 
-                    return $user?->role === 'tutor' && ! $user->tutorProfile()->exists();
+                    return ($user?->isTutor() ?? false) && ! $user->tutorProfile()->exists();
                 }),
         ];
     }

@@ -6,7 +6,7 @@
 
 <!-- ═══ SEO ═══ -->
 <title>Edusfera — подготовка к ЦТ и ЦЭ в Беларуси с репетиторами из госреестра</title>
-<meta name="description" content="Все репетиторы Edusfera включены в госреестр с 1 июля. Официальный договор, ИИ-диагностика пробелов по тестам РИКЗ за 15 минут, встроенный класс и защита платежей (эскроу). Подготовка к ЦТ/ЦЭ без штрафов и рисков.">
+<meta name="description" content="Все репетиторы Edusfera включены в госреестр с 1 июля. Официальный договор, ИИ-диагностика пробелов по тестам РИКЗ за 15 минут, встроенный класс и каталог преподавателей. Подготовка к ЦТ/ЦЭ без штрафов и рисков.">
 <meta name="keywords" content="госреестр репетиторов беларусь, реестр репетиторов, репетитор ЦТ, репетитор ЦЭ, подготовка к ЦТ Минск, подготовка к ЦЭ Беларусь, репетитор по математике, легальные репетиторы беларусь, безопасная оплата репетитору, подготовка к экзаменам ЦТ">
 <meta name="author" content="ООО Эдусфера">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -35,7 +35,20 @@
 <!-- Fonts (Cyrillic & Latin) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="./fonts/Rimma_sans-Bold.ttf" as="font" type="font/ttf" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Unbounded:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- ═══ Modern Web Guidance: Speculation Rules for Instant Navigation ═══ -->
+<script type="speculationrules">
+{
+  "prefetch": [
+    {
+      "source": "list",
+      "urls": ["offer.html", "privacy-policy.html", "contacts.html", "refund-policy.html", "payment-security.html"]
+    }
+  ]
+}
+</script>
 
 <!-- ═══ JSON-LD: EducationalOrganization + Service + FAQPage ═══ -->
 <script type="application/ld+json">
@@ -87,12 +100,12 @@
         {
           "@type": "Question",
           "name": "В чём отличие Edusfera от самостоятельного поиска репетитора?",
-          "acceptedAnswer": { "@type": "Answer", "text": "С 1 июля 2026 года в Беларуси все репетиторы обязаны состоять в госреестре Минобра. На Edusfera все преподаватели проходят обязательную верификацию. Кроме того, ваши оплаты защищены системой эскроу (деньги списываются только после урока), а ИИ-диагностика строит точную карту знаний." }
+          "acceptedAnswer": { "@type": "Answer", "text": "С 1 июля 2026 года в Беларуси все репетиторы обязаны состоять в госреестре Минобра. На Edusfera все преподаватели проходят обязательную верификацию. Оплата за уроки перечисляется напрямую преподавателю на карту без посредников, а ИИ-диагностика строит точную карту знаний." }
         },
         {
           "@type": "Question",
           "name": "Нужно ли репетитору открывать ИП, чтобы работать на платформе?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Нет. Платформа сама оформляет чеки и платит налоги (НПД). Репетитор получает белый доход без открытия ИП. Мы помогаем с включением в госреестр Минобра. Комиссия взимается только за реально проведённые уроки — от 11% до 15% по лестнице." }
+          "acceptedAnswer": { "@type": "Answer", "text": "Нет. Платформа сама оформляет чеки и платит налоги (НПД). Репетитор получает 100% стоимости проведённых занятий при фиксированной подписке от 20 BYN/мес (1-й месяц тарифа Pro бесплатно). Мы помогаем с включением в госреестр Минобра." }
         },
         {
           "@type": "Question",
@@ -114,6 +127,12 @@
   ]
 }
 </script>
+
+<noscript>
+  <style>
+    .rv { opacity: 1 !important; transform: none !important; }
+  </style>
+</noscript>
 
 <style>
 /* ════════════════════════════════════════════════
@@ -171,7 +190,7 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;scrollbar-gutter:stable;accent-color:var(--ed-violet)}
 
 body{
   font-family:'Inter',system-ui,-apple-system,sans-serif;
@@ -193,6 +212,16 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .font-rimma,.sec-h,.hero h1,h1,h2,h3,.logo{
   font-family:'Rimma Sans','Unbounded','Inter',system-ui,sans-serif !important;
   letter-spacing:-0.03em;
+  text-wrap:balance;
+}
+p, .sec-sub, .hero-sub, .ans, .t-quote {
+  text-wrap:pretty;
+}
+
+/* ── Modern Web: content-visibility for heavy below-the-fold blocks ── */
+#registry-info, #comparison, #why, #tutors, #calc, #faq, #testimonials, #beta, .ftr {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
 }
 
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
@@ -476,7 +505,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .zero-badge h3{margin-bottom:6px}
 .zero-badge p{max-width:280px}
 
-/* лестница комиссий */
+/* SaaS тарифы */
 .comm-ladder{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
 .comm-tier{flex:1;min-width:110px;background:rgba(255,255,255,.04);border:1px solid var(--dark-border);border-radius:var(--r);padding:18px;text-align:center}
 .comm-tier .pct{font-family:'Rimma Sans',sans-serif;font-weight:800;font-size:1.8rem;color:var(--ed-lime);line-height:1}
@@ -609,9 +638,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
 .ftr-bottom a:hover{color:var(--ed-lime)}
 
 /* ═══ Reveal анимация ═══ */
-.rv{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.rv{opacity:0;transform:translateY(24px);transition:opacity .6s cubic-bezier(0.16,1,0.3,1),transform .6s cubic-bezier(0.16,1,0.3,1)}
 .rv.vis{opacity:1;transform:none}
 .rv-d1{transition-delay:.08s}.rv-d2{transition-delay:.16s}.rv-d3{transition-delay:.24s}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1!important;transform:none!important;transition:none!important}}
 
 /* ════════════════════════════════════════════════
    2026 — СОВРЕМЕННЫЕ ЭФФЕКТЫ
@@ -1038,7 +1068,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
     padding: 0.6rem 0.4rem !important;
   }
 
-  /* ── Bento (dark секция): комиссии ── */
+  /* ── Bento (dark секция): модель подписки ── */
   .zero-circle {
     width: 90px !important;
     height: 90px !important;
@@ -1785,7 +1815,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
           <!-- Футер карточки -->
           <div style="padding-top:16px;border-top:1px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;color:#64748B;font-weight:600;">
             <span>🛡️ Эскроу-защита оплаты</span>
-            <span style="color:#7D39EB;font-weight:700;">ЗАО «БСБ Банк»</span>
+            <span style="color:#7D39EB;font-weight:700;">ЗАО «Альфа-Банк»</span>
           </div>
         </div>
       </div>
@@ -1861,7 +1891,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
         </ul>
         <div style="margin-top:auto;padding-top:18px;background:var(--ed-bg);padding:14px 16px;border-radius:12px;border-left:4px solid var(--ed-violet);">
           <strong style="display:block;margin-bottom:4px;font-size:.88rem;">✓ Решение Edusfera</strong>
-          <span style="font-size:.84rem;color:var(--text-muted);display:block;">Все репетиторы проверены, оплата под защитой эскроу.</span>
+          <span style="font-size:.84rem;color:var(--text-muted);display:block;">Все репетиторы проверены, прямая оплата репетитору за урок.</span>
         </div>
       </div>
 
@@ -1898,20 +1928,20 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
         <thead>
           <tr style="background:var(--ed-bg);text-align:left;">
             <th style="padding:20px 24px;font-size:0.9rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-main);width:28%;">Параметр</th>
-            <th style="padding:20px 24px;font-size:0.9rem;font-weight:800;color:var(--text-muted);width:36%;">Зарубежные сервисы (GetCourse / Zoom)</th>
+            <th style="padding:20px 24px;font-size:0.9rem;font-weight:800;color:var(--text-muted);width:36%;">Классические доски и агрегаторы</th>
             <th style="padding:20px 24px;font-size:0.9rem;font-weight:800;color:var(--ed-violet);background:rgba(125,57,235,0.06);width:36%;">Edusfera 🇧🇾</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td style="padding:20px 24px;font-weight:700;font-size:0.92rem;color:var(--text-main);border-top:1px solid var(--border);">
-              💳 Приём платежей
+              💳 Комиссия и доходы
             </td>
             <td style="padding:20px 24px;font-size:0.9rem;color:var(--text-muted);line-height:1.5;border-top:1px solid var(--border);">
-              <span style="color:#ef4444;font-weight:700;">❌ Сложно:</span> валютный контроль, выводы через сторонние костыли и комиссия до 10%
+              <span style="color:#ef4444;font-weight:700;">❌ 30–50% потерь:</span> огромные вычеты с каждого заказа, плата за нецелевые отклики и скрытые сборы
             </td>
             <td style="padding:20px 24px;font-size:0.9rem;color:var(--text-main);line-height:1.5;background:rgba(125,57,235,0.03);border-top:1px solid var(--border);">
-              <span style="color:#22c55e;font-weight:800;">✓ ЕРИП, БЕЛКАРТ, Visa/Mastercard (BYN)</span> напрямую на ваш расчётный счёт в банке РБ
+              <span style="color:#22c55e;font-weight:800;">✓ SaaS-подписка:</span> 100% дохода репетитору через ЕРИП, БЕЛКАРТ, Visa/Mastercard (BYN). Фиксированные тарифы (Basic 20, Pro 40, Premium 60 BYN/мес, 1-й мес. Pro бесплатно)
             </td>
           </tr>
           <tr>
@@ -2012,12 +2042,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
       </div>
       <div class="glass-dark bento-card b2 rv rv-d1">
         <span class="bc-badge">Прозрачно</span>
-        <h3>Удобный учет и НПД</h3>
-        <p>Чеки и отчёты — в 1 клик. Прозрачные занятия без головной боли.</p>
+        <h3>100% дохода с уроков вам</h3>
+        <p>100% стоимости проведённых занятий остаётся у вас. Фиксированная прозрачная подписка.</p>
         <div class="comm-ladder">
-          <div class="comm-tier"><div class="pct">15%</div><div class="nm">Старт</div><div class="req">до 5 уроков/мес</div></div>
-          <div class="comm-tier"><div class="pct">13%</div><div class="nm">Рост</div><div class="req">от 5 уроков/мес</div></div>
-          <div class="comm-tier"><div class="pct">11%</div><div class="nm">Пик</div><div class="req">от 12 уроков/мес</div></div>
+          <div class="comm-tier"><div class="pct">20 <small style="font-size:0.85rem;font-weight:700;">BYN</small></div><div class="nm">Basic</div><div class="req">профиль в каталоге</div></div>
+          <div class="comm-tier" style="border-color:rgba(198,255,51,0.5);"><div class="pct" style="color:var(--ed-lime);">40 <small style="font-size:0.85rem;font-weight:700;">BYN</small></div><div class="nm">Pro ★</div><div class="req">10 откликов + ИИ (1-й мес. 0 BYN)</div></div>
+          <div class="comm-tier"><div class="pct">60 <small style="font-size:0.85rem;font-weight:700;">BYN</small></div><div class="nm">Premium</div><div class="req">безлимит + видеокласс</div></div>
         </div>
       </div>
       <div class="glass-dark bento-card b3 rv rv-d2">
@@ -2027,10 +2057,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
       </div>
       <div class="glass-dark bento-card b4 rv rv-d3">
         <div class="zero-badge">
-          <div class="zero-circle"><div class="n">0</div><div class="u">BYN</div></div>
+          <div class="zero-circle"><div class="n">100%</div><div class="u">ДОХОД ВАМ</div></div>
           <div>
-            <h3>Без подписок</h3>
-            <p>Комиссия списывается только за проведённый урок. Нет урока — нет расходов.</p>
+            <h3>Честная SaaS-модель</h3>
+            <p>Фиксированная подписка от 20 BYN/мес. Первый месяц тарифа Pro — бесплатно. Все заработанные деньги — ваши.</p>
           </div>
         </div>
       </div>
@@ -2084,7 +2114,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
           <div class="cr-cell">
             <div class="lab" id="cr-edu-label">Edusfera (легально)</div>
             <div class="val" id="cr-edu" style="color:var(--ed-violet)">1800 BYN</div>
-            <div class="diff" id="cr-edu-diff">100% в реестре, договор, эскроу</div>
+            <div class="diff" id="cr-edu-diff">100% в реестре, договор, чеки НПД</div>
           </div>
         </div>
 
@@ -2142,7 +2172,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
     <div class="faq-list">
       <details class="faq-item rv" open>
         <summary>Чем Edusfera лучше самостоятельного поиска?</summary>
-        <div class="ans">Все репетиторы верифицированы в госреестре, оплата под защитой эскроу, а ИИ строит точную карту знаний. Вы платите только за проведённый урок.</div>
+        <div class="ans">Все репетиторы верифицированы в госреестре, прямая оплата репетитору за урок, а ИИ строит точную карту знаний. Вы платите только за проведённый урок.</div>
       </details>
       <details class="faq-item rv rv-d1">
         <summary>Нужно ли репетитору открывать ИП?</summary>
@@ -2295,28 +2325,28 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
               
               <div class="bf-field" id="field-name">
                 <label for="bf-name" id="bf-name-label">Ваше имя</label>
-                <input type="text" id="bf-name" name="name" placeholder="Иван Иванов" required>
-                <span class="valid-badge">✓</span>
-                <span class="bf-error" id="bf-name-error">Пожалуйста, введите имя</span>
+                <input type="text" id="bf-name" name="name" placeholder="Иван Иванов" autocomplete="name" enterkeyhint="next" aria-describedby="bf-name-error" aria-invalid="false" required>
+                <span class="valid-badge" aria-hidden="true">✓</span>
+                <span class="bf-error" id="bf-name-error" role="alert">Пожалуйста, введите имя</span>
               </div>
               
               <div class="bf-field" id="field-phone">
                 <label for="bf-phone">Номер телефона / Telegram</label>
-                <input type="tel" id="bf-phone" name="phone" placeholder="+375 (29) 123-45-67" required>
-                <span class="valid-badge">✓</span>
-                <span class="bf-error" id="bf-phone-error">Введите телефон в формате +375 (XX) XXX-XX-XX</span>
+                <input type="tel" id="bf-phone" name="phone" placeholder="+375 (29) 123-45-67" autocomplete="tel" inputmode="tel" enterkeyhint="next" aria-describedby="bf-phone-error" aria-invalid="false" required>
+                <span class="valid-badge" aria-hidden="true">✓</span>
+                <span class="bf-error" id="bf-phone-error" role="alert">Введите телефон в формате +375 (XX) XXX-XX-XX</span>
               </div>
 
               <div class="bf-field" id="field-email">
                 <label for="bf-email">Ваш Email</label>
-                <input type="email" id="bf-email" name="email" placeholder="example@edusfera.by" required>
-                <span class="valid-badge">✓</span>
-                <span class="bf-error" id="bf-email-error">Пожалуйста, введите корректный Email</span>
+                <input type="email" id="bf-email" name="email" placeholder="example@edusfera.by" autocomplete="email" inputmode="email" enterkeyhint="next" aria-describedby="bf-email-error" aria-invalid="false" required>
+                <span class="valid-badge" aria-hidden="true">✓</span>
+                <span class="bf-error" id="bf-email-error" role="alert">Пожалуйста, введите корректный Email</span>
               </div>
               
               <div class="bf-field" id="field-subject">
                 <label for="bf-subject" id="bf-subject-label">Предмет для подготовки</label>
-                <select id="bf-subject" name="subject" required>
+                <select id="bf-subject" name="subject" aria-describedby="bf-subject-error" aria-invalid="false" required>
                   <option value="" disabled selected>Выберите предмет...</option>
                   <option value="math">📐 Математика</option>
                   <option value="physics">⚛️ Физика</option>
@@ -2328,8 +2358,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
                   <option value="biology">🧬 Биология</option>
                   <option value="chemistry">🧪 Химия</option>
                 </select>
-                <span class="valid-badge">✓</span>
-                <span class="bf-error" id="bf-subject-error">Пожалуйста, выберите предмет</span>
+                <span class="valid-badge" aria-hidden="true">✓</span>
+                <span class="bf-error" id="bf-subject-error" role="alert">Пожалуйста, выберите предмет</span>
               </div>
               
               <button type="submit" class="btn btn-violet btn-block bf-submit-btn" style="margin-top: 12px; width: 100%;">
@@ -2365,153 +2395,301 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;background:var(--ed-v
 
 </main>
 
-<!-- ═══════ FOOTER ═══════ -->
-<footer class="ftr">
-  <div class="wrap">
-    <div class="ftr-grid">
-      <div class="ftr-brand">
-        <a href="#top" class="logo">EDUSFERA.</a>
-        <p>Первая белорусская платформа для преподавания, запуска онлайн-курсов и приема платежей через ЕРИП.</p>
-        <span class="status-pill"><span class="d"></span> Платформа на стадии запуска</span>
-      </div>
-      <div class="ftr-col">
-        <h4>Платформа</h4>
-        <a href="#why">Выгоды</a>
-        <a href="#comparison">Сравнение</a>
-        <a href="#tutors">Репетиторам</a>
-        <a href="#calc">Калькулятор</a>
-        <a href="#beta">Ранний доступ</a>
-      </div>
-      <div class="ftr-col">
-        <h4>Документы (bePaid & БСБ)</h4>
-        <a href="offer.html">Публичная оферта и тарифы</a>
-        <a href="privacy-policy.html">Конфиденциальность (Закон 99-З)</a>
-        <a href="payment-security.html">Правила оплаты и безопасность</a>
-        <a href="refund-policy.html">Правила возврата и отмены</a>
-      </div>
-      <div class="ftr-col">
-        <h4>Контакты и режим работы</h4>
-        <a href="contacts.html">Контакты</a>
-        <a href="mailto:edusferaby@gmail.com">edusferaby@gmail.com</a>
-        <a href="tel:+375295190821">+375 (29) 519-08-21</a>
-        <span style="font-size:0.78rem;color:var(--text-dim);margin-top:4px;display:block;">Режим работы: Пн-Пт 09:00 – 18:00 (Сб-Вс: выходной)</span>
-      </div>
-    </div>
+<!-- ═══════ UNIFIED SITE FOOTER ═══════ -->
+<footer style="width: 100%; background: #010101; color: #ffffff; padding: 48px 0 64px 0; margin-top: 64px; font-family: 'Inter', system-ui, sans-serif;">
+  <div style="max-width: 1280px; margin: 0 auto; padding: 0 20px;">
+    <!-- Outer Layered Card -->
+    <div style="background: rgba(11, 15, 25, 0.9); border-radius: 40px; border: 1px solid rgba(51, 65, 85, 0.8); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); overflow: hidden; backdrop-filter: blur(24px);">
+      
+      <!-- Inner Box -->
+      <div style="background: rgba(16, 23, 38, 0.85); border-radius: 32px; margin: 12px; border: 1px solid rgba(51, 65, 85, 0.4); padding: 40px 32px; box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 32px;">
+          
+          <!-- Brand Column -->
+          <div style="min-width: 240px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+              <div style="width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, #7D39EB, #5B21B6); border: 1px solid rgba(167, 139, 250, 0.4); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 15px -3px rgba(125, 57, 235, 0.3);">
+                <svg width="22" height="22" viewBox="0 0 64 64">
+                  <path d="M32 10L54 32L32 54L10 32L32 10Z" fill="none" stroke="#C6FF33" stroke-width="6" stroke-linejoin="round" />
+                  <path d="M32 22L42 32L32 42L22 32L32 22Z" fill="#C6FF33" />
+                </svg>
+              </div>
+              <a href="/" style="font-size: 1.5rem; font-weight: 900; letter-spacing: -0.02em; color: #ffffff; text-transform: uppercase; text-decoration: none; font-family: 'Rimma Sans', sans-serif;">
+                EDUSFERA
+              </a>
+            </div>
+            
+            <p style="color: #94a3b8; font-size: 0.875rem; line-height: 1.6; max-width: 320px; margin-bottom: 16px;">
+              Первая белорусская платформа умной подготовки к ЦТ и ЦЭ с ИИ-агентами, подбором проверенных репетиторов из реестра и безопасными платежами.
+            </p>
 
-    <!-- Полноширинная плашка цветных оригинальных логотипов из файлов bePaid -->
-    <div style="border-top:1px solid rgba(255,255,255,0.08);padding:24px 0 16px;margin-top:28px;width:100%;">
-      <img src="payment-logos-full.svg" alt="bePaid, БЕЛКАРТ, Visa, Mastercard, Samsung Pay, Google Pay" style="width:100%;max-width:100%;height:auto;object-fit:contain;display:block;" />
-    </div>
+            <div>
+              <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(51, 65, 85, 0.6); font-size: 0.75rem; font-weight: 600; color: #C6FF33;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #C6FF33;"></span>
+                Платформа 2026 · Реестр РБ
+              </span>
+            </div>
+          </div>
 
-    <div class="ftr-info" style="border-top: 1px solid var(--dark-border); padding-top: 24px; margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; font-size: 0.82rem; line-height: 1.6; color: var(--text-dim);">
-      <div>
-        <strong style="color: #fff; display: block; margin-bottom: 6px;">Юридическая информация</strong>
-        Наименование: Общество с ограниченной ответственностью «Эдусфера»<br>
-        Гос. регистрация: Зарегистрировано Минским горисполкомом 25.10.2023 г., УНП 192854899<br>
-        Юридический адрес: Республика Беларусь, 220100, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29
+          <!-- Col 2: ПЛАТФОРМА -->
+          <div>
+            <h4 style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">
+              Платформа
+            </h4>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; font-size: 0.875rem;">
+              <li><a href="/tutors" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Каталог репетиторов</a></li>
+              <li><a href="/for-tutors" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Преподавателям</a></li>
+              <li><a href="/diagnostic" style="color: #94a3b8; text-decoration: none; transition: color 0.2s; display: flex; align-items: center; gap: 6px;"><span>ИИ-Диагностика</span> <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(125, 57, 235, 0.2); color: #c084fc; border: 1px solid rgba(125, 57, 235, 0.3); font-weight: 700;">2026</span></a></li>
+              <li><a href="/news" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Новости и статьи</a></li>
+            </ul>
+          </div>
+
+          <!-- Col 3: ДОКУМЕНТЫ -->
+          <div>
+            <h4 style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">
+              Документы
+            </h4>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; font-size: 0.875rem;">
+              <li><a href="/offer" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Публичная оферта и тарифы</a></li>
+              <li><a href="/privacy-policy" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Конфиденциальность (99-З)</a></li>
+              <li><a href="/payment-security" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Безопасность платежей</a></li>
+              <li><a href="/refund-policy" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Правила возврата и отмены</a></li>
+            </ul>
+          </div>
+
+          <!-- Col 4: КОНТАКТЫ -->
+          <div>
+            <h4 style="font-size: 0.75rem; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">
+              Контакты и офис
+            </h4>
+            <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; font-size: 0.875rem;">
+              <li><a href="/contacts" style="color: #e2e8f0; font-weight: 600; text-decoration: none; transition: color 0.2s;">Контакты ООО «Эдусфера»</a></li>
+              <li><a href="mailto:edusferaby@gmail.com" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">edusferaby@gmail.com</a></li>
+              <li><a href="tel:+375295190821" style="color: #cbd5e1; font-weight: 700; text-decoration: none; transition: color 0.2s;">+375 (29) 519-08-21</a></li>
+            </ul>
+            <p style="font-size: 0.75rem; color: #64748b; margin-top: 12px; line-height: 1.5;">
+              Режим работы: Пн-Пт 09:00 – 18:00 (Минск)
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Payment Systems & Acquiring Logos Strip -->
+        <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(51, 65, 85, 0.8);">
+          <p style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;">
+            Принимаем к онлайн-оплате через интернет-эквайринг ЗАО «Альфа-Банк»
+          </p>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+            <div style="background: #ffffff; border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; justify-content: center; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(51, 65, 85, 0.3);">
+              <img src="/logo/alfa-bank.svg" alt="ЗАО «Альфа-Банк»" style="height: 24px; max-width: 115px; object-fit: contain;">
+            </div>
+            <div style="background: #ffffff; border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; justify-content: center; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(51, 65, 85, 0.3);">
+              <img src="/logo/belkart.png" alt="БЕЛКАРТ" style="height: 26px; max-width: 90px; object-fit: contain;">
+            </div>
+            <div style="background: #ffffff; border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; justify-content: center; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(51, 65, 85, 0.3);">
+              <img src="/logo/belkart-internetparol.svg" alt="Белкарт ИнтернетПароль" style="height: 24px; max-width: 110px; object-fit: contain;">
+            </div>
+            <div style="background: #ffffff; border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; justify-content: center; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(51, 65, 85, 0.3);">
+              <img src="/logo/visa.svg" alt="VISA" style="height: 20px; max-width: 70px; object-fit: contain;">
+            </div>
+            <div style="background: #ffffff; border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; justify-content: center; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(51, 65, 85, 0.3);">
+              <img src="/logo/visa-secure.svg" alt="Visa Secure" style="height: 26px; max-width: 65px; object-fit: contain;">
+            </div>
+            <div style="background: #ffffff; border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; justify-content: center; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(51, 65, 85, 0.3);">
+              <img src="/logo/mastercard.svg" alt="MasterCard" style="height: 24px; max-width: 75px; object-fit: contain;">
+            </div>
+            <div style="background: #ffffff; border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; justify-content: center; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(51, 65, 85, 0.3);">
+              <img src="/logo/mastercard-id-check.svg" alt="Mastercard Identity Check" style="height: 26px; max-width: 100px; object-fit: contain;">
+            </div>
+            <div style="background: #ffffff; border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; justify-content: center; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(51, 65, 85, 0.3);">
+              <img src="/logo/apple-pay.svg" alt="Apple Pay" style="height: 20px; max-width: 60px; object-fit: contain;">
+            </div>
+            <div style="background: #ffffff; border-radius: 12px; padding: 6px 14px; display: flex; align-items: center; justify-content: center; height: 42px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); border: 1px solid rgba(51, 65, 85, 0.3);">
+              <img src="/logo/samsung-pay.svg" alt="Samsung Pay" style="height: 20px; max-width: 95px; object-fit: contain;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Legal info box -->
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(51, 65, 85, 0.8); display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; font-size: 0.75rem; color: #94a3b8; line-height: 1.6;">
+          <div style="background: rgba(15, 23, 42, 0.4); padding: 16px; border-radius: 16px; border: 1px solid rgba(51, 65, 85, 0.6);">
+            <h5 style="font-weight: 700; color: #ffffff; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Юридическая информация</h5>
+            <p><strong>ООО «Эдусфера»</strong> · УНП 192854899 · Зарегистрировано Минским горисполкомом 04.05.2026 г.</p>
+            <p><strong>Юридический адрес:</strong> 220100, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29 (Страна нахождения: Республика Беларусь).</p>
+            <p><strong>Тел:</strong> +375 (29) 519-08-21 · <strong>Email:</strong> edusferaby@gmail.com · <strong>Режим работы:</strong> Пн-Пт 09:00 – 18:00</p>
+            <p style="font-size: 11px; color: #64748b; margin-top: 4px;">Деятельность не подлежит лицензированию в соответствии с законодательством Республики Беларусь.</p>
+          </div>
+          <div style="background: rgba(15, 23, 42, 0.4); padding: 16px; border-radius: 16px; border: 1px solid rgba(51, 65, 85, 0.6);">
+            <h5 style="font-weight: 700; color: #ffffff; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Платёжный эквайринг и безопасность</h5>
+            <p><strong>Интернет-эквайринг:</strong> ЗАО «Альфа-Банк» · Защита платежей по стандарту PCI DSS v4.0</p>
+            <p><strong>Поддерживаемые карты:</strong> VISA, Visa Secure, MasterCard, MasterCard ID Check, БЕЛКАРТ, Белкарт ИнтернетПароль, Apple Pay, Samsung Pay.</p>
+            <p style="font-size: 11px; color: #64748b; margin-top: 4px;">Безопасность передачи данных обеспечивается шифрованием TLS/SSL (256-bit) и технологиями 3D-Secure 2.0.</p>
+          </div>
+        </div>
+
       </div>
-      <div>
-        <strong style="color: #fff; display: block; margin-bottom: 6px;">Банковские реквизиты</strong>
-        Расчетный счет (IBAN): BY64UNBS30121685100000001933<br>
-        Банк: ЗАО «БСБ Банк»<br>
-        БИК банка: UNBSBY2X
+
+      <!-- Bottom Bar -->
+      <div style="padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 0.75rem; color: #94a3b8;">
+        <p style="margin: 0; font-weight: 500;">
+          © <span id="year">2026</span> ООО «Эдусфера». Все права защищены.
+        </p>
+
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <span>Минск, Беларусь</span>
+          <a href="/offer" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;">Пользовательское соглашение</a>
+          <a href="/platform" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; background: rgba(198,255,51,0.12); border: 1px solid rgba(198,255,51,0.35); color: #c6ff33; font-weight: 700; text-decoration: none;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #c6ff33;"></span>
+            Платформа v2.0 ⚡
+          </a>
+        </div>
       </div>
-    </div>
-    <div class="ftr-bottom" style="margin-top: 16px;">
-      <div>© <span id="year">2026</span> ООО «Эдусфера». Все права защищены.</div>
-      <div>Минск, Беларусь · Сделано для преподавателей и абитуриентов</div>
+
     </div>
   </div>
 </footer>
 
 <script>
+/* ═══ Reveal animation (CRITICAL FIRST STEP — Guarantees no blank blocks) ═══ */
+!function initReveal() {
+  const rvElements = document.querySelectorAll('.rv');
+  if (!('IntersectionObserver' in window)) {
+    rvElements.forEach(el => el.classList.add('vis'));
+    return;
+  }
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('vis');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.05, rootMargin: '0px 0px 100px 0px' });
+
+  rvElements.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight + 100) {
+      el.classList.add('vis');
+    } else {
+      obs.observe(el);
+    }
+  });
+
+  // Safety fallback: reveal all elements if scroll doesn't trigger or on delay
+  setTimeout(() => {
+    document.querySelectorAll('.rv:not(.vis)').forEach(el => el.classList.add('vis'));
+  }, 1200);
+}();
+
 /* ═══ HEADER scroll + Scroll progress bar ═══ */
-const progressBar=document.getElementById('progress');
-function onScroll(){
-  document.getElementById('hdr').classList.toggle('scrolled',scrollY>20);
-  // прогресс прокрутки
-  const h=document.documentElement;
-  const max=h.scrollHeight-h.clientHeight;
-  const p=max>0?(scrollY/max)*100:0;
-  progressBar.style.width=p+'%';
+const progressBar = document.getElementById('progress');
+const hdr = document.getElementById('hdr');
+function onScroll() {
+  if (hdr) hdr.classList.toggle('scrolled', window.scrollY > 20);
+  const h = document.documentElement;
+  const max = h.scrollHeight - h.clientHeight;
+  const p = max > 0 ? (window.scrollY / max) * 100 : 0;
+  if (progressBar) progressBar.style.width = p + '%';
 }
-addEventListener('scroll',onScroll,{passive:true});
-addEventListener('resize',onScroll,{passive:true});
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('resize', onScroll, { passive: true });
 onScroll();
 
 /* ═══ YEAR ═══ */
-document.getElementById('year').textContent=new Date().getFullYear();
+const yearEl = document.getElementById('year');
+if (yearEl) yearEl.textContent = new Date().getFullYear();
 
 /* ═══ 3D-tilt карточек + spotlight (2026) ═══ */
-const supportsHover=matchMedia('(hover:hover)').matches;
-const reduceMotion=matchMedia('(prefers-reduced-motion:reduce)').matches;
-if(supportsHover&&!reduceMotion){
-  document.querySelectorAll('.tilt').forEach(card=>{
-    const spot=card.querySelector('.spot');
-    let raf=null;
-    card.addEventListener('mousemove',e=>{
-      const r=card.getBoundingClientRect();
-      const px=(e.clientX-r.left)/r.width;   // 0..1 по X
-      const py=(e.clientY-r.top)/r.height;   // 0..1 по Y
-      const rx=(py-.5)*-8;                    // наклон по оси X (градусы)
-      const ry=(px-.5)*8;                     // наклон по оси Y
-      if(raf)cancelAnimationFrame(raf);
-      raf=requestAnimationFrame(()=>{
-        card.style.transform=`perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-4px)`;
-        if(spot){spot.style.setProperty('--mx',(px*100)+'%');spot.style.setProperty('--my',(py*100)+'%')}
+try {
+  const supportsHover = matchMedia('(hover:hover)').matches;
+  const reduceMotion = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if (supportsHover && !reduceMotion) {
+    document.querySelectorAll('.tilt').forEach(card => {
+      const spot = card.querySelector('.spot');
+      let raf = null;
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        const rx = (py - .5) * -8;
+        const ry = (px - .5) * 8;
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          card.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-4px)`;
+          if (spot) {
+            spot.style.setProperty('--mx', (px * 100) + '%');
+            spot.style.setProperty('--my', (py * 100) + '%');
+          }
+        });
+      });
+      card.addEventListener('mouseleave', () => {
+        if (raf) cancelAnimationFrame(raf);
+        card.style.transform = '';
       });
     });
-    card.addEventListener('mouseleave',()=>{
-      if(raf)cancelAnimationFrame(raf);
-      card.style.transform='';
-    });
-  });
+  }
+} catch (err) {
+  console.warn('[Promo] Tilt error:', err);
 }
 
 /* ═══ Magnetic-кнопки (CTA тянутся к курсору) ═══ */
-if(supportsHover&&!reduceMotion){
-  document.querySelectorAll('.magnetic').forEach(btn=>{
-    let raf=null;
-    btn.addEventListener('mousemove',e=>{
-      const r=btn.getBoundingClientRect();
-      const mx=e.clientX-(r.left+r.width/2);
-      const my=e.clientY-(r.top+r.height/2);
-      if(raf)cancelAnimationFrame(raf);
-      raf=requestAnimationFrame(()=>{btn.style.transform=`translate(${mx*0.25}px,${my*0.35}px)`});
+try {
+  const supportsHover = matchMedia('(hover:hover)').matches;
+  const reduceMotion = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if (supportsHover && !reduceMotion) {
+    document.querySelectorAll('.magnetic').forEach(btn => {
+      let raf = null;
+      btn.addEventListener('mousemove', e => {
+        const r = btn.getBoundingClientRect();
+        const mx = e.clientX - (r.left + r.width / 2);
+        const my = e.clientY - (r.top + r.height / 2);
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          btn.style.transform = `translate(${mx * 0.25}px,${my * 0.35}px)`;
+        });
+      });
+      btn.addEventListener('mouseleave', () => {
+        if (raf) cancelAnimationFrame(raf);
+        btn.style.transform = '';
+      });
     });
-    btn.addEventListener('mouseleave',()=>{if(raf)cancelAnimationFrame(raf);btn.style.transform=''});
-  });
+  }
+} catch (err) {
+  console.warn('[Promo] Magnetic error:', err);
 }
 
 /* ═══ Count-up анимация цифр trust-bar ═══ */
-const reduceFast = reduceMotion;
-function countUp(el,target,dur,dec){
-  if(reduceFast){el.textContent=String(target).replace('.',',');return}
-  const start=performance.now();
-  !function tick(now){
-    const p=Math.min((now-start)/dur,1);
-    const eased=1-Math.pow(1-p,3); // easeOutCubic
-    const val=target*eased;
-    el.textContent=(dec?val.toFixed(dec):Math.round(val)).replace('.',',');
-    if(p<1)requestAnimationFrame(tick);
-  }(start);
-}
-const trustObserver=new IntersectionObserver((entries)=>{
-  entries.forEach(en=>{
-    if(!en.isIntersecting)return;
-    en.target.querySelectorAll('[data-count]').forEach(n=>{
-      const target=parseFloat(n.dataset.count);
-      const dec=(n.dataset.count+'').includes('.')?1:0;
-      countUp(n,target,1400,dec);
+try {
+  const reduceMotion = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function countUp(el, target, dur, dec) {
+    if (reduceMotion) {
+      el.textContent = String(target).replace('.', ',');
+      return;
+    }
+    const start = performance.now();
+    !function tick(now) {
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = target * eased;
+      el.textContent = (dec ? val.toFixed(dec) : Math.round(val)).replace('.', ',');
+      if (p < 1) requestAnimationFrame(tick);
+    }(start);
+  }
+  const trustObserver = new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      en.target.querySelectorAll('[data-count]').forEach(n => {
+        const target = parseFloat(n.dataset.count);
+        const dec = (n.dataset.count + '').includes('.') ? 1 : 0;
+        countUp(n, target, 1400, dec);
+      });
+      trustObserver.unobserve(en.target);
     });
-    trustObserver.unobserve(en.target);
-  });
-},{threshold:.5});
-document.querySelectorAll('.trust-grid').forEach(g=>trustObserver.observe(g));
-
-/* ═══ Reveal animation ═══ */
-const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)}}),{threshold:.08});
-document.querySelectorAll('.rv').forEach(el=>obs.observe(el));
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.trust-grid').forEach(g => trustObserver.observe(g));
+} catch (err) {
+  console.warn('[Promo] Count-up error:', err);
+}
 
 /* ═══ ПЕРЕКЛЮЧАТЕЛЬ АУДИТОРИИ ═══ */
 const asBtns=document.querySelectorAll('.as-btn');
@@ -2576,21 +2754,25 @@ asBtns.forEach(b=>b.addEventListener('click',()=>setAudience(b.dataset.aud)));
       if (badLabel) badLabel.textContent = 'Вне реестра (риски)';
       if (badDiff) badDiff.textContent = 'без чека, риск штрафов и отмен';
       if (eduLabel) eduLabel.textContent = 'Edusfera (легально)';
-      if (eduDiff) eduDiff.textContent = '100% в реестре, договор, эскроу';
+      if (eduDiff) eduDiff.textContent = '100% в реестре, договор, чеки НПД';
     }else{
-      // Репетитор: работа в серую грозит штрафами и откликами. На платформе помощь с НПД и реестром.
-      const lost=Math.round(total*0.17); // потери на отменах и неявках
-      const commission=Math.round(total*0.13);
-      const netBenefit=lost-commission;
-      blackEl.textContent=Math.round(total-lost).toLocaleString('ru-RU')+' BYN';
-      eduEl.textContent=Math.round(total-commission).toLocaleString('ru-RU')+' BYN';
-      animateNum(benefitEl,Math.max(0,netBenefit));
-      subEl.textContent='доход под защитой платформы без риска проверок и санкций';
+      // Репетитор: SaaS-подписка Edusfera против 30-50% потерь на классических досках объявлений
+      // при фиксированной подписке Pro всего 40 BYN/мес (1-й месяц бесплатно).
+      const boardLoss = Math.round(total * 0.40); // 30–50% потерь на досках и агрегаторах (среднее 40%)
+      const boardNet = total - boardLoss;
+      const subCost = (m > 1 ? (m - 1) * 40 : 0); // 1-й месяц бесплатно, далее 40 BYN/мес
+      const eduNet = total - subCost;
+      const netBenefit = eduNet - boardNet; // реальная выгода репетитора на Edusfera
 
-      if (badLabel) badLabel.textContent = 'Работа вне реестра';
-      if (badDiff) badDiff.textContent = 'риск штрафа до 100 б.в.';
-      if (eduLabel) eduLabel.textContent = 'Edusfera (официально)';
-      if (eduDiff) eduDiff.textContent = 'чеки, налоги (НПД) под ключ';
+      blackEl.textContent = boardNet.toLocaleString('ru-RU') + ' BYN';
+      eduEl.textContent = eduNet.toLocaleString('ru-RU') + ' BYN';
+      animateNum(benefitEl, Math.max(0, netBenefit));
+      subEl.textContent = 'Фиксированная подписка Edusfera против 30–50% потерь на досках (1-й месяц Pro — 0 BYN)';
+
+      if (badLabel) badLabel.textContent = 'Классические доски (30–50% потерь)';
+      if (badDiff) badDiff.textContent = 'потери на агрегаторах и неявках';
+      if (eduLabel) eduLabel.textContent = 'Edusfera (подписка)';
+      if (eduDiff) eduDiff.textContent = '100% дохода вам · подписка Pro 40 BYN/мес';
     }
 
     // график

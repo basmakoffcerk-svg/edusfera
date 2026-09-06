@@ -31,7 +31,11 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'phone',
+        'google_id',
+        'yandex_id',
+        'avatar',
         'offer_accepted_at',
+        'email_verified_at',
     ];
 
     /**
@@ -77,12 +81,44 @@ class User extends Authenticatable implements FilamentUser
                 && mb_strtolower($this->email) === $technicalEmail;
         }
 
-        return true;
+        return false;
+    }
+
+    public function isAdmin(): bool
+    {
+        if ($this->role instanceof UserRole) {
+            return $this->role === UserRole::Admin;
+        }
+
+        return $this->role === 'admin' || $this->role === UserRole::Admin->value;
+    }
+
+    public function isTutor(): bool
+    {
+        if ($this->role instanceof UserRole) {
+            return $this->role === UserRole::Tutor;
+        }
+
+        return $this->role === 'tutor' || $this->role === UserRole::Tutor->value;
+    }
+
+    public function isStudent(): bool
+    {
+        if ($this->role instanceof UserRole) {
+            return $this->role === UserRole::Student;
+        }
+
+        return $this->role === 'student' || $this->role === UserRole::Student->value;
     }
 
     public function tutorProfile(): HasOne
     {
         return $this->hasOne(TutorProfile::class);
+    }
+
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(\App\Domain\Subscription\Models\Subscription::class, 'tutor_id');
     }
 
     public function tutorLessons(): HasMany

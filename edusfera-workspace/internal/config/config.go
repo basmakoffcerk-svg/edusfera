@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -17,6 +18,8 @@ type Config struct {
 	RedisPort      int
 	InternalSecret string
 	JWTSecret      string
+	JWKSURL        string
+	LaravelAPIUrl  string
 	LogLevel       string
 }
 
@@ -25,7 +28,11 @@ func Load() *Config {
 	dbPort := getEnvInt("DB_PORT", 5432)
 	redisPort := getEnvInt("REDIS_PORT", 6379)
 
-	return &Config{
+	// Дефолты "secret" убраны: секрет по умолчанию — тривиально угадываемый
+	// Bearer-токен, а set-but-empty из docker-compose (LookupEnv) и вовсе
+	// открывал apply-ai-patch без авторизации. Пустое значение = fail closed
+	// (main.go требует INTERNAL_SECRET при старте).
+	cfg := &Config{
 		Port:           port,
 		DBHost:         getEnv("DB_HOST", "127.0.0.1"),
 		DBPort:         dbPort,
@@ -34,10 +41,17 @@ func Load() *Config {
 		DBDatabase:     getEnv("DB_DATABASE", "edusfera"),
 		RedisHost:      getEnv("REDIS_HOST", "127.0.0.1"),
 		RedisPort:      redisPort,
-		InternalSecret: getEnv("INTERNAL_SECRET", "secret"),
-		JWTSecret:      getEnv("JWT_SECRET", "secret"),
+		InternalSecret: getEnv("INTERNAL_SECRET", ""),
+		JWTSecret:      getEnv("JWT_SECRET", ""),
 		LogLevel:       getEnv("LOG_LEVEL", "info"),
+		LaravelAPIUrl:  getEnv("LARAVEL_API_URL", "http://nginx:80"),
 	}
+
+	// JWKS для проверки RS256 classroom-токенов (Laravel публикует публичные
+	// ключи на /api/v1/.well-known/jwks.json).
+	cfg.JWKSURL = getEnv("JWKS_URL", strings.TrimRight(cfg.LaravelAPIUrl, "/")+"/api/v1/.well-known/jwks.json")
+
+	return cfg
 }
 
 func (c *Config) DSN() string {

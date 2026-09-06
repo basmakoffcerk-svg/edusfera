@@ -124,12 +124,21 @@ class AiService
         $url = config('classroom.workspace_internal_url', 'http://localhost:8083');
         $secret = config('classroom.workspace_internal_secret');
 
+        $allowedTypes = ['draw_shape', 'add_text', 'clear_canvas', 'add_note', 'highlight_area'];
+        $sanitizedActions = array_values(array_filter($actions, function ($action) use ($allowedTypes) {
+            return is_array($action) && isset($action['type']) && in_array((string) $action['type'], $allowedTypes, true);
+        }));
+
+        if (empty($sanitizedActions)) {
+            return false;
+        }
+
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $secret,
                 'Content-Type' => 'application/json',
             ])->post("{$url}/api/v1/workspace/{$roomId}/apply-ai-patch", [
-                'actions' => $actions,
+                'actions' => $sanitizedActions,
             ]);
 
             return $response->successful();

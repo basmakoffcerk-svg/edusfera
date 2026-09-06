@@ -55,16 +55,17 @@ class ClassroomService
             return false;
         }
 
-        if ($user->role === 'parent') {
-            return false;
-        }
+        // Проверка `role === 'parent'` была мёртвым кодом (enum никогда не
+        // равен строке) и к тому же сломала бы родителя, бронирующего урок:
+        // родитель-букер записывается как student_id, т.е. является
+        // полноценным участником занятия.
 
         $hasActiveClassroom = ClassroomSession::query()
             ->where('lesson_id', $lesson->id)
             ->whereIn('status', [ClassroomSession::STATUS_WAITING, ClassroomSession::STATUS_ACTIVE])
             ->exists();
 
-        return $lesson->status === Lesson::STATUS_CONFIRMED || $hasActiveClassroom;
+        return in_array($lesson->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true) || $hasActiveClassroom;
     }
 
     public function endClassroom(ClassroomSession $session): void

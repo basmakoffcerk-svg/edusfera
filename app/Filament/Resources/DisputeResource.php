@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class DisputeResource extends Resource
 {
@@ -22,6 +23,36 @@ class DisputeResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-scale';
 
     protected static ?int $navigationSort = 50;
+
+    public static function canAccess(): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canCreate(): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
+    public static function canView(Model $record): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
 
     public static function form(Form $form): Form
     {
@@ -129,7 +160,7 @@ class DisputeResource extends Resource
 
                             Notification::make()
                                 ->title('Спор разрешен')
-                                ->body('Средства успешно возвращены ученику (bePaid / баланс).')
+                                ->body('Средства успешно возвращены ученику (WebPAY / баланс).')
                                 ->success()
                                 ->send();
                         } catch (\Exception $e) {
@@ -227,6 +258,6 @@ class DisputeResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->role === \App\Enums\UserRole::Admin;
+        return (bool) auth()->user()?->isAdmin();
     }
 }

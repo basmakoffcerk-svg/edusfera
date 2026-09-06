@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -32,6 +33,15 @@ func main() {
 	cfg := config.Load()
 	logger.Info("configuration loaded", "port", cfg.Port, "db_host", cfg.DBHost, "redis_host", cfg.RedisHost)
 
+	// Внутренний секрет обязателен: без него apply-ai-patch (публично
+	// проксируется nginx) должен отвечать 401, а не принимать любой запрос
+	// с заголовком "Bearer " (пустой секрет) или "Bearer secret" (старый
+	// дефолт).
+	if cfg.InternalSecret == "" {
+		logger.Error("INTERNAL_SECRET environment variable is required (workspaces apply-ai-patch endpoint)")
+		os.Exit(1)
+	}
+
 	// 3. Connect to Database (PostgreSQL)
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -54,7 +64,7 @@ func main() {
 	// 5. Initialize Components
 	boardManager := workspace.NewManager(database, rdb, logger)
 	pool := websocket.NewPool(rdb, logger)
-	wsHandler := websocket.NewHandler(pool, boardManager, rdb, cfg.JWTSecret, logger)
+	wsHandler := websocket.NewHandler(pool, boardManager, rdb, cfg.JWTSecret, cfg.JWKSURL, logger)
 
 	// 6. Setup HTTP Router (Go 1.22+ routing features)
 	mux := http.NewServeMux()
@@ -84,11 +94,11 @@ func main() {
 			return
 		}
 
-		// Authorization header verification
+		// Authorization header verification (constant-time)
 		authHeader := r.Header.Get("Authorization")
-		expectedAuth := fmt.Sprintf("Bearer %s", cfg.InternalSecret)
-		if authHeader != expectedAuth {
-			logger.Warn("Unauthorized AI patch attempt", "roomId", roomId, "received", authHeader)
+		expectedAuth := "Bearer " + cfg.InternalSecret
+		if subtle.ConstantTimeCompare([]byte(authHeader), []byte(expectedAuth)) != 1 {
+			logger.Warn("Unauthorized AI patch attempt", "roomId", roomId)
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}

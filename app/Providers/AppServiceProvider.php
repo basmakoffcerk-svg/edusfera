@@ -8,6 +8,7 @@ use App\Contracts\Integrations\AiAssistantClient;
 use App\Contracts\Lesson\LessonBooker;
 use App\Contracts\Lesson\LessonReader;
 use App\Domain\Classroom\RsaClassroomTokenIssuer;
+use App\Filament\Responses\LogoutResponse;
 use App\Integrations\AI\NullAiAssistantClient;
 use App\Integrations\EventBus\NullEventBus;
 use App\Integrations\EventBus\RedisStreamsEventBus;
@@ -25,6 +26,7 @@ use App\Services\Lesson\EloquentLessonReader;
 use App\Services\Payment\DisabledPaymentGateway;
 use App\Services\Payment\MockPaymentGateway;
 use App\Services\Payment\PaymentGatewayInterface;
+use App\Services\Payment\AlfaBankPaymentGateway;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -40,9 +42,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Полный logout из Filament-панелей должен чистить cookie связанных
+        // аккаунтов (см. App\Filament\Responses\LogoutResponse).
+        $this->app->singleton(
+            \Filament\Http\Responses\Auth\Contracts\LogoutResponse::class,
+            LogoutResponse::class,
+        );
+
         $this->app->bind(PaymentGatewayInterface::class, function () {
             return match (config('payments.gateway', 'mock')) {
-                'bepaid' => new \App\Services\Payment\BePaidPaymentGateway,
+                'alfa', 'alfabank' => new \App\Services\Payment\AlfaBankPaymentGateway,
+                'webpay' => new \App\Services\Payment\AlfaBankPaymentGateway,
                 'mock' => new MockPaymentGateway,
                 'disabled' => new DisabledPaymentGateway,
                 default => throw new InvalidArgumentException('Unknown payment gateway ['.config('payments.gateway').'].'),
@@ -99,8 +109,28 @@ class AppServiceProvider extends ServiceProvider
         // Passport::tokensCan() принимает массив [scope => description].
         Passport::tokensCan(config('oauth.scopes', []));
 
+        if (file_exists(public_path('hot')) && ! in_array(request()->getHost(), ['localhost', '127.0.0.1'], true)) {
+            @unlink(public_path('hot'));
+        }
+
         $this->syncTechnicalAdminAccount();
         $this->enforceProductionSecurity();
+        $this->configureOpenBasedirFallback();
+    }
+
+    /**
+     * Предотвращение ошибки is_file(): open_basedir restriction в ISPmanager при загрузке файлов.
+     */
+    private function configureOpenBasedirFallback(): void
+    {
+        $tmpDir = storage_path('app/tmp');
+        if (! is_dir($tmpDir)) {
+            @mkdir($tmpDir, 0777, true);
+        }
+
+        putenv("TMPDIR={$tmpDir}");
+        putenv("TEMP={$tmpDir}");
+        putenv("TMP={$tmpDir}");
     }
 
     /**
@@ -139,7 +169,7 @@ class AppServiceProvider extends ServiceProvider
 
         // M8: reject trivially weak passwords in production.
         if (app()->isProduction() && strlen($password) < 16) {
-            report(new \InvalidArgumentException('SITE_ADMIN_PASSWORD must be at least 16 characters in production.'));
+            report(new InvalidArgumentException('SITE_ADMIN_PASSWORD must be at least 16 characters in production.'));
 
             return;
         }

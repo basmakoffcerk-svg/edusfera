@@ -66,7 +66,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := auth.ValidateToken(token, h.cfg.JWTSecret)
+	claims, err := auth.ValidateToken(token, h.cfg.JWTSecret, h.cfg.JWKSURL)
 	if err != nil {
 		h.logger.Warn("authentication failed", "error", err, "room", roomID)
 		http.Error(w, `{"error":"unauthorized"}`, http.StatusUnauthorized)

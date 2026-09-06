@@ -1,42 +1,42 @@
 <x-filament-panels::page>
     <div class="space-y-6">
-        <section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div class="max-w-3xl space-y-3">
-                    <span class="inline-flex min-h-9 items-center rounded-full bg-lime-100 px-4 text-xs font-black uppercase tracking-[0.28em] text-lime-800">
-                        Practice loop
-                    </span>
-                    <div class="space-y-2">
-                        <h2 class="text-3xl font-black tracking-[-0.05em] text-stone-950">Домашние задания между уроками</h2>
-                        <p class="max-w-2xl text-sm leading-7 text-stone-600">
-                            Здесь собраны задания, которые появились после отчётов преподавателя. Выполняйте их между уроками, чтобы платформа видела реальный темп подготовки, а преподаватель понимал, что уже закрыто.
-                        </p>
-                    </div>
-                </div>
+        <x-filament::section icon="heroicon-o-document-check">
+            <x-slot name="heading">
+                Домашние задания между уроками
+            </x-slot>
 
-                <div class="grid min-w-[16rem] gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                    <div class="rounded-2xl border border-lime-200 bg-lime-50 p-4">
-                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-lime-700">Активно</p>
-                        <p class="mt-2 text-3xl font-black tracking-[-0.04em] text-stone-950">{{ $assignedCount }}</p>
-                    </div>
-                    <div class="rounded-2xl border border-sky-200 bg-sky-50 p-4">
-                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-sky-700">Выполнено</p>
-                        <p class="mt-2 text-3xl font-black tracking-[-0.04em] text-stone-950">{{ $completedCount }}</p>
-                    </div>
+            <x-slot name="description">
+                Задания от преподавателей. Выполняйте их для фиксации прогресса
+            </x-slot>
+
+            <x-slot name="headerEnd">
+                <div class="flex items-center gap-2">
+                    <x-filament::badge color="warning">
+                        Активно: {{ $assignedCount }}
+                    </x-filament::badge>
+                    <x-filament::badge color="success">
+                        Выполнено: {{ $completedCount }}
+                    </x-filament::badge>
                 </div>
-            </div>
-        </section>
+            </x-slot>
+        </x-filament::section>
 
         @if ($assignments->isEmpty())
-            <section class="rounded-[2rem] border border-stone-200 bg-white p-8 text-center shadow-sm">
-                <h3 class="text-2xl font-black tracking-[-0.04em] text-stone-950">Пока нет активной домашки</h3>
-                <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-stone-600">
-                    Домашние задания появляются после отчёта преподавателя по уроку. Когда преподаватель зафиксирует следующий шаг, вы увидите задание здесь и сможете отметить его выполнение.
-                </p>
-                <a href="/admin/lessons" class="mt-5 inline-flex min-h-11 items-center rounded-2xl bg-violet-600 px-5 text-sm font-black text-white transition hover:bg-violet-700">
-                    Открыть мои уроки
-                </a>
-            </section>
+            <x-filament::section icon="heroicon-o-document-magnifying-glass">
+                <x-slot name="heading">
+                    Пока нет активной домашки
+                </x-slot>
+
+                <x-slot name="description">
+                    Домашние задания появляются после отчёта преподавателя по уроку. Когда преподаватель зафиксирует следующий шаг, вы увидите задание здесь.
+                </x-slot>
+
+                <div class="mt-4">
+                    <x-filament::button href="/admin/lessons" tag="a" color="primary" size="md" icon="heroicon-o-academic-cap">
+                        Открыть мои уроки
+                    </x-filament::button>
+                </div>
+            </x-filament::section>
         @else
             <div class="grid gap-6 xl:grid-cols-[20rem_minmax(0,1fr)]">
                 <aside class="space-y-3">

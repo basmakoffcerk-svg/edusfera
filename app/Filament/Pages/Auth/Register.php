@@ -17,6 +17,7 @@ use Illuminate\Support\HtmlString;
 class Register extends BaseRegister
 {
     protected static string $view = 'filament.admin.pages.auth.register';
+    protected static string $layout = 'filament-panels::components.layout.base';
 
     public function mount(): void
     {
@@ -128,9 +129,9 @@ class Register extends BaseRegister
 
         $user = auth()->user();
 
-        if ($user->role === 'tutor') {
+        if ($user->isTutor()) {
             return $user->tutorProfile()->exists()
-                ? '/admin/tutor-profiles'
+                ? '/admin'
                 : '/admin/tutor-profiles/create';
         }
 
@@ -152,9 +153,25 @@ class Register extends BaseRegister
         return $normalized;
     }
 
+    protected function getPasswordFormComponent(): Component
+    {
+        return parent::getPasswordFormComponent()
+            ->label('Пароль')
+            ->rules([
+                \Illuminate\Validation\Rules\Password::min(8)
+                    ->letters()
+                    ->numbers()
+                    ->uncompromised(2),
+            ])
+            ->validationMessages([
+                'min' => 'Пароль должен быть не менее 8 символов и содержать буквы и цифры.',
+                'uncompromised' => 'Этот пароль ранее встречался в утечках данных (credential stuffing). Выберите более надежный пароль.',
+            ]);
+    }
+
     private function isSafeRedirect(string $redirectTo): bool
     {
-        if (str_starts_with($redirectTo, '/') && ! str_starts_with($redirectTo, '//')) {
+        if (str_starts_with($redirectTo, '/') && ! str_starts_with($redirectTo, '//') && ! str_starts_with($redirectTo, '/\\')) {
             return true;
         }
 

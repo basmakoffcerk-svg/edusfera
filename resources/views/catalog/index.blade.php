@@ -129,13 +129,16 @@
                                 <div class="h-px bg-gray-100 my-2 mx-2"></div>
                                 <div class="px-4 py-1 text-[10px] uppercase font-bold text-gray-400 tracking-wider">Связанные аккаунты</div>
                                 @foreach($linked as $account)
-                                    <a href="{{ route('account.switch', $account['id']) }}" class="flex items-center gap-3 px-4 py-2 hover:bg-violet-50 rounded-lg transition-colors group">
-                                        <div class="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs font-bold group-hover:bg-violet-200">{{ mb_substr($account['name'], 0, 1) }}</div>
-                                        <div>
-                                            <div class="text-sm font-bold text-gray-900">{{ $account['name'] }}</div>
-                                            <div class="text-[10px] font-bold text-gray-400 uppercase">{{ \App\Services\MultiAccountService::roleLabel($account['role']) }}</div>
-                                        </div>
-                                    </a>
+                                    <form method="POST" action="{{ route('account.switch', $account['id']) }}" class="m-0">
+                                        @csrf
+                                        <button type="submit" class="w-full text-left flex items-center gap-3 px-4 py-2 hover:bg-violet-50 rounded-lg transition-colors group cursor-pointer border-0 bg-transparent">
+                                            <div class="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-xs font-bold group-hover:bg-violet-200">{{ mb_substr($account['name'], 0, 1) }}</div>
+                                            <div>
+                                                <div class="text-sm font-bold text-gray-900">{{ $account['name'] }}</div>
+                                                <div class="text-[10px] font-bold text-gray-400 uppercase">{{ \App\Services\MultiAccountService::roleLabel($account['role']) }}</div>
+                                            </div>
+                                        </button>
+                                    </form>
                                 @endforeach
                             @endif
 

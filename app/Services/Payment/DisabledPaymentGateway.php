@@ -18,6 +18,16 @@ class DisabledPaymentGateway implements PaymentGatewayInterface
         return false;
     }
 
+    public function capturePayment(string $transactionId, float $amount): bool
+    {
+        throw new RuntimeException('Payment gateway is disabled for this environment.');
+    }
+
+    public function voidPayment(string $transactionId): bool
+    {
+        throw new RuntimeException('Payment gateway is disabled for this environment.');
+    }
+
     public function refundPayment(string $transactionId, float $amount): bool
     {
         throw new RuntimeException('Payment gateway is disabled for this environment.');

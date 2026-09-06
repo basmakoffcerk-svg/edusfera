@@ -1,9 +1,21 @@
 <?php
 
+require_once __DIR__.'/../app/Support/bcmath_polyfill.php';
+
+use App\Http\Api\V1\Controllers\MetricsController;
+use App\Http\Middleware\ApplyRoleSessionLifetime;
+use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\EnforceIdempotency;
+use App\Http\Middleware\EnforceServiceScope;
+use App\Http\Middleware\MetricsAuth;
+use App\Http\Middleware\RecordHttpMetrics;
+use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\StructuredLogging;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -28,7 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // чтобы быть доступным для стандартного сбора (scrape).
             // Защищен с помощью middleware `metrics.auth`.
             Route::middleware(['api', 'metrics.auth'])
-                ->get('/metrics', \App\Http\Api\V1\Controllers\MetricsController::class)
+                ->get('/metrics', MetricsController::class)
                 ->name('metrics');
 
             // Internal S2S API для микросервисов.
@@ -45,13 +57,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // M7: Global throttle on web routes — prevents brute-force and DDoS.
         // 120 req/min per IP is generous for a tutor marketplace.
         $middleware->appendToGroup('web', [
-            \App\Http\Middleware\ApplyRoleSessionLifetime::class,
-            \App\Http\Middleware\SecurityHeaders::class,
+            ApplyRoleSessionLifetime::class,
+            SecurityHeaders::class,
             'throttle:120,1',
         ]);
 
         $middleware->appendToGroup('api', [
-            \App\Http\Middleware\SecurityHeaders::class,
+            SecurityHeaders::class,
         ]);
 
         // Группа `api` используется маршрутами `routes/api.php`,
@@ -61,29 +73,34 @@ return Application::configure(basePath: dirname(__DIR__))
         //   1. AssignRequestId   — управление X-Request-Id для сквозного логирования.
         //   2. StructuredLogging — структурированное логирование запросов.
         $middleware->prependToGroup('api', [
-            \App\Http\Middleware\AssignRequestId::class,
-            \App\Http\Middleware\StructuredLogging::class,
+            AssignRequestId::class,
+            StructuredLogging::class,
         ]);
 
         // Сбор метрик HTTP-запросов. Middleware регистрируется в группе `api`
         // для замера длительности и записи метрик в Prometheus.
         $middleware->appendToGroup('api', [
-            \App\Http\Middleware\RecordHttpMetrics::class,
+            RecordHttpMetrics::class,
         ]);
 
         // Алиасы для middleware:
         // - `scope`: проверка прав доступа по scope.
         // - `idempotency`: обеспечение идемпотентности мутирующих запросов.
         $middleware->alias([
-            'scope' => \App\Http\Middleware\EnforceServiceScope::class,
-            'idempotency' => \App\Http\Middleware\EnforceIdempotency::class,
-            'metrics.auth' => \App\Http\Middleware\MetricsAuth::class,
-            'throttle:web.auth' => \Illuminate\Http\Middleware\ThrottleRequests::class.':web.auth',
+            'scope' => EnforceServiceScope::class,
+            'idempotency' => EnforceIdempotency::class,
+            'metrics.auth' => MetricsAuth::class,
+            'throttle:web.auth' => ThrottleRequests::class.':web.auth',
         ]);
 
         $middleware->validateCsrfTokens(except: [
             'api/internal/classroom/*/whiteboard',
             'payments/webhook',
+            'payments/alfabank/webhook',
+            'webhooks/alfabank',
+            'api/v1/payments/alfabank/webhook',
+            'payments/webpay/webhook',
+            'webhooks/webpay',
         ]);
     })
     ->withCommands([

@@ -180,16 +180,41 @@ class LessonRequestResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->role === UserRole::Admin)
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->isAdmin())
             ? 'Заявки на уроки'
             : 'Заявки';
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->role === UserRole::Admin)
+        return (Filament::getCurrentPanel()?->getId() === 'site-admin' || auth()->user()?->isAdmin())
             ? 'Операции'
-            : 'Организация';
+            : 'Занятия';
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 1;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $user = auth()->user();
+        if (! $user?->isTutor()) {
+            return null;
+        }
+
+        $count = \App\Models\Lesson::query()
+            ->where('tutor_id', $user->id)
+            ->where('status', \App\Models\Lesson::STATUS_PENDING)
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
     }
 
     public static function getModelLabel(): string
@@ -206,6 +231,6 @@ class LessonRequestResource extends Resource
     {
         $user = auth()->user();
 
-        return in_array($user?->role, [UserRole::Tutor, UserRole::Admin], true);
+        return $user !== null && ($user->isTutor() || $user->isAdmin());
     }
 }

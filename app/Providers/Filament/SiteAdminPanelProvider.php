@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\MessagesPage;
 use App\Filament\SiteAdmin\Auth\Login;
 use App\Filament\SiteAdmin\Widgets\AdminOperationsWidget;
@@ -18,6 +19,7 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\MaxWidth;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -38,18 +40,22 @@ class SiteAdminPanelProvider extends PanelProvider
             ->login(Login::class)
             ->databaseNotifications()
             ->databaseNotificationsPolling('10s')
+            ->maxContentWidth(MaxWidth::Full)
+            ->simplePageMaxContentWidth(MaxWidth::Full)
+            ->brandName('Edusfera Tech Admin')
+            ->favicon(asset('favicon.svg'))
             ->colors([
                 'primary' => Color::Hex('#7D39EB'),
                 'secondary' => Color::Hex('#C6FF33'),
+                'success' => Color::Hex('#10B981'),
+                'warning' => Color::Hex('#F59E0B'),
+                'danger' => Color::Hex('#EF4444'),
+                'info' => Color::Hex('#06B6D4'),
             ])
-            ->renderHook(
-                PanelsRenderHook::HEAD_END,
-                fn (): string => Blade::render("@vite('resources/css/app.css')")
-            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
                 MessagesPage::class,
             ])
             ->widgets([

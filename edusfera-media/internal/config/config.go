@@ -18,11 +18,12 @@ type Config struct {
 	MaxRoomSize     int
 	RoomIdleTimeout time.Duration
 	LaravelAPIUrl   string
+	JWKSURL         string
 }
 
 // Load reads configuration from environment variables with sensible defaults.
 func Load() *Config {
-	return &Config{
+	cfg := &Config{
 		Port:            getEnvInt("PORT", 8088),
 		JWTSecret:       getEnv("JWT_SECRET", ""),
 		AllowedOrigins:  getEnvSlice("ALLOWED_ORIGINS", []string{"*"}),
@@ -32,6 +33,13 @@ func Load() *Config {
 		RoomIdleTimeout: time.Duration(getEnvInt("ROOM_IDLE_TIMEOUT_MINUTES", 120)) * time.Minute,
 		LaravelAPIUrl:   getEnv("LARAVEL_API_URL", "http://nginx:80"),
 	}
+
+	// JWKS для проверки RS256 classroom-токенов (Laravel публикует публичные
+	// ключи на /api/v1/.well-known/jwks.json). По умолчанию берётся из
+	// LARAVEL_API_URL; переопределяется через JWKS_URL.
+	cfg.JWKSURL = getEnv("JWKS_URL", strings.TrimRight(cfg.LaravelAPIUrl, "/")+"/api/v1/.well-known/jwks.json")
+
+	return cfg
 }
 
 func getEnv(key, fallback string) string {

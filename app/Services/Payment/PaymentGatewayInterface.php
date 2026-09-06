@@ -10,6 +10,10 @@ interface PaymentGatewayInterface
 
     public function verifyPayment(string $transactionId): bool;
 
+    public function capturePayment(string $transactionId, float $amount): bool;
+
+    public function voidPayment(string $transactionId): bool;
+
     public function refundPayment(string $transactionId, float $amount): bool;
 
     public function getCallbackUrl(): string;

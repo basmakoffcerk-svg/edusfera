@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace App\Filament\Widgets;
 
 use App\Models\Lesson;
+use App\Services\ChatUnreadCounter;
 use Filament\Widgets\Widget;
 
+/**
+ * Центр действий репетитора: последняя заявка с большими кнопками ответа
+ * и быстрые плитки-переходы (на смартфоне боковое меню скрыто — плитки
+ * заменяют его на главном экране).
+ */
 class TutorActionCenterWidget extends Widget
 {
     protected static string $view = 'filament.widgets.tutor-action-center-widget';
@@ -17,7 +23,7 @@ class TutorActionCenterWidget extends Widget
 
     public static function canView(): bool
     {
-        return auth()->user()?->role === 'tutor';
+        return auth()->user()?->isTutor() ?? false;
     }
 
     protected function getViewData(): array
@@ -30,29 +36,22 @@ class TutorActionCenterWidget extends Widget
             ->count();
 
         $latestRequest = Lesson::query()
-            ->with(['student', 'parent'])
+            ->with(['student', 'parent', 'conversation'])
             ->where('tutor_id', $user->id)
             ->where('status', Lesson::STATUS_PENDING)
             ->orderBy('created_at')
             ->first();
 
-        $upcomingLesson = Lesson::query()
-            ->with('student')
-            ->where('tutor_id', $user->id)
-            ->whereIn('status', [Lesson::STATUS_CONFIRMED, Lesson::STATUS_PENDING])
-            ->where('start_time', '>', now()->utc())
-            ->orderBy('start_time')
-            ->first();
-
-        $meetingJoinAvailable = $upcomingLesson !== null
-            && $upcomingLesson->meeting_link !== null
-            && now('UTC')->greaterThanOrEqualTo($upcomingLesson->start_time->copy()->subMinutes(10));
+        $chatUrl = '/admin/messages';
+        if ($latestRequest?->conversation_id) {
+            $chatUrl = '/admin/messages?conversation='.$latestRequest->conversation_id;
+        }
 
         return [
             'newRequestsCount' => $newRequestsCount,
             'latestRequest' => $latestRequest,
-            'upcomingLesson' => $upcomingLesson,
-            'meetingJoinAvailable' => $meetingJoinAvailable,
+            'chatUrl' => $chatUrl,
+            'unreadMessages' => app(ChatUnreadCounter::class)->countForUser($user),
         ];
     }
 }
