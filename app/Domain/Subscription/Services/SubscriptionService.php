@@ -31,11 +31,11 @@ class SubscriptionService
     }
 
     /**
-     * Ensure a 14-day PRO trial is started for tutor if they don't have one yet.
+     * Ensure a 14-day trial is started for tutor if they don't have one yet.
      */
-    public function ensureTrialStarted(User $tutor): Subscription
+    public function ensureTrialStarted(User $tutor, ?SubscriptionPlan $plan = null): Subscription
     {
-        return DB::transaction(function () use ($tutor) {
+        return DB::transaction(function () use ($tutor, $plan) {
             $existing = Subscription::where('tutor_id', $tutor->id)->first();
             if ($existing) {
                 return $existing;
@@ -48,7 +48,7 @@ class SubscriptionService
 
             return Subscription::create([
                 'tutor_id' => $tutor->id,
-                'plan' => SubscriptionPlan::PRO,
+                'plan' => $plan ?? SubscriptionPlan::PRO,
                 'status' => SubscriptionStatus::TRIAL,
                 'is_founder' => $isFounder,
                 'trial_ends_at' => $now->addDays(self::TRIAL_DAYS),

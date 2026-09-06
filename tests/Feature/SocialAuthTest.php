@@ -20,6 +20,12 @@ class SocialAuthTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+
     public function test_unsupported_provider_returns_404(): void
     {
         $response = $this->get('/auth/unsupported/redirect');

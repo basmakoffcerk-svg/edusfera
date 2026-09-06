@@ -38,12 +38,16 @@ class WalletPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return in_array(auth()->user()?->role, [UserRole::Student, UserRole::Parent], true);
+        $user = auth()->user();
+
+        return $user && ($user->isStudent() || $user->isParent());
     }
 
     public static function canAccess(): bool
     {
-        return in_array(auth()->user()?->role, [UserRole::Student, UserRole::Parent], true);
+        $user = auth()->user();
+
+        return $user && ($user->isStudent() || $user->isParent() || $user->isAdmin());
     }
 
     public static function getNavigationGroup(): ?string
@@ -55,7 +59,7 @@ class WalletPage extends Page
     {
         $user = auth()->user();
 
-        if (! $user || ! in_array($user->role, [UserRole::Student, UserRole::Parent], true)) {
+        if (! $user || (! $user->isStudent() && ! $user->isParent())) {
             return null;
         }
 

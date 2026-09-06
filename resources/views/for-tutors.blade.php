@@ -12,6 +12,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
 
+    @php
+        $authUser = auth()->user() ? [
+            'id' => auth()->user()->id,
+            'name' => auth()->user()->name,
+            'email' => auth()->user()->email,
+            'role' => is_object(auth()->user()->role) ? auth()->user()->role->value : auth()->user()->role,
+            'role_label' => \App\Services\MultiAccountService::roleLabel(auth()->user()->role),
+        ] : null;
+        $linkedAccounts = $authUser ? app(\App\Services\MultiAccountService::class)->getLinkedAccounts() : [];
+    @endphp
+    <script>
+        window.EDUSFERA_USER = {!! json_encode($authUser) !!};
+        window.EDUSFERA_LINKED_ACCOUNTS = {!! json_encode($linkedAccounts) !!};
+        window.EDUSFERA_CSRF_TOKEN = "{{ csrf_token() }}";
+    </script>
+
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])
 

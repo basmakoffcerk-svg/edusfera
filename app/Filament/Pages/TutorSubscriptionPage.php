@@ -50,7 +50,7 @@ class TutorSubscriptionPage extends Page
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
-        return $user !== null && $user->isTutor();
+        return $user !== null && ($user->isTutor() || $user->isAdmin());
     }
 
     public function mount(SubscriptionService $service): void

@@ -37,7 +37,7 @@ class SocialAuthController extends Controller
 
         session([
             'oauth_role' => in_array($role, ['student', 'tutor', 'parent'], true) ? $role : 'student',
-            'oauth_plan' => in_array($plan, ['basic', 'pro', 'premium'], true) ? $plan : 'pro',
+            'oauth_plan' => in_array($plan, ['start', 'pro', 'basic', 'premium'], true) ? $plan : 'pro',
         ]);
 
         return Socialite::driver($provider)->redirect();
@@ -71,7 +71,7 @@ class SocialAuthController extends Controller
 
         $normalizedEmail = mb_strtolower(trim($email));
         $providerId = (string) $socialUser->getId();
-        $providerIdField = 'google_id';
+        $providerIdField = $provider === 'yandex' ? 'yandex_id' : 'google_id';
 
         // 1. Find user by provider ID or email
         $user = User::where($providerIdField, $providerId)
@@ -98,7 +98,7 @@ class SocialAuthController extends Controller
         } else {
             // 2. Create new User
             $isNewUser = true;
-            $roleStr = (string) session('oauth_role', 'student');
+            $roleStr = (string) ($request->query('role') ?? session('oauth_role', 'student'));
             $userRole = UserRole::tryFrom($roleStr) ?? UserRole::Student;
 
             $name = trim((string) ($socialUser->getName() ?? $socialUser->getNickname() ?? 'Пользователь'));
@@ -125,11 +125,16 @@ class SocialAuthController extends Controller
                     'user_id' => $user->id,
                 ]);
 
-                $planStr = (string) session('oauth_plan', 'pro');
-                $plan = SubscriptionPlan::tryFrom($planStr) ?? SubscriptionPlan::PRO;
+                $planStr = (string) ($request->query('plan') ?? session('oauth_plan', 'pro'));
+                $plan = match ($planStr) {
+                    'start', 'basic' => SubscriptionPlan::START,
+                    'pro' => SubscriptionPlan::PRO,
+                    'premium' => SubscriptionPlan::PREMIUM,
+                    default => SubscriptionPlan::PRO,
+                };
 
                 try {
-                    app(SubscriptionService::class)->startTrial($user, $plan);
+                    app(SubscriptionService::class)->ensureTrialStarted($user, $plan);
                 } catch (Throwable $e) {
                     Log::error('Failed to start trial for OAuth tutor: '.$e->getMessage());
                 }
@@ -140,15 +145,11 @@ class SocialAuthController extends Controller
         Auth::login($user, true);
         Filament::auth()->login($user, true);
         $request->session()->regenerate();
+        $request->session()->put('password_hash_web', $user->getAuthPassword());
 
         // 4. Clean session
         session()->forget(['oauth_role', 'oauth_plan']);
 
-        // Redirect tutor or student
-        if ($user->role === UserRole::Tutor && $isNewUser) {
-            return redirect('/admin');
-        }
-
-        return redirect()->intended('/admin');
+        return redirect('/admin');
     }
 }

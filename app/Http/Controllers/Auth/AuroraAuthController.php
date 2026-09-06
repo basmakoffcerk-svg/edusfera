@@ -23,7 +23,7 @@ class AuroraAuthController extends Controller
 
     public function showAuthPage()
     {
-        if (Auth::check()) {
+        if (Auth::check() || Filament::auth()->check()) {
             return redirect('/admin');
         }
 
@@ -43,9 +43,14 @@ class AuroraAuthController extends Controller
         if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
             $user = User::whereRaw('LOWER(email) = ?', [mb_strtolower($login)])->first();
         } else {
-            $normalizedPhone = preg_replace('/[^\d+]/', '', $login);
-            if (! empty($normalizedPhone)) {
-                $user = User::where('phone', $normalizedPhone)->first();
+            $normalizedPhone = $this->normalizePhone($login);
+            $rawDigits = preg_replace('/\D/', '', $login) ?? '';
+            if ($normalizedPhone !== '') {
+                $user = User::query()
+                    ->where('phone', $normalizedPhone)
+                    ->orWhere('phone', ltrim($normalizedPhone, '+'))
+                    ->orWhere('phone', $rawDigits)
+                    ->first();
             }
         }
 
@@ -55,14 +60,14 @@ class AuroraAuthController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Неверный e-mail или пароль.',
+                'message' => 'Неверный e-mail/телефон или пароль.',
             ], 422);
         }
 
         if (! Hash::check($credentials['password'], $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Неверный e-mail или пароль.',
+                'message' => 'Неверный e-mail/телефон или пароль.',
             ], 422);
         }
 
@@ -70,10 +75,17 @@ class AuroraAuthController extends Controller
         Filament::auth()->login($user, true);
 
         $request->session()->regenerate();
+        $request->session()->put('password_hash_web', $user->getAuthPassword());
 
         return response()->json([
             'success' => true,
             'redirect' => '/admin',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role instanceof UserRole ? $user->role->value : (string) $user->role,
+            ],
         ]);
     }
 
@@ -83,25 +95,25 @@ class AuroraAuthController extends Controller
             'firstName' => ['required', 'string', 'max:255'],
             'lastName' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['required', 'string', Password::min(8)->letters()->numbers()],
             'role' => ['nullable', 'string', 'in:student,tutor,parent'],
-            'plan' => ['nullable', 'string', 'in:basic,pro,premium'],
+            'plan' => ['nullable', 'string', 'in:start,pro,basic,premium'],
         ]);
 
         $name = trim($data['firstName'].' '.($data['lastName'] ?? ''));
+        $rawPhone = $data['phone'] ?? null;
+        $phone = $rawPhone ? $this->normalizePhone((string) $rawPhone) : null;
 
         $user = User::create([
             'name' => $name,
             'email' => mb_strtolower(trim($data['email'])),
+            'phone' => $phone,
             'password' => Hash::make($data['password']),
             'offer_accepted_at' => now(),
         ]);
 
-        // `role` не входит в $fillable (защита от mass assignment), поэтому
-        // раньше она молча отбрасывалась — все «репетиторы» регистрировались
-        // как ученики. Роль валидирована выше (student|tutor|parent) и
-        // сохраняется явно.
-        $userRole = UserRole::from($data['role'] ?? 'student');
+        $userRole = UserRole::tryFrom($data['role'] ?? 'student') ?? UserRole::Student;
         $user->role = $userRole;
         $user->save();
 
@@ -110,23 +122,50 @@ class AuroraAuthController extends Controller
                 'user_id' => $user->id,
             ]);
 
-            $plan = \App\Domain\Subscription\Enums\SubscriptionPlan::tryFrom($data['plan'] ?? 'pro') 
-                ?? \App\Domain\Subscription\Enums\SubscriptionPlan::PRO;
+            $planInput = $data['plan'] ?? 'pro';
+            $plan = match ($planInput) {
+                'start', 'basic' => \App\Domain\Subscription\Enums\SubscriptionPlan::START,
+                'pro' => \App\Domain\Subscription\Enums\SubscriptionPlan::PRO,
+                'premium' => \App\Domain\Subscription\Enums\SubscriptionPlan::PREMIUM,
+                default => \App\Domain\Subscription\Enums\SubscriptionPlan::PRO,
+            };
 
-            app(\App\Domain\Subscription\Services\SubscriptionService::class)->startTrial($user, $plan);
+            app(\App\Domain\Subscription\Services\SubscriptionService::class)->ensureTrialStarted($user, $plan);
         }
 
         Auth::login($user, true);
         Filament::auth()->login($user, true);
 
         $request->session()->regenerate();
+        $request->session()->put('password_hash_web', $user->getAuthPassword());
 
         return response()->json([
             'success' => true,
             'role' => $userRole->value,
             'isTutor' => $userRole === UserRole::Tutor,
             'redirect' => '/admin',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $userRole->value,
+            ],
         ]);
+    }
+
+    private function normalizePhone(string $phone): string
+    {
+        $digits = preg_replace('/\D/', '', $phone) ?? '';
+
+        if (str_starts_with($digits, '80') && strlen($digits) === 11) {
+            $digits = '375'.substr($digits, 2);
+        }
+
+        if (str_starts_with($digits, '375')) {
+            return '+'.$digits;
+        }
+
+        return $digits !== '' ? '+'.$digits : '';
     }
 
     public function confirmPlan(Request $request)

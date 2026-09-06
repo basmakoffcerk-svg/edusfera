@@ -18,17 +18,9 @@ class StudentUpcomingLessonsWidget extends Widget
 
     public static function canView(): bool
     {
-        /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
-        if (! $user) {
-            return false;
-        }
-
-        $role = $user->role;
-        $val = is_object($role) ? $role->value : $role;
-
-        return in_array($role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true) || in_array($val, ['student', 'parent'], true);
+        return $user !== null && ($user->isStudent() || $user->isParent());
     }
 
     protected function getViewData(): array

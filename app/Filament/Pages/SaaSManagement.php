@@ -136,8 +136,13 @@ class SaaSManagement extends Page
         return 'Хранилище и SaaS-тарифы';
     }
 
+    public static function canAccess(): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->role === 'admin';
+        return (bool) auth()->user()?->isAdmin();
     }
 }

@@ -111,6 +111,20 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === 'student' || $this->role === UserRole::Student->value;
     }
 
+    public function isParent(): bool
+    {
+        if ($this->role instanceof UserRole) {
+            return $this->role === UserRole::Parent;
+        }
+
+        return $this->role === 'parent' || $this->role === UserRole::Parent->value;
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return \App\Services\MultiAccountService::roleLabel($this->role);
+    }
+
     public function tutorProfile(): HasOne
     {
         return $this->hasOne(TutorProfile::class);

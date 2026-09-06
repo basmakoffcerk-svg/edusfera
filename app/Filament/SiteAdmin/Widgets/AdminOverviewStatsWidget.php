@@ -21,9 +21,7 @@ class AdminOverviewStatsWidget extends StatsOverviewWidget
 
     public static function canView(): bool
     {
-        $role = auth()->user()?->role;
-
-        return $role === \App\Enums\UserRole::Admin || (is_object($role) ? $role->value : $role) === 'admin';
+        return (bool) auth()->user()?->isAdmin();
     }
 
     protected function getStats(): array

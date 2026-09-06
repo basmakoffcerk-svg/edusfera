@@ -27,12 +27,16 @@ class HomeworkPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
+        $user = auth()->user();
+
+        return $user && ($user->isStudent() || $user->isParent());
     }
 
     public static function canAccess(): bool
     {
-        return in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
+        $user = auth()->user();
+
+        return $user && ($user->isStudent() || $user->isParent() || $user->isAdmin());
     }
 
     public static function getNavigationGroup(): ?string
@@ -44,7 +48,7 @@ class HomeworkPage extends Page
     {
         $user = auth()->user();
 
-        if (! $user || ! in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
+        if (! $user || (! $user->isStudent() && ! $user->isParent())) {
             return null;
         }
 
@@ -58,7 +62,8 @@ class HomeworkPage extends Page
 
     public function mount(): void
     {
-        abort_unless(in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true), 403);
+        $user = auth()->user();
+        abort_unless($user && ($user->isStudent() || $user->isParent() || $user->isAdmin()), 403);
 
         $this->selectedAssignmentId = $this->assignments()->first()?->id;
     }

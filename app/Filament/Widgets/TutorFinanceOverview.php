@@ -22,9 +22,7 @@ class TutorFinanceOverview extends Widget
 
     public static function canView(): bool
     {
-        $user = auth()->user();
-
-        return $user !== null && ($user->isTutor() || $user->isAdmin());
+        return auth()->user()?->isTutor() ?? false;
     }
 
     protected function getViewData(): array

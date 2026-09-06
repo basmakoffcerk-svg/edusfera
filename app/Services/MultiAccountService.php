@@ -89,8 +89,9 @@ class MultiAccountService
             $this->addId($currentId);
         }
 
-        // Log in as the target user via the 'web' guard
+        // Log in as the target user via the 'web' guard and Filament auth
         $guard->login($user, remember: true);
+        \Filament\Facades\Filament::auth()->login($user, remember: true);
 
         // Regenerate session to prevent fixation attacks
         session()->regenerate();
@@ -123,18 +124,18 @@ class MultiAccountService
     /**
      * Get role label in Russian.
      */
-    public static function roleLabel(string|\App\Enums\UserRole $role): string
+    public static function roleLabel(string|\App\Enums\UserRole|null $role): string
     {
         if ($role instanceof \App\Enums\UserRole) {
             $role = $role->value;
         }
 
         return match ($role) {
-            'admin' => 'Админ',
+            'admin' => 'Администратор',
             'tutor' => 'Репетитор',
             'student' => 'Ученик',
             'parent' => 'Родитель',
-            default => $role,
+            default => (string) ($role ?? ''),
         };
     }
 

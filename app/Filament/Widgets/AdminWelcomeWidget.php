@@ -28,16 +28,7 @@ class AdminWelcomeWidget extends Widget
 
     public static function canView(): bool
     {
-        /** @var User|null $user */
-        $user = Auth::user();
-
-        if (! $user) {
-            return false;
-        }
-
-        $role = $user->role;
-
-        return $role === UserRole::Admin || (is_object($role) ? $role->value : $role) === 'admin';
+        return (bool) Auth::user()?->isAdmin();
     }
 
     protected function getViewData(): array

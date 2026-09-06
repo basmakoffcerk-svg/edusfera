@@ -169,40 +169,135 @@ export default function NexumHero() {
                   <button
                     type="button"
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-5 py-2 text-sm font-semibold hover:bg-emerald-500/30 transition-all flex items-center gap-2.5 cursor-pointer backdrop-blur-md shadow-sm focus:outline-none"
+                    className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-4 py-2 text-sm font-semibold hover:bg-emerald-500/30 transition-all flex items-center gap-2.5 cursor-pointer backdrop-blur-md shadow-sm focus:outline-none"
                     aria-expanded={userMenuOpen}
                   >
                     <span className="relative flex h-2.5 w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
-                    <span className="truncate max-w-[130px]">{user.name || 'Кабинет'}</span>
-                    <LayoutDashboard className="w-4 h-4 text-emerald-400" />
+                    <span className="truncate max-w-[120px]">{user.name || 'Кабинет'}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-emerald-200 font-bold border border-white/10">
+                      {user.role_label || (user.role === 'tutor' ? 'Репетитор' : user.role === 'admin' ? 'Администратор' : user.role === 'parent' ? 'Родитель' : 'Ученик')}
+                    </span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-emerald-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Dropdown Menu */}
                   {userMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl bg-[#121214]/95 border border-white/10 p-2 text-white shadow-2xl backdrop-blur-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl bg-[#121214]/95 border border-white/10 p-2 text-white shadow-2xl backdrop-blur-xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                       {/* Current User Card */}
                       <div className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5 mb-1.5">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-sm">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-sm">
                           {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-bold text-white truncate">{user.name}</p>
-                          <p className="text-xs text-neutral-400 truncate">{user.role_label || user.email}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              {user.role_label || (user.role === 'tutor' ? 'Репетитор' : user.role === 'admin' ? 'Администратор' : user.role === 'parent' ? 'Родитель' : 'Ученик')}
+                            </span>
+                            <span className="text-xs text-neutral-400 truncate">{user.email}</span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Main Navigation Links */}
+                      {/* Unified Dashboard Link */}
                       <div className="space-y-0.5">
                         <a
-                          href={user.role === 'admin' ? '/site-admin' : '/admin'}
-                          className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                          href="/admin"
+                          className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-white rounded-xl bg-gradient-to-r from-[#7D39EB]/30 to-[#C6FF33]/20 border border-white/10 hover:from-[#7D39EB]/50 hover:to-[#C6FF33]/30 transition-all"
                         >
-                          <LayoutDashboard className="w-4 h-4 text-emerald-400" />
+                          <span className="text-base">🚀</span>
                           <span>Личный кабинет</span>
                         </a>
+
+                        {/* Role-Specific Quick Actions */}
+                        {user.role === 'tutor' && (
+                          <>
+                            <a
+                              href="/admin/tutor-subscription-page"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <Sparkles className="w-4 h-4 text-amber-400" />
+                              <span>Управление тарифом</span>
+                            </a>
+                            <a
+                              href="/admin/tutor-availability-page"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <Calendar className="w-4 h-4 text-emerald-400" />
+                              <span>Расписание</span>
+                            </a>
+                            <a
+                              href="/admin/lessons"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <BookOpen className="w-4 h-4 text-blue-400" />
+                              <span>Мои занятия</span>
+                            </a>
+                            <a
+                              href="/admin/transactions"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <DollarSign className="w-4 h-4 text-[#C6FF33]" />
+                              <span>Мои финансы</span>
+                            </a>
+                          </>
+                        )}
+
+                        {(user.role === 'student' || user.role === 'parent') && (
+                          <>
+                            <a
+                              href="/admin/lessons"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <BookOpen className="w-4 h-4 text-blue-400" />
+                              <span>Мои занятия</span>
+                            </a>
+                            <a
+                              href="/admin/diagnostic"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <GraduationCap className="w-4 h-4 text-emerald-400" />
+                              <span>ИИ-Диагностика</span>
+                            </a>
+                            <a
+                              href="/admin/homework"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <FileCheck className="w-4 h-4 text-amber-400" />
+                              <span>Домашние задания</span>
+                            </a>
+                            <a
+                              href="/admin/wallet"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <DollarSign className="w-4 h-4 text-[#C6FF33]" />
+                              <span>Учёт денег</span>
+                            </a>
+                          </>
+                        )}
+
+                        {user.role === 'admin' && (
+                          <>
+                            <a
+                              href="/admin/users"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <Users className="w-4 h-4 text-blue-400" />
+                              <span>Пользователи</span>
+                            </a>
+                            <a
+                              href="/admin/saa-s-management"
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
+                            >
+                              <Sparkles className="w-4 h-4 text-violet-400" />
+                              <span>Управление SaaS</span>
+                            </a>
+                          </>
+                        )}
+
                         <a
                           href="/admin/messages"
                           className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
@@ -233,7 +328,7 @@ export default function NexumHero() {
                                   <span className="truncate text-xs font-semibold">{acc.name}</span>
                                 </div>
                                 <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/10 text-neutral-400 font-medium shrink-0">
-                                  {acc.role === 'tutor' ? 'Репетитор' : acc.role === 'admin' ? 'Админ' : 'Ученик'}
+                                  {acc.role === 'tutor' ? 'Репетитор' : acc.role === 'admin' ? 'Администратор' : acc.role === 'parent' ? 'Родитель' : 'Ученик'}
                                 </span>
                               </button>
                             ))}
@@ -248,7 +343,7 @@ export default function NexumHero() {
                           className="flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-neutral-200 hover:text-white rounded-xl hover:bg-white/10 transition-colors"
                         >
                           <UserPlus className="w-4 h-4 text-blue-400" />
-                          <span>Войти в другой аккаунт</span>
+                          <span>+ Добавить аккаунт</span>
                         </a>
 
                         <button
@@ -257,7 +352,7 @@ export default function NexumHero() {
                           className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-red-400 hover:text-red-300 rounded-xl hover:bg-red-500/10 transition-colors cursor-pointer text-left"
                         >
                           <LogOut className="w-4 h-4 text-red-400" />
-                          <span>Выйти из аккаунта</span>
+                          <span>Выйти</span>
                         </button>
                       </div>
                     </div>
@@ -272,8 +367,14 @@ export default function NexumHero() {
                     Войти
                   </a>
                   <a
+                    href="/register"
+                    className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold px-4 py-2 text-sm hover:from-violet-500 hover:to-indigo-500 transition-all shadow-md"
+                  >
+                    Регистрация
+                  </a>
+                  <a
                     href="/diagnostic"
-                    className="rounded-full bg-[#C6FF33] text-black font-extrabold px-5 py-2 text-sm hover:bg-[#d4ff59] transition-all shadow-md"
+                    className="rounded-full bg-[#C6FF33] text-black font-extrabold px-4 py-2 text-sm hover:bg-[#d4ff59] transition-all shadow-md"
                   >
                     ИИ-Диагностика
                   </a>
@@ -307,22 +408,75 @@ export default function NexumHero() {
               {user ? (
                 <div className="mt-4 pt-4 border-t border-white/10 space-y-2.5">
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-sm">
                       {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-white truncate">{user.name}</p>
-                      <p className="text-xs text-neutral-400 truncate">{user.role_label || user.email}</p>
+                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        {user.role_label || (user.role === 'tutor' ? 'Репетитор' : user.role === 'admin' ? 'Администратор' : user.role === 'parent' ? 'Родитель' : 'Ученик')}
+                      </span>
                     </div>
                   </div>
 
                   <a
-                    href={user.role === 'admin' ? '/site-admin' : '/admin'}
-                    className="flex items-center justify-center gap-2.5 rounded-xl bg-emerald-600/30 border border-emerald-500/40 px-4 py-3 text-sm font-semibold text-emerald-300"
+                    href="/admin"
+                    className="flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#7D39EB]/40 to-[#C6FF33]/30 border border-white/20 px-4 py-3 text-sm font-semibold text-white"
                   >
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span>Личный кабинет</span>
+                    <span>🚀 Личный кабинет</span>
                   </a>
+
+                  {user.role === 'tutor' && (
+                    <div className="space-y-1">
+                      <a
+                        href="/admin/tutor-subscription-page"
+                        className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-white"
+                      >
+                        <Sparkles className="w-4 h-4 text-amber-400" />
+                        <span>Управление тарифом</span>
+                      </a>
+                      <a
+                        href="/admin/tutor-availability-page"
+                        className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-white"
+                      >
+                        <Calendar className="w-4 h-4 text-emerald-400" />
+                        <span>Расписание</span>
+                      </a>
+                      <a
+                        href="/admin/lessons"
+                        className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-white"
+                      >
+                        <BookOpen className="w-4 h-4 text-blue-400" />
+                        <span>Мои занятия</span>
+                      </a>
+                    </div>
+                  )}
+
+                  {(user.role === 'student' || user.role === 'parent') && (
+                    <div className="space-y-1">
+                      <a
+                        href="/admin/lessons"
+                        className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-white"
+                      >
+                        <BookOpen className="w-4 h-4 text-blue-400" />
+                        <span>Мои занятия</span>
+                      </a>
+                      <a
+                        href="/admin/diagnostic"
+                        className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-white"
+                      >
+                        <GraduationCap className="w-4 h-4 text-emerald-400" />
+                        <span>ИИ-Диагностика</span>
+                      </a>
+                      <a
+                        href="/admin/homework"
+                        className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-white"
+                      >
+                        <FileCheck className="w-4 h-4 text-amber-400" />
+                        <span>Домашние задания</span>
+                      </a>
+                    </div>
+                  )}
 
                   <a
                     href="/admin/messages"
@@ -346,43 +500,50 @@ export default function NexumHero() {
                         >
                           <span className="font-medium">{acc.name}</span>
                           <span className="text-xs text-neutral-400">
-                            {acc.role === 'tutor' ? 'Репетитор' : acc.role === 'admin' ? 'Админ' : 'Ученик'}
+                            {acc.role === 'tutor' ? 'Репетитор' : acc.role === 'admin' ? 'Администратор' : acc.role === 'parent' ? 'Родитель' : 'Ученик'}
                           </span>
                         </button>
                       ))}
                     </div>
                   )}
 
-                  <a
-                    href="/account/add"
-                    className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-semibold text-white"
-                  >
-                    <UserPlus className="w-4 h-4 text-blue-400" />
-                    <span>Войти в другой аккаунт</span>
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-2.5 text-sm font-semibold text-red-400 cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Выйти из аккаунта</span>
-                  </button>
+                  <div className="pt-2 border-t border-white/10 space-y-1">
+                    <a
+                      href="/account/add"
+                      className="flex items-center gap-2.5 rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-neutral-300"
+                    >
+                      <UserPlus className="w-4 h-4 text-blue-400" />
+                      <span>+ Добавить аккаунт</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 rounded-xl bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-400 cursor-pointer text-left"
+                    >
+                      <LogOut className="w-4 h-4 text-red-400" />
+                      <span>Выйти</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3 pt-4 border-t border-white/10">
-                  <a
-                    href="/diagnostic"
-                    className="rounded-full bg-[#C6FF33] py-3 text-center text-black font-extrabold text-sm"
-                  >
-                    Пройти ИИ-диагностику
-                  </a>
+                <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
                   <a
                     href="/login"
-                    className="rounded-full bg-white/10 py-3 text-center text-white font-medium text-sm"
+                    className="block text-center rounded-xl bg-white/10 py-3 text-sm font-semibold text-white"
                   >
                     Войти
+                  </a>
+                  <a
+                    href="/register"
+                    className="block text-center rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-3 text-sm font-bold text-white shadow-md"
+                  >
+                    Регистрация
+                  </a>
+                  <a
+                    href="/diagnostic"
+                    className="block text-center rounded-xl bg-[#C6FF33] py-3 text-sm font-extrabold text-black shadow-md"
+                  >
+                    ИИ-Диагностика
                   </a>
                 </div>
               )}

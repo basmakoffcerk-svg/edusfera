@@ -117,8 +117,13 @@ class AiSettingsPage extends Page
         return 'Управление ИИ и Моделями';
     }
 
+    public static function canAccess(): bool
+    {
+        return (bool) auth()->user()?->isAdmin();
+    }
+
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->role === 'admin';
+        return (bool) auth()->user()?->isAdmin();
     }
 }

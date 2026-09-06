@@ -60,9 +60,17 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 'Занятия',
+                'Подготовка',
                 'Связь',
                 'Финансы',
                 'Профиль',
+                'Управление пользователями',
+                'Модерация',
+                'Диспуты и безопасность',
+                'Хранилище и SaaS-тарифы',
+                'Управление ИИ и Моделями',
+                'Микросервисы и Шлюз (Gateway)',
+                'Контент',
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

@@ -39,6 +39,16 @@ enum UserRole: string
         return $this === self::Parent;
     }
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::Admin => 'Администратор',
+            self::Tutor => 'Репетитор',
+            self::Student => 'Ученик',
+            self::Parent => 'Родитель',
+        };
+    }
+
     public function canBook(): bool
     {
         return in_array($this, [self::Student, self::Parent], true);

@@ -200,6 +200,14 @@ class TutorAvailabilityPage extends Page
             ->all();
     }
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return Filament::getCurrentPanel()?->getId() === 'admin'
+            && ($user?->isTutor() || $user?->isAdmin());
+    }
+
     public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->user();
