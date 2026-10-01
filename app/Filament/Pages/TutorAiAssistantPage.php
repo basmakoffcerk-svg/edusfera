@@ -18,7 +18,7 @@ class TutorAiAssistantPage extends Page
 
     protected static ?string $navigationLabel = 'ИИ-Помощник';
 
-    protected static ?string $title = 'ИИ-Помощник репетитора (Google Gemini)';
+    protected static ?string $title = 'ИИ-Помощник репетитора Edusfera AI';
 
     protected static ?int $navigationSort = 5;
 
