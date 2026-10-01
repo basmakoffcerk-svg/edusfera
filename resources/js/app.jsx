@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import NexumHero from './components/NexumHero';
 import AuroraSignUp from './components/AuroraSignUp';
 import ForTutorsPage from './components/ForTutorsPage';
+import TutorAiAssistant from './components/TutorAiAssistant/TutorAiAssistant';
 
 const appContainer = document.getElementById('app');
 if (appContainer) {
@@ -21,4 +22,11 @@ if (tutorsContainer) {
   const root = createRoot(tutorsContainer);
   root.render(<ForTutorsPage />);
 }
+
+const aiAssistantContainer = document.getElementById('tutor-ai-assistant-root');
+if (aiAssistantContainer) {
+  const root = createRoot(aiAssistantContainer);
+  root.render(<TutorAiAssistant />);
+}
+
 
