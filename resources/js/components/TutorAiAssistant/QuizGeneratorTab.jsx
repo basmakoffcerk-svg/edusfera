@@ -29,10 +29,34 @@ const QUESTION_COUNTS = [
 ];
 
 const DIFFICULTIES = [
-    { id: 'Базовый (Часть А ЦТ 2026)', label: 'Часть А (Базовый)', badge: 'Тест 4-5 вар.' },
-    { id: 'Средний (ЦТ 2026, часть А и Б)', label: 'ЦТ 2026 (А + Б)', badge: 'Смешанный' },
-    { id: 'Сложный (Часть Б, высокий балл)', label: 'Часть Б (80+ баллов)', badge: 'Числовой ответ' },
-    { id: 'Олимпиадный уровень со звездочкой', label: 'Олимпиадный (*)', badge: 'Повышенный' },
+    { 
+        id: 'Базовый (Часть А ЦТ 2026)', 
+        label: 'Часть А', 
+        tag: 'Базовый', 
+        desc: 'Выбор ответа (4-5 вариантов), дистракторы РИКЗ',
+        icon: '📝' 
+    },
+    { 
+        id: 'Средний (ЦТ 2026, часть А и Б)', 
+        label: 'ЦТ 2026', 
+        tag: 'А + Б', 
+        desc: 'Сбалансированный тест полного формата экзамена',
+        icon: '🎯' 
+    },
+    { 
+        id: 'Сложный (Часть Б, высокий балл)', 
+        label: 'Часть Б', 
+        tag: '80+ баллов', 
+        desc: 'Краткий числовой ответ, повышенная сложность',
+        icon: '⚡' 
+    },
+    { 
+        id: 'Олимпиадный уровень со звездочкой', 
+        label: 'Олимпиадный', 
+        tag: 'Хард (*)', 
+        desc: 'Нестандартное мышление, задачи со звездочкой',
+        icon: '🏆' 
+    },
 ];
 
 const FORMATS = [
@@ -245,82 +269,127 @@ export default function QuizGeneratorTab({ csrfToken, endpoints, initialSubject 
                 </div>
 
                 {/* БЛОК 3: Количество, сложность и формат */}
-                <div className="ed-ai-box space-y-3">
-                    <div className="flex items-center gap-2 pb-2 border-b border-[#ECEEF1] dark:border-slate-800">
-                        <span className="text-base">⚙️</span>
-                        <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider">
-                            3. Спецификация РИКЗ
+                <div className="ed-ai-box space-y-4">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#ECEEF1] dark:border-slate-800">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-xl bg-[#FAF8FF] dark:bg-violet-950/60 text-[#7D39EB] dark:text-violet-400 flex items-center justify-center border border-[#ECE5FB] dark:border-violet-900/50">
+                                <Target className="w-4 h-4 text-[#7D39EB]" />
+                            </div>
+                            <div>
+                                <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider block">
+                                    3. Спецификация РИКЗ
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-medium block">
+                                    Количество заданий и формат сложности
+                                </span>
+                            </div>
+                        </div>
+                        <span className="text-[10px] px-2.5 py-1 rounded-full font-extrabold bg-[#FAF8FF] dark:bg-slate-800 text-[#7D39EB] border border-[#ECE5FB]">
+                            {count} заданий
                         </span>
                     </div>
 
-                    {/* Count Pills */}
-                    <div className="space-y-1.5">
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    {/* Count Buttons */}
+                    <div className="space-y-2">
+                        <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
                             Количество заданий:
                         </label>
-                        <div className="grid grid-cols-4 gap-1.5">
-                            {QUESTION_COUNTS.map((qc) => (
-                                <button
-                                    key={qc.value}
-                                    type="button"
-                                    onClick={() => setCount(qc.value)}
-                                    className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer ${
-                                        count === qc.value
-                                            ? 'border-[#7D39EB] bg-[#7D39EB] text-white font-black shadow-xs'
-                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    <div className="text-xs font-bold">{qc.label}</div>
-                                    <div className={`text-[9px] ${count === qc.value ? 'text-violet-200' : 'text-slate-400'}`}>{qc.sub}</div>
-                                </button>
-                            ))}
+                        <div className="grid grid-cols-4 gap-2">
+                            {QUESTION_COUNTS.map((qc) => {
+                                const isSelected = count === qc.value;
+                                return (
+                                    <button
+                                        key={qc.value}
+                                        type="button"
+                                        onClick={() => setCount(qc.value)}
+                                        className={`ed-timing-btn ${isSelected ? 'active' : ''}`}
+                                    >
+                                        {isSelected && (
+                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#C6FF33] border-2 border-white dark:border-slate-900 shadow-2xs"></span>
+                                        )}
+                                        <span className="ed-timing-val">{qc.label}</span>
+                                        <span className="ed-timing-sub">{qc.sub}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
                     {/* Difficulty Grid */}
-                    <div className="space-y-1.5 pt-1">
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    <div className="space-y-2 pt-1">
+                        <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
                             Формат сложности:
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {DIFFICULTIES.map((df) => (
-                                <button
-                                    key={df.id}
-                                    type="button"
-                                    onClick={() => setDifficulty(df.id)}
-                                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                                        difficulty === df.id
-                                            ? 'border-[#7D39EB] bg-[#FAF8FF] dark:bg-violet-950/40 text-[#7D39EB] dark:text-violet-300 shadow-2xs font-bold'
-                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                                    }`}
-                                >
-                                    <div className="text-[11px] font-bold leading-tight">{df.label}</div>
-                                    <div className="text-[9.5px] opacity-75 mt-0.5">{df.badge}</div>
-                                </button>
-                            ))}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {DIFFICULTIES.map((df) => {
+                                const isSelected = difficulty === df.id;
+                                return (
+                                    <button
+                                        key={df.id}
+                                        type="button"
+                                        onClick={() => setDifficulty(df.id)}
+                                        className={`ed-level-card ${isSelected ? 'active' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm shrink-0 transition-colors ${
+                                                isSelected 
+                                                    ? 'bg-[#7D39EB] text-white shadow-xs' 
+                                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                            }`}>
+                                                {df.icon}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white truncate">
+                                                        {df.label}
+                                                    </span>
+                                                    <span className={`text-[9.5px] px-1.5 py-0.2 rounded-md font-bold tracking-tight ${
+                                                        isSelected
+                                                            ? 'bg-[#7D39EB]/15 text-[#7D39EB] dark:bg-violet-900/60 dark:text-violet-300'
+                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                                                    }`}>
+                                                        {df.tag}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
+                                                    {df.desc}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Custom Radio / Check Indicator */}
+                                        <div className="ed-radio-indicator">
+                                            {isSelected && (
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
                     {/* Format Selector Pills */}
-                    <div className="space-y-1.5 pt-1">
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    <div className="space-y-2 pt-1">
+                        <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
                             Тип ответов:
                         </label>
-                        <div className="flex flex-wrap gap-1.5">
-                            {FORMATS.map((fmt) => (
-                                <button
-                                    key={fmt.id}
-                                    type="button"
-                                    onClick={() => setFormat(fmt.id)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                                        format === fmt.id
-                                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs'
-                                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {fmt.label}
-                                </button>
-                            ))}
+                        <div className="flex flex-wrap gap-2">
+                            {FORMATS.map((fmt) => {
+                                const isSelected = format === fmt.id;
+                                return (
+                                    <button
+                                        key={fmt.id}
+                                        type="button"
+                                        onClick={() => setFormat(fmt.id)}
+                                        className={`ed-format-pill ${isSelected ? 'active' : ''}`}
+                                    >
+                                        {fmt.label}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>

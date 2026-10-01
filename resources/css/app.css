@@ -739,3 +739,170 @@
     border-color: #9055FD;
 }
 
+/* ═══ EDUSFERA AI: LEVEL & TIMING SEGMENTED CONTROLS ═══ */
+
+/* Level Cards Grid */
+.ed-level-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1.5px solid #ECEEF1;
+    background: #FFFFFF !important;
+    color: #0C0A14 !important;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: left;
+    position: relative;
+    user-select: none;
+}
+:is(.dark) .ed-level-card {
+    background: #1E293B !important;
+    border-color: #334155;
+    color: #F8FAFC !important;
+}
+.ed-level-card:hover {
+    border-color: rgba(125, 57, 235, 0.45);
+    background: #FAF8FF !important;
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 12px rgba(125, 57, 235, 0.08);
+}
+:is(.dark) .ed-level-card:hover {
+    background: #1E1B4B !important;
+    border-color: #7D39EB;
+}
+.ed-level-card.active {
+    border-color: #7D39EB !important;
+    background: #FAF8FF !important;
+    box-shadow: 0 0 0 2px rgba(125, 57, 235, 0.2), 0 4px 12px rgba(125, 57, 235, 0.1) !important;
+}
+:is(.dark) .ed-level-card.active {
+    background: rgba(125, 57, 235, 0.2) !important;
+    border-color: #A855F7 !important;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25) !important;
+}
+
+/* Radio checkmark circle in Level Card */
+.ed-radio-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    border: 2px solid #CBD5E1;
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+:is(.dark) .ed-radio-indicator {
+    border-color: #475569;
+    background: #0F172A;
+}
+.ed-level-card.active .ed-radio-indicator {
+    border-color: #7D39EB !important;
+    background: #7D39EB !important;
+    color: #FFFFFF !important;
+}
+
+/* Timing & Count Buttons */
+.ed-timing-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px;
+    border-radius: 14px;
+    border: 1.5px solid #ECEEF1;
+    background: #FFFFFF !important;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    user-select: none;
+    text-align: center;
+    width: 100%;
+}
+:is(.dark) .ed-timing-btn {
+    background: #1E293B !important;
+    border-color: #334155;
+}
+.ed-timing-btn:hover {
+    border-color: rgba(125, 57, 235, 0.45);
+    background: #FAF8FF !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(125, 57, 235, 0.08);
+}
+.ed-timing-btn .ed-timing-val {
+    font-size: 13.5px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #0C0A14 !important;
+    letter-spacing: -0.01em;
+}
+:is(.dark) .ed-timing-btn .ed-timing-val {
+    color: #F8FAFC !important;
+}
+.ed-timing-btn .ed-timing-sub {
+    font-size: 10px;
+    font-weight: 600;
+    color: #64748B !important;
+    margin-top: 2px;
+}
+:is(.dark) .ed-timing-btn .ed-timing-sub {
+    color: #94A3B8 !important;
+}
+
+/* ACTIVE STATE FOR TIMING BUTTON - ROCK-SOLID HIGH-CONTRAST */
+.ed-timing-btn.active {
+    background: linear-gradient(135deg, #7D39EB 0%, #6827D6 100%) !important;
+    border-color: #7D39EB !important;
+    box-shadow: 0 4px 14px rgba(125, 57, 235, 0.32) !important;
+    transform: translateY(-1px);
+}
+.ed-timing-btn.active .ed-timing-val {
+    color: #FFFFFF !important;
+    font-weight: 900 !important;
+}
+.ed-timing-btn.active .ed-timing-sub {
+    color: #C6FF33 !important; /* Electric Lime accent for maximum contrast & pop */
+    font-weight: 800 !important;
+}
+
+/* Format Pills */
+.ed-format-pill {
+    padding: 7px 12px;
+    border-radius: 12px;
+    border: 1.5px solid #ECEEF1;
+    background: #FFFFFF !important;
+    color: #334155 !important;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+:is(.dark) .ed-format-pill {
+    background: #1E293B !important;
+    border-color: #334155;
+    color: #CBD5E1 !important;
+}
+.ed-format-pill:hover {
+    border-color: rgba(125, 57, 235, 0.4);
+    background: #FAF8FF !important;
+    color: #7D39EB !important;
+}
+.ed-format-pill.active {
+    background: #0C0A14 !important;
+    color: #FFFFFF !important;
+    border-color: #0C0A14 !important;
+    box-shadow: 0 2px 8px rgba(12, 10, 20, 0.2) !important;
+}
+:is(.dark) .ed-format-pill.active {
+    background: #FFFFFF !important;
+    color: #0C0A14 !important;
+    border-color: #FFFFFF !important;
+}
+
+

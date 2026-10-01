@@ -26,10 +26,34 @@ const SUBJECTS = [
 ];
 
 const GRADES = [
-    { id: '11 класс (подготовка к ЦТ/ЦЭ 2026)', label: '11 класс (ЦТ/ЦЭ 2026)', badge: '🎯 Экзамен' },
-    { id: '10 класс (углубленный уровень)', label: '10 класс (углубленный)', badge: '🚀 Профиль' },
-    { id: '9 класс (базовый / выпускные экзамены)', label: '9 класс (выпускной)', badge: '📖 База' },
-    { id: 'Олимпиадная подготовка', label: 'Олимпиада (район/город)', badge: '🏆 Высокий балл' },
+    { 
+        id: '11 класс (подготовка к ЦТ/ЦЭ 2026)', 
+        label: '11 класс', 
+        tag: 'ЦТ/ЦЭ 2026', 
+        desc: 'Спецификации РИКЗ, тесты А и Б, ловушки',
+        icon: '🎯' 
+    },
+    { 
+        id: '10 класс (углубленный уровень)', 
+        label: '10 класс', 
+        tag: 'Профиль', 
+        desc: 'Углубленная теория, доказательства, олимпиадные',
+        icon: '🚀' 
+    },
+    { 
+        id: '9 класс (базовый / выпускные экзамены)', 
+        label: '9 класс', 
+        tag: 'Выпускной', 
+        desc: 'Базовая программа, экзамен за 9 классов',
+        icon: '📖' 
+    },
+    { 
+        id: 'Олимпиадная подготовка', 
+        label: 'Олимпиады', 
+        tag: 'Высокий балл', 
+        desc: 'Районный/городской этапы, задачи со звёздочкой',
+        icon: '🏆' 
+    },
 ];
 
 const DURATIONS = [
@@ -245,59 +269,105 @@ export default function LessonPlanTab({ csrfToken, endpoints, initialSubject = '
                 </div>
 
                 {/* БЛОК 3: Аудитория и Длительность */}
-                <div className="ed-ai-box space-y-3">
-                    <div className="flex items-center gap-2 pb-2 border-b border-[#ECEEF1] dark:border-slate-800">
-                        <span className="text-base">🎯</span>
-                        <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider">
-                            3. Уровень и длительность
+                <div className="ed-ai-box space-y-4">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#ECEEF1] dark:border-slate-800">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-xl bg-[#FAF8FF] dark:bg-violet-950/60 text-[#7D39EB] dark:text-violet-400 flex items-center justify-center border border-[#ECE5FB] dark:border-violet-900/50">
+                                <Target className="w-4 h-4 text-[#7D39EB]" />
+                            </div>
+                            <div>
+                                <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider block">
+                                    3. Уровень и длительность
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-medium block">
+                                    Аудитория учащихся и тайминг занятия
+                                </span>
+                            </div>
+                        </div>
+                        <span className="text-[10px] px-2.5 py-1 rounded-full font-extrabold bg-[#FAF8FF] dark:bg-slate-800 text-[#7D39EB] border border-[#ECE5FB]">
+                            {duration}
                         </span>
                     </div>
 
-                    {/* Level Pills */}
-                    <div className="space-y-1.5">
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    {/* Level Cards */}
+                    <div className="space-y-2">
+                        <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
                             Целевая аудитория:
                         </label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {GRADES.map((g) => (
-                                <button
-                                    key={g.id}
-                                    type="button"
-                                    onClick={() => setGrade(g.id)}
-                                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                                        grade === g.id
-                                            ? 'border-[#7D39EB] bg-[#FAF8FF] dark:bg-violet-950/40 text-[#7D39EB] dark:text-violet-300 shadow-2xs font-bold'
-                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                                    }`}
-                                >
-                                    <div className="text-[11px] font-bold leading-tight">{g.label}</div>
-                                    <div className="text-[9.5px] opacity-75 mt-0.5">{g.badge}</div>
-                                </button>
-                            ))}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {GRADES.map((g) => {
+                                const isSelected = grade === g.id;
+                                return (
+                                    <button
+                                        key={g.id}
+                                        type="button"
+                                        onClick={() => setGrade(g.id)}
+                                        className={`ed-level-card ${isSelected ? 'active' : ''}`}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm shrink-0 transition-colors ${
+                                                isSelected 
+                                                    ? 'bg-[#7D39EB] text-white shadow-xs' 
+                                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                            }`}>
+                                                {g.icon}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white truncate">
+                                                        {g.label}
+                                                    </span>
+                                                    <span className={`text-[9.5px] px-1.5 py-0.2 rounded-md font-bold tracking-tight ${
+                                                        isSelected
+                                                            ? 'bg-[#7D39EB]/15 text-[#7D39EB] dark:bg-violet-900/60 dark:text-violet-300'
+                                                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                                                    }`}>
+                                                        {g.tag}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
+                                                    {g.desc}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Custom Radio / Check Indicator */}
+                                        <div className="ed-radio-indicator">
+                                            {isSelected && (
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* Duration Pills */}
-                    <div className="space-y-1.5 pt-1">
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                    {/* Timing Buttons */}
+                    <div className="space-y-2 pt-1">
+                        <label className="block text-[11px] font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
                             Тайминг занятия:
                         </label>
-                        <div className="grid grid-cols-4 gap-1.5">
-                            {DURATIONS.map((d) => (
-                                <button
-                                    key={d.value}
-                                    type="button"
-                                    onClick={() => setDuration(d.value)}
-                                    className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer ${
-                                        duration === d.value
-                                            ? 'border-[#7D39EB] bg-[#7D39EB] text-white font-black shadow-xs'
-                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
-                                    }`}
-                                >
-                                    <div className="text-xs font-bold">{d.label}</div>
-                                    <div className={`text-[9px] ${duration === d.value ? 'text-violet-200' : 'text-slate-400'}`}>{d.sub}</div>
-                                </button>
-                            ))}
+                        <div className="grid grid-cols-4 gap-2">
+                            {DURATIONS.map((d) => {
+                                const isSelected = duration === d.value;
+                                return (
+                                    <button
+                                        key={d.value}
+                                        type="button"
+                                        onClick={() => setDuration(d.value)}
+                                        className={`ed-timing-btn ${isSelected ? 'active' : ''}`}
+                                    >
+                                        {isSelected && (
+                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#C6FF33] border-2 border-white dark:border-slate-900 shadow-2xs"></span>
+                                        )}
+                                        <span className="ed-timing-val">{d.label}</span>
+                                        <span className="ed-timing-sub">{d.sub}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
