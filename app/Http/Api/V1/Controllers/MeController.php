@@ -6,6 +6,7 @@ namespace App\Http\Api\V1\Controllers;
 
 use App\Http\Api\V1\Resources\Dto\SubjectDto;
 use App\Http\Middleware\AssignRequestId;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,7 +24,7 @@ final class MeController
 {
     public function __invoke(Request $request): JsonResponse
     {
-        /** @var \App\Models\User $user */
+        /** @var Authenticatable $user */
         $user = $request->user();
 
         $dto = new SubjectDto(

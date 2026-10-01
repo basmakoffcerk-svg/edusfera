@@ -39,6 +39,9 @@ class Lesson extends Model
         'start_time',
         'end_time',
         'duration_minutes',
+        'price',
+        'platform_commission',
+        'net_amount',
         'status',
         'payment_status',
         'package_code',
@@ -55,6 +58,8 @@ class Lesson extends Model
         'tutor_homework_summary',
         'tutor_report_score',
         'tutor_reported_at',
+        'npd_receipt_number',
+        'npd_receipt_issued_at',
     ];
 
     protected function casts(): array
@@ -71,6 +76,7 @@ class Lesson extends Model
             'checkout_started_at' => 'datetime',
             'tutor_report_score' => 'integer',
             'tutor_reported_at' => 'datetime',
+            'npd_receipt_issued_at' => 'datetime',
         ];
     }
 
@@ -164,5 +170,10 @@ class Lesson extends Model
         return $this->hasOne(ClassroomSession::class)
             ->whereIn('status', ['waiting', 'active'])
             ->latestOfMany();
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->payment_status === self::PAYMENT_PAID;
     }
 }

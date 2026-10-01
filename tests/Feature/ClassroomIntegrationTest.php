@@ -201,4 +201,28 @@ class ClassroomIntegrationTest extends TestCase
 
         $this->assertStringContainsString('Физика', $response->json('reply'));
     }
+
+    public function test_classroom_shows_maintenance_when_disabled()
+    {
+        config(['classroom.enabled' => false]);
+
+        $response = $this->actingAs($this->student)->get(route('classroom.show', $this->lesson));
+
+        $response->assertStatus(200);
+        $response->assertViewIs('classroom.maintenance');
+        $response->assertSee('Режим доработки платформы');
+    }
+
+    public function test_tutor_can_update_meeting_link()
+    {
+        config(['classroom.enabled' => false]);
+
+        $response = $this->actingAs($this->tutor)->post(route('classroom.meeting-link', $this->lesson), [
+            'meeting_link' => 'https://meet.google.com/abc-defg-hij',
+        ]);
+
+        $response->assertRedirect();
+        $this->lesson->refresh();
+        $this->assertEquals('https://meet.google.com/abc-defg-hij', $this->lesson->meeting_link);
+    }
 }

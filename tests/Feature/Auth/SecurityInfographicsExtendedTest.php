@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
 
-use App\Models\StudentBalance;
+use App\Models\Lesson;
 use App\Models\User;
 use App\Services\Finance\StudentBalanceService;
 use App\Support\SecuritySanitizer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class SecurityInfographicsExtendedTest extends TestCase
@@ -30,8 +31,8 @@ class SecurityInfographicsExtendedTest extends TestCase
 
         config(['payments.webhook_require_signature' => true]);
 
-        $response = $this->postJson(route('payments.webpay.webhook'), $payload, [
-            'X-WebPay-Signature' => 'invalid_signature_hash',
+        $response = $this->postJson(route('payments.alfabank.webhook'), $payload, [
+            'X-Payment-Signature' => 'invalid_signature_hash',
         ]);
 
         $response->assertStatus(403);
@@ -95,7 +96,7 @@ class SecurityInfographicsExtendedTest extends TestCase
 
         $balance->update(['available_amount' => '10.00']);
 
-        $lesson = new \App\Models\Lesson([
+        $lesson = new Lesson([
             'student_id' => $user->id,
             'tutor_id' => $user->id,
             'status' => 'pending',
@@ -108,7 +109,7 @@ class SecurityInfographicsExtendedTest extends TestCase
         $lesson->net_amount = 45.00;
         $lesson->save();
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         $service->debitForLesson($balance, '50.00', 'BYN', $lesson);
     }

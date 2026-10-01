@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Auth\Register;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\MessagesPage;
+use App\Filament\SiteAdmin\Widgets\AdminOverviewStatsWidget;
 use App\Filament\Widgets\AdminWelcomeWidget;
-use App\Filament\Widgets\CommissionLadderWidget;
 use App\Filament\Widgets\StudentTutorsWidget;
 use App\Filament\Widgets\StudentUpcomingLessonsWidget;
 use App\Filament\Widgets\StudentWelcomeWidget;
 use App\Filament\Widgets\TutorActionCenterWidget;
 use App\Filament\Widgets\TutorFinanceOverview;
+use App\Filament\Widgets\TutorHeroWidget;
 use App\Filament\Widgets\TutorOnboardingWidget;
+use App\Http\Middleware\EnsureTutorHasActiveSubscription;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -46,6 +49,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('favicon.svg'))
             ->login(Login::class)
             ->registration(Register::class)
+            ->profile(EditProfile::class)
             ->databaseNotifications()
             ->databaseNotificationsPolling('10s')
             ->maxContentWidth(MaxWidth::Full)
@@ -79,19 +83,28 @@ class AdminPanelProvider extends PanelProvider
                 MessagesPage::class,
             ])
             ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render('@include("partials.pwa-meta")'),
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => Blade::render('@include("partials.pwa-prompt") @include("partials.ai-copilot-widget")'),
+            )
+            ->renderHook(
                 PanelsRenderHook::PAGE_START,
                 fn (): string => auth()->user()?->isTutor()
                     ? view('filament.widgets.partials.tutor-dashboard-styles')->render()
-                    : '',
+                    : ((auth()->user()?->isStudent() || auth()->user()?->isParent())
+                        ? view('filament.widgets.partials.student-dashboard-styles')->render()
+                        : ''),
             )
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                \App\Filament\SiteAdmin\Widgets\AdminOverviewStatsWidget::class,
+                AdminOverviewStatsWidget::class,
                 AdminWelcomeWidget::class,
-                \App\Filament\Widgets\TutorHeroWidget::class,
+                TutorHeroWidget::class,
                 TutorFinanceOverview::class,
                 TutorActionCenterWidget::class,
-                CommissionLadderWidget::class,
                 TutorOnboardingWidget::class,
                 StudentWelcomeWidget::class,
                 StudentUpcomingLessonsWidget::class,
@@ -110,6 +123,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                EnsureTutorHasActiveSubscription::class,
             ]);
     }
 }

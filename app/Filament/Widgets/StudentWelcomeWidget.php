@@ -10,6 +10,8 @@ use App\Models\ProgressSnapshot;
 use App\Models\StudentBalance;
 use App\Models\StudentGoal;
 use App\Models\Transaction;
+use App\Models\User;
+use App\Services\ChatUnreadCounter;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 
@@ -30,10 +32,10 @@ class StudentWelcomeWidget extends Widget
 
     protected function getViewData(): array
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
-        $lessonsRelation = $user->role === 'parent' ? $user->parentLessons() : $user->studentLessons();
+        $lessonsRelation = $user->isParent() ? $user->parentLessons() : $user->studentLessons();
 
         $completedTokens = (clone $lessonsRelation)
             ->where('status', Lesson::STATUS_COMPLETED)
@@ -119,15 +121,59 @@ class StudentWelcomeWidget extends Widget
         $activeSkillGapsCount = $primaryGoal
             ? $primaryGoal->skillGaps->where('status', 'open')->count()
             : 0;
+        $weakTopics = $primaryGoal
+            ? $primaryGoal->skillGaps->where('status', 'open')->take(6)
+            : collect();
+
         $progressPercent = $this->resolveProgressPercent(
             currentScore: $latestSnapshot?->current_score ?? $primaryGoal?->current_score,
             targetScore: $latestSnapshot?->target_score ?? $primaryGoal?->target_score,
         );
         $nextStep = $this->resolveNextStep($primaryGoal, $latestSnapshot, $activeSkillGapsCount);
 
+        // Nearest upcoming or currently live lesson
+        $nextLesson = (clone $lessonsRelation)
+            ->with(['tutor.tutorProfile'])
+            ->whereIn('status', [Lesson::STATUS_CONFIRMED, Lesson::STATUS_PENDING])
+            ->where('end_time', '>', now())
+            ->orderBy('start_time', 'asc')
+            ->first();
+
+        $isLiveNow = false;
+        $startsInMinutes = null;
+        $meetingJoinAvailable = false;
+        $lessonStartsAt = null;
+        $lessonEndsAt = null;
+        $lessonJoinFrom = null;
+        $lessonJoinUntil = null;
+
+        if ($nextLesson && $nextLesson->start_time && $nextLesson->end_time) {
+            $lessonStartsAt = $nextLesson->start_time->timestamp;
+            $lessonEndsAt = $nextLesson->end_time->timestamp;
+
+            $joinWindowMinutes = (int) config('booking.tutor_join_window_minutes', 15);
+            $joinWindowAfterMinutes = (int) config('booking.tutor_join_window_after_minutes', 60);
+
+            $joinFrom = $nextLesson->start_time->clone()->subMinutes($joinWindowMinutes);
+            $joinUntil = $nextLesson->end_time->clone()->addMinutes($joinWindowAfterMinutes);
+
+            $lessonJoinFrom = $joinFrom->timestamp;
+            $lessonJoinUntil = $joinUntil->timestamp;
+
+            $isLiveNow = now()->between($joinFrom, $nextLesson->end_time);
+            $meetingJoinAvailable = now()->between($joinFrom, $joinUntil);
+            $startsInMinutes = max(0, (int) round(now()->diffInMinutes($nextLesson->start_time, false)));
+        }
+
+        $tz = config('booking.display_timezone', 'Europe/Minsk');
+        $dateLine = now($tz)->translatedFormat('l, j F');
+        $unreadMessagesCount = app(ChatUnreadCounter::class)->countForUser($user);
+        $completedHours = round($completedTokens * 1.0, 1);
+
         return [
             'user' => $user,
             'completedCount' => $completedTokens,
+            'completedHours' => $completedHours,
             'scheduledCount' => $scheduledTokens,
             'availableBalance' => $availableBalance,
             'heldForBookedLessons' => $heldForBookedLessons,
@@ -145,8 +191,20 @@ class StudentWelcomeWidget extends Widget
             'primaryGoal' => $primaryGoal,
             'latestSnapshot' => $latestSnapshot,
             'activeSkillGapsCount' => $activeSkillGapsCount,
+            'weakTopics' => $weakTopics,
             'progressPercent' => $progressPercent,
             'nextStep' => $nextStep,
+            'nextLesson' => $nextLesson,
+            'isLiveNow' => $isLiveNow,
+            'startsInMinutes' => $startsInMinutes,
+            'meetingJoinAvailable' => $meetingJoinAvailable,
+            'lessonStartsAt' => $lessonStartsAt,
+            'lessonEndsAt' => $lessonEndsAt,
+            'lessonJoinFrom' => $lessonJoinFrom,
+            'lessonJoinUntil' => $lessonJoinUntil,
+            'scheduledLessonsCount' => $scheduledTokens,
+            'dateLine' => $dateLine,
+            'unreadMessagesCount' => $unreadMessagesCount,
         ];
     }
 
@@ -162,7 +220,7 @@ class StudentWelcomeWidget extends Widget
     private function resolveNextStep(?StudentGoal $goal, ?ProgressSnapshot $snapshot, int $activeSkillGapsCount): string
     {
         if ($goal === null) {
-            return 'Оплатите первое занятие, чтобы открыть траекторию подготовки.';
+            return 'Запишитесь на первое занятие, чтобы составить индивидуальную траекторию ЦТ/ЦЭ.';
         }
 
         if ($goal->latest_diagnostic_at === null) {

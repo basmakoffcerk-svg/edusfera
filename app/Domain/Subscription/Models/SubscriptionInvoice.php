@@ -6,6 +6,7 @@ namespace App\Domain\Subscription\Models;
 
 use App\Domain\Subscription\Enums\InvoiceStatus;
 use App\Domain\Subscription\Enums\SubscriptionPlan;
+use App\Models\PromoCode;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,6 +23,8 @@ class SubscriptionInvoice extends Model
         'plan',
         'period_months',
         'amount_kopecks',
+        'promo_code_id',
+        'discount_kopecks',
         'erip_account_number',
         'status',
         'due_date',
@@ -37,6 +40,7 @@ class SubscriptionInvoice extends Model
             'status' => InvoiceStatus::class,
             'period_months' => 'integer',
             'amount_kopecks' => 'integer',
+            'discount_kopecks' => 'integer',
             'due_date' => 'datetime',
             'paid_at' => 'datetime',
             'payload' => 'array',
@@ -46,6 +50,11 @@ class SubscriptionInvoice extends Model
     public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class, 'subscription_id');
+    }
+
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(PromoCode::class);
     }
 
     public function tutor(): BelongsTo

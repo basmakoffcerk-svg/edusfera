@@ -6,6 +6,7 @@ namespace App\Notifications;
 
 use App\Models\Conversation;
 use App\Models\Message;
+use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -34,7 +35,7 @@ class NewChatMessageNotification extends Notification implements ShouldQueue
             ->icon('heroicon-o-chat-bubble-left-right')
             ->iconColor('success')
             ->actions([
-                \Filament\Notifications\Actions\Action::make('open_chat')
+                Action::make('open_chat')
                     ->label('Открыть чат')
                     ->url("/admin/messages?conversation={$this->conversation->id}"),
             ])

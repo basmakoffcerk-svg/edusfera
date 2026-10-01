@@ -41,7 +41,7 @@ class SubscriptionGracePeriodNotification extends Notification implements Should
             ->subject('Не удалось продлить подписку Edusfera')
             ->greeting('Здравствуйте, '.$notifiable->name.'!')
             ->line('Не удалось автоматически списать оплату за вашу подписку Edusfera.')
-            ->line('Вам предоставлен 3-дневный льготный период для обновления карты или оплаты по ЕРИП.')
+            ->line('Вам предоставлен 3-дневный льготный период для обновления данных карты.')
             ->action('Управление подпиской', url('/admin/tutor-subscription-page'));
     }
 }

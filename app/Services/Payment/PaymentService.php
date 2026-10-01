@@ -9,13 +9,18 @@ use App\Domain\Shared\Events\EventEnvelopeFactory;
 use App\Integrations\Outbox\OutboxRepository;
 use App\Models\Lesson;
 use App\Models\LessonSettlement;
+use App\Models\PromoCode;
+use App\Models\PromoCodeUsage;
+use App\Models\StudentBalance;
 use App\Models\StudentBalanceLedgerEntry;
 use App\Models\Transaction;
 use App\Models\TutorBalance;
+use App\Models\User;
 use App\Notifications\LessonCancelledNotification;
 use App\Notifications\PaymentSucceededNotification;
 use App\Services\ChatService;
 use App\Services\Finance\StudentBalanceService;
+use App\Services\PromoCodeService;
 use App\Services\StudentGoalService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
@@ -44,8 +49,9 @@ class PaymentService
         ?string $paymentMethod = 'card',
         bool $rememberPaymentMethod = false,
         bool $useWalletBalance = false,
+        ?string $promoCode = null,
     ): Transaction {
-        return DB::transaction(function () use ($lessonId, $paymentMethod, $rememberPaymentMethod, $useWalletBalance, $userId): Transaction {
+        return DB::transaction(function () use ($lessonId, $paymentMethod, $rememberPaymentMethod, $useWalletBalance, $userId, $promoCode): Transaction {
             $lesson = Lesson::query()
                 ->with(['tutor', 'student', 'parent', 'transaction'])
                 ->lockForUpdate()
@@ -72,6 +78,34 @@ class PaymentService
             $currency = (string) config('payments.currency', 'BYN');
             $lessonAmount = $this->money((string) $lesson->price);
             $payableAmount = $this->money((string) ($lesson->package_total ?? $lesson->price));
+
+            $promoCodeModel = null;
+            $discountAmount = '0.00';
+            if (! empty($promoCode)) {
+                $user = User::find($userId);
+                $validation = app(PromoCodeService::class)->validate(
+                    (string) $promoCode,
+                    (float) $payableAmount,
+                    $user,
+                    [
+                        'order_type' => 'lesson',
+                        'package_code' => $lesson->package_code ?? 'single',
+                        'tutor_id' => $lesson->tutor_id,
+                        'subject' => $lesson->tutor?->tutorProfile?->subjects[0] ?? null,
+                    ]
+                );
+
+                if (! $validation['valid']) {
+                    throw ValidationException::withMessages([
+                        'promo_code' => $validation['error'] ?? 'Недействительный промокод',
+                    ]);
+                }
+
+                $promoCodeModel = $validation['promo_code'];
+                $discountAmount = $this->money((string) $validation['discount_amount']);
+                $payableAmount = $this->maxZero($this->sub($payableAmount, $discountAmount));
+            }
+
             $effectivePaymentMethod = (string) ($paymentMethod ?? 'card');
             $chargeAmount = $effectivePaymentMethod === 'wallet'
                 ? '0.00'
@@ -80,6 +114,7 @@ class PaymentService
             $walletContribution = '0.00';
 
             if ($effectivePaymentMethod !== 'wallet' && $useWalletBalance) {
+                $studentBalance = StudentBalance::query()->lockForUpdate()->find($studentBalance->id) ?? $studentBalance;
                 $walletContribution = $this->min((string) $studentBalance->available_amount, $payableAmount);
                 $chargeAmount = $this->maxZero($this->sub($chargeAmount, $walletContribution));
             }
@@ -99,10 +134,13 @@ class PaymentService
                 && in_array($existingTransaction->status, [Transaction::STATUS_AUTHORIZED, Transaction::STATUS_PENDING], true)
             ) {
                 $existingCharged = (string) ($existingTransaction->gateway_response['charged_amount'] ?? $existingTransaction->amount);
+                $existingPromoId = $existingTransaction->promo_code_id;
+                $expectedPromoId = $promoCodeModel?->id;
 
-                // Если метод оплаты, общая сумма и сумма к списанию совпадают — переиспользуем активную сессию
+                // Если метод оплаты, промокод, общая сумма и сумма к списанию совпадают — переиспользуем активную сессию
                 if (
                     $existingTransaction->payment_method === $effectivePaymentMethod
+                    && (int) $existingPromoId === (int) $expectedPromoId
                     && bccomp((string) $existingTransaction->amount, (string) $payableAmount, 2) === 0
                     && bccomp($existingCharged, (string) $chargeAmount, 2) === 0
                 ) {
@@ -165,6 +203,8 @@ class PaymentService
                 [
                     'user_id' => $userId,
                     'amount' => $payableAmount,
+                    'promo_code_id' => $promoCodeModel?->id,
+                    'discount_amount' => $discountAmount,
                     'platform_commission' => $platformCommission,
                     'acquiring_fee' => $acquiringFee,
                     'net_amount' => $netAmount,
@@ -179,6 +219,9 @@ class PaymentService
                         'charged_amount' => $chargeAmount,
                         'lesson_amount' => $lessonAmount,
                         'payable_amount' => $payableAmount,
+                        'promo_code_id' => $promoCodeModel?->id,
+                        'promo_code' => $promoCodeModel?->code,
+                        'discount_amount' => $discountAmount,
                         'wallet_contribution' => $walletContribution,
                     ]),
                     'paid_at' => $status === Transaction::STATUS_SUCCESS ? now('UTC') : null,
@@ -194,7 +237,7 @@ class PaymentService
             }
 
             if ($status === Transaction::STATUS_PENDING || $status === Transaction::STATUS_AUTHORIZED) {
-                // Async / Hold gateway (e.g. WebPAY hold): return the transaction with redirect_url / status
+                // Async / Hold gateway (e.g. bank pre-auth hold): return the transaction with redirect_url / status
                 return $transaction->fresh(['lesson', 'user']);
             }
 
@@ -343,6 +386,36 @@ class PaymentService
 
             $this->studentGoalService->ensureGoalForPaidLesson($lesson->fresh(['tutor.tutorProfile', 'student']));
 
+            if ($transaction->promo_code_id) {
+                $promo = PromoCode::find($transaction->promo_code_id);
+                if ($promo) {
+                    $alreadyUsed = PromoCodeUsage::where('transaction_id', $transaction->id)->exists();
+                    if (! $alreadyUsed) {
+                        $discount = (float) ($transaction->discount_amount ?? 0.0);
+                        $original = (float) $payableAmount + $discount;
+                        $user = $transaction->user ?? User::find($userId);
+                        if ($user) {
+                            try {
+                                app(PromoCodeService::class)->applyToLesson(
+                                    $promo,
+                                    $lesson,
+                                    $user,
+                                    $transaction,
+                                    $discount,
+                                    $original
+                                );
+                            } catch (\Throwable $e) {
+                                Log::channel('payments')->error('Failed to record promo code usage', [
+                                    'promo_id' => $promo->id,
+                                    'transaction_id' => $transaction->id,
+                                    'error' => $e->getMessage(),
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
             try {
                 $lesson->student?->notify(new PaymentSucceededNotification($transaction));
             } catch (\Throwable $e) {
@@ -364,9 +437,9 @@ class PaymentService
         });
     }
 
-    public function refundLessonPayment(Lesson $lesson, ?string $reason = null): void
+    public function refundLessonPayment(Lesson $lesson, ?string $reason = null, bool $allowCompleted = false): void
     {
-        DB::transaction(function () use ($lesson, $reason): void {
+        DB::transaction(function () use ($lesson, $reason, $allowCompleted): void {
             $lesson = Lesson::query()->lockForUpdate()->findOrFail($lesson->id);
 
             // Resolve the backing transaction. Child package lessons own no
@@ -390,18 +463,18 @@ class PaymentService
             $isSingle = $packageLessons <= 1 && $lesson->package_parent_lesson_id === null;
 
             if ($isSingle) {
-                if ($lesson->status === Lesson::STATUS_COMPLETED || $lesson->isSettled()) {
+                if ((! $allowCompleted && $lesson->status === Lesson::STATUS_COMPLETED) || $lesson->isSettled()) {
                     throw ValidationException::withMessages([
                         'payment' => 'Урок уже проведён, возврат недоступен.',
                     ]);
                 }
 
-                $this->refundSingleLesson($lesson, $transaction, $reason);
+                $this->refundSingleLesson($lesson, $transaction, $reason, $allowCompleted);
 
                 return;
             }
 
-            $this->refundPackageLesson($lesson, $transaction, $packageLessons, $reason);
+            $this->refundPackageLesson($lesson, $transaction, $packageLessons, $reason, $allowCompleted);
         });
     }
 
@@ -411,9 +484,9 @@ class PaymentService
      * net_amount out of pending, flip the lesson to cancelled/refunded — plus
      * an audit LessonSettlement row.
      */
-    private function refundSingleLesson(Lesson $lesson, Transaction $transaction, ?string $reason): void
+    private function refundSingleLesson(Lesson $lesson, Transaction $transaction, ?string $reason, bool $allowCompleted = false): void
     {
-        if ($lesson->status === Lesson::STATUS_COMPLETED || $lesson->isSettled()) {
+        if ((! $allowCompleted && $lesson->status === Lesson::STATUS_COMPLETED) || $lesson->isSettled()) {
             throw ValidationException::withMessages([
                 'payment' => 'Урок уже проведён, возврат недоступен.',
             ]);
@@ -529,7 +602,7 @@ class PaymentService
      * the tutor's pending balance, leaves already-settled shares in
      * available_amount untouched, and never touches sibling lessons.
      */
-    private function refundPackageLesson(Lesson $lesson, Transaction $transaction, int $packageLessons, ?string $reason): void
+    private function refundPackageLesson(Lesson $lesson, Transaction $transaction, int $packageLessons, ?string $reason, bool $allowCompleted = false): void
     {
         // Lock the transaction and all its settlements to serialize
         // against concurrent settle/refund of sibling package lessons.
@@ -546,8 +619,8 @@ class PaymentService
 
         $existing = $settlements->firstWhere('lesson_id', $lesson->id);
 
-        // A settled or completed lesson cannot be refunded.
-        if ($lesson->status === Lesson::STATUS_COMPLETED || ($existing !== null && $existing->settled_at !== null)) {
+        // A settled lesson cannot be refunded. Completed lesson cannot be refunded unless allowed in arbitration.
+        if ((! $allowCompleted && $lesson->status === Lesson::STATUS_COMPLETED) || ($existing !== null && $existing->settled_at !== null)) {
             throw ValidationException::withMessages([
                 'payment' => 'Урок уже проведён, возврат недоступен.',
             ]);
@@ -786,12 +859,19 @@ class PaymentService
             $settledSettlements = $settlements->filter(
                 fn (LessonSettlement $settlement): bool => $settlement->settled_at !== null
             );
+            $closedSettlements = $settlements->filter(
+                fn (LessonSettlement $settlement): bool => $settlement->settled_at !== null || $settlement->refunded_at !== null
+            );
 
             $alreadySettledNet = $this->sumShares($settledSettlements, 'net_share');
             $alreadySettledGross = $this->sumShares($settledSettlements, 'gross_share');
-            $settledCount = $settledSettlements->count();
+            $alreadyClosedNet = $this->sumClosedShares($closedSettlements, 'net_share', 'refunded_net');
+            $alreadyClosedGross = $this->sumClosedShares($closedSettlements, 'gross_share', 'refunded_gross');
 
-            $isResidual = ($settledCount + 1) === $packageLessons;
+            $settledCount = $settledSettlements->count();
+            $closedCount = $closedSettlements->count();
+            $remainingLessons = $packageLessons - $closedCount;
+            $isResidual = $remainingLessons <= 1;
 
             if ($packageLessons <= 1) {
                 // Single lesson (or package metadata absent): settle the full
@@ -800,10 +880,10 @@ class PaymentService
                 $grossShare = (string) $tx->amount;
                 $isResidual = true;
             } elseif ($isResidual) {
-                // Last lesson of the package: close out the exact remainder so
+                // Last active lesson of the package: close out the exact remainder so
                 // Σ shares == transaction totals to the kopeck.
-                $netShare = bcsub((string) $tx->net_amount, $alreadySettledNet, 2);
-                $grossShare = bcsub((string) $tx->amount, $alreadySettledGross, 2);
+                $netShare = bcsub((string) $tx->net_amount, $alreadyClosedNet, 2);
+                $grossShare = bcsub((string) $tx->amount, $alreadyClosedGross, 2);
             } else {
                 // Base share: bcdiv with scale 2 truncates (rounds down).
                 $netShare = bcdiv((string) $tx->net_amount, (string) $packageLessons, 2);
@@ -868,13 +948,21 @@ class PaymentService
 
             // Trigger Gateway Completion / Capture API
             if ($tx->gateway_transaction_id && $tx->payment_method !== 'wallet') {
-                $this->gateway->capturePayment((string) $tx->gateway_transaction_id, (float) $grossShare);
+                $captured = $this->gateway->capturePayment((string) $tx->gateway_transaction_id, (float) $grossShare);
+                if (! $captured) {
+                    Log::channel('payments')->warning('Gateway capture failed during lesson settlement', [
+                        'transaction_id' => $tx->id,
+                        'lesson_id' => $lesson->id,
+                        'gateway_transaction_id' => $tx->gateway_transaction_id,
+                        'amount' => $grossShare,
+                    ]);
+                }
             }
 
             // 3.7 — On the lesson that closes the package, mark the transaction
             // settled for backward-compat / audit. This is NOT the idempotency
             // source of truth — LessonSettlement is.
-            if (($settledCount + 1) === $packageLessons) {
+            if (($closedCount + 1) >= $packageLessons) {
                 $tx->update([
                     'gateway_response' => array_merge($tx->gateway_response ?? [], [
                         'settled' => true,
@@ -975,12 +1063,22 @@ class PaymentService
                 ],
             );
 
+            if (bccomp((string) $balance->available_amount, '0.00', 2) <= 0) {
+                throw ValidationException::withMessages([
+                    'payout' => 'У вас нет доступных средств для вывода.',
+                ]);
+            }
+
+            $payoutAmount = (string) $balance->available_amount;
+
             $this->logFinancialOperation('payout_requested', [
                 'tutor_id' => $tutorId,
-                'available_amount' => (string) $balance->available_amount,
+                'available_amount' => $payoutAmount,
             ]);
 
             $balance->update([
+                'available_amount' => '0.00',
+                'total_withdrawn' => $this->add((string) $balance->total_withdrawn, $payoutAmount),
                 'last_payout_at' => now('UTC'),
             ]);
 
@@ -989,7 +1087,7 @@ class PaymentService
     }
 
     /**
-     * Частичный или полный Complete (списание холда) за проведенное занятие в WebPAY.
+     * Частичный или полный Complete (списание холда) за проведенное занятие.
      */
     public function captureLessonPayment(Lesson $lesson, ?float $amount = null): bool
     {
@@ -1016,7 +1114,7 @@ class PaymentService
                     'payment_status' => Lesson::PAYMENT_PAID,
                 ]);
 
-                $this->logFinancialOperation('webpay_lesson_captured', [
+                $this->logFinancialOperation('payment_lesson_captured', [
                     'lesson_id' => $lesson->id,
                     'transaction_id' => $transaction->gateway_transaction_id,
                     'amount' => $captureAmount,
@@ -1056,7 +1154,7 @@ class PaymentService
                     'status' => Lesson::STATUS_CANCELLED,
                 ]);
 
-                $this->logFinancialOperation('webpay_lesson_voided', [
+                $this->logFinancialOperation('payment_lesson_voided', [
                     'lesson_id' => $lesson->id,
                     'transaction_id' => $transaction->gateway_transaction_id,
                 ]);

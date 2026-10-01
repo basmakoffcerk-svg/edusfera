@@ -134,7 +134,8 @@ class SocialAuthController extends Controller
                 };
 
                 try {
-                    app(SubscriptionService::class)->ensureTrialStarted($user, $plan);
+                    $sub = app(SubscriptionService::class)->ensureTrialStarted($user, $plan);
+                    $sub->update(['is_onboarded' => false]);
                 } catch (Throwable $e) {
                     Log::error('Failed to start trial for OAuth tutor: '.$e->getMessage());
                 }
@@ -149,6 +150,13 @@ class SocialAuthController extends Controller
 
         // 4. Clean session
         session()->forget(['oauth_role', 'oauth_plan']);
+
+        if ($user->isTutor()) {
+            $subscription = $user->subscription;
+            if (! $subscription || ! $subscription->isActive() || ! $subscription->is_onboarded) {
+                return redirect('/admin/tutor-subscription-page?onboarding=1');
+            }
+        }
 
         return redirect('/admin');
     }

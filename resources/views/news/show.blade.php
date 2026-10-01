@@ -3,9 +3,98 @@
 <head>
     <meta charset="utf-8">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @include('partials.pwa-meta')
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $article->title }} — Блог Edusfera</title>
-    <meta name="description" content="{{ Str::limit(preg_replace('/\s+/', ' ', strip_tags(str_replace(['</p>', '</div>', '<br>', '<br />', '</h1>', '</h2>', '</h3>', '</h4>', '</h5>', '</h6>'], ' ', $article->content))), 150) }}">
+    @php
+        $plainDesc = Str::limit(preg_replace('/\s+/', ' ', strip_tags(str_replace(['</p>', '</div>', '<br>', '<br />', '</h1>', '</h2>', '</h3>', '</h4>', '</h5>', '</h6>'], ' ', $article->content))), 155);
+        $articleUrl = route('news.show', $article->slug);
+        $articleImage = $article->featured_image ? asset('storage/' . $article->featured_image) : asset('og-image.png');
+        $datePublished = $article->published_at ? $article->published_at->toIso8601String() : $article->created_at->toIso8601String();
+        $dateModified = ($article->updated_at ?? $article->created_at)->toIso8601String();
+    @endphp
+    <meta name="description" content="{{ $plainDesc }}">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="{{ $articleUrl }}">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:locale" content="ru_BY">
+    <meta property="og:site_name" content="Edusfera">
+    <meta property="og:title" content="{{ $article->title }} — Edusfera">
+    <meta property="og:description" content="{{ $plainDesc }}">
+    <meta property="og:url" content="{{ $articleUrl }}">
+    <meta property="og:image" content="{{ $articleImage }}">
+    <meta property="article:published_time" content="{{ $datePublished }}">
+    <meta property="article:modified_time" content="{{ $dateModified }}">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $article->title }}">
+    <meta name="twitter:description" content="{{ $plainDesc }}">
+    <meta name="twitter:image" content="{{ $articleImage }}">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": "https://edusfera.by/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Новости",
+              "item": "https://edusfera.by/news"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "{{ addslashes($article->title) }}",
+              "item": "{{ $articleUrl }}"
+            }
+          ]
+        },
+        {
+          "@type": "NewsArticle",
+          "headline": "{{ addslashes($article->title) }}",
+          "description": "{{ addslashes($plainDesc) }}",
+          "url": "{{ $articleUrl }}",
+          "image": [
+            "{{ $articleImage }}"
+          ],
+          "datePublished": "{{ $datePublished }}",
+          "dateModified": "{{ $dateModified }}",
+          "inLanguage": "ru-BY",
+          "author": {
+            "@type": "Organization",
+            "name": "Edusfera",
+            "url": "https://edusfera.by/"
+          },
+          "publisher": {
+            "@type": "EducationalOrganization",
+            "name": "Edusfera",
+            "url": "https://edusfera.by/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://edusfera.by/favicon.svg"
+            }
+          },
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "{{ $articleUrl }}"
+          }
+        }
+      ]
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -230,6 +319,13 @@
                 <h1 class="text-3xl sm:text-4xl md:text-5xl font-rimma font-black tracking-tight text-gray-900 leading-tight">
                     {{ $article->title }}
                 </h1>
+                <div class="flex items-center justify-between gap-4 mt-6">
+                    <div class="text-xs text-gray-500 font-medium">Edusfera Блог</div>
+                    <button type="button" onclick="shareArticle()" class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-violet-700 bg-violet-50 hover:bg-violet-100 transition-colors border border-violet-200/60" title="Поделиться статьей">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        Поделиться статьей
+                    </button>
+                </div>
             </div>
 
             <!-- Video Player (Primary Media) -->
@@ -283,5 +379,27 @@
 
     @include('partials.site-footer')
 
+    <script>
+    function shareArticle() {
+        window.EdusferaHaptics?.tap();
+        const shareData = {
+            title: '{{ addslashes($article->title) }} — Блог Edusfera',
+            text: '{{ addslashes(Str::limit($plainDesc, 120)) }}',
+            url: window.location.href
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch((e) => {
+                if (e.name !== 'AbortError') console.warn(e);
+            });
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('Ссылка на статью скопирована в буфер обмена!');
+            });
+        } else {
+            prompt('Ссылка на статью:', window.location.href);
+        }
+    }
+    </script>
+    @include('partials.pwa-prompt')
 </body>
 </html>

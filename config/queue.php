@@ -16,7 +16,7 @@ return [
     'default' => (function (): string {
         $connection = (string) env('QUEUE_CONNECTION', 'database');
 
-        if ($connection === 'redis' && ! class_exists(\Redis::class)) {
+        if ($connection === 'redis' && ! class_exists(Redis::class)) {
             return 'database';
         }
 

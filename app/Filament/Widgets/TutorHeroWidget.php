@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Domain\Subscription\Enums\SubscriptionPlan;
+use App\Domain\Subscription\Enums\SubscriptionStatus;
+use App\Domain\Subscription\Services\SubscriptionService;
 use App\Models\Lesson;
 use Filament\Widgets\Widget;
 
@@ -69,33 +72,33 @@ class TutorHeroWidget extends Widget
         // Подписка репетитора
         $subscription = $user->subscription;
         if (! $subscription) {
-            /** @var \App\Domain\Subscription\Services\SubscriptionService $subService */
-            $subService = app(\App\Domain\Subscription\Services\SubscriptionService::class);
-            $subscription = $subService->startTrial($user, \App\Domain\Subscription\Enums\SubscriptionPlan::PRO);
+            /** @var SubscriptionService $subService */
+            $subService = app(SubscriptionService::class);
+            $subscription = $subService->startTrial($user, SubscriptionPlan::PRO);
         }
 
-        $isTrial = $subscription->status === \App\Domain\Subscription\Enums\SubscriptionStatus::TRIAL;
-        $isActive = $subscription->status === \App\Domain\Subscription\Enums\SubscriptionStatus::ACTIVE;
+        $isTrial = $subscription->status === SubscriptionStatus::TRIAL;
+        $isActive = $subscription->status === SubscriptionStatus::ACTIVE;
         $isInGrace = $subscription->isInGracePeriod();
         $daysRemaining = $subscription->daysRemaining();
         $graceDaysRemaining = $subscription->graceDaysRemaining();
         $isExpiringSoon = ($isTrial || $isActive) && $daysRemaining <= 3 && $daysRemaining > 0;
 
         if ($isTrial) {
-            $subPillText = "Пробный период: {$daysRemaining} " . trans_choice('день|дня|дней', $daysRemaining) . " бесплатно";
+            $subPillText = "Пробный период: {$daysRemaining} ".trans_choice('день|дня|дней', $daysRemaining).' бесплатно';
         } elseif ($isActive) {
-            $subPillText = "Тариф: " . $subscription->plan->title();
+            $subPillText = 'Тариф: '.$subscription->plan->title();
         } elseif ($isInGrace) {
-            $subPillText = "Льготный период (" . $graceDaysRemaining . " " . trans_choice('день|дня|дней', $graceDaysRemaining) . ")";
+            $subPillText = 'Льготный период ('.$graceDaysRemaining.' '.trans_choice('день|дня|дней', $graceDaysRemaining).')';
         } else {
-            $subPillText = "Тариф: " . $subscription->plan->title();
+            $subPillText = 'Тариф: '.$subscription->plan->title();
         }
 
         // Персональная ссылка для записи
         $tutorProfile = $user->tutorProfile;
         $bookingUrl = $tutorProfile
             ? route('tutors.show', $tutorProfile)
-            : url('/tutors/' . $user->id);
+            : url('/tutors/'.$user->id);
 
         return [
             'greeting' => $greeting,

@@ -14,6 +14,7 @@ namespace Tests\Feature;
 */
 
 use App\Models\Lesson;
+use App\Models\LessonSettlement;
 use App\Models\StudentBalance;
 use App\Models\Transaction;
 use App\Models\TutorBalance;
@@ -390,7 +391,7 @@ class PackageSettlementInvariantTest extends TestCase
 
         $tutor = User::factory()->create([
             'role' => 'tutor',
-            'phone' => '+37529' . $phoneCounter++,
+            'phone' => '+37529'.$phoneCounter++,
         ]);
 
         $tutor->tutorProfile()->create([
@@ -407,7 +408,7 @@ class PackageSettlementInvariantTest extends TestCase
 
         $student = User::factory()->create([
             'role' => 'student',
-            'phone' => '+37529' . $phoneCounter++,
+            'phone' => '+37529'.$phoneCounter++,
         ]);
 
         // Calculate package pricing
@@ -415,7 +416,7 @@ class PackageSettlementInvariantTest extends TestCase
         $discountFactor = $packageSize === 4 ? 0.95 : 0.90;
         $packageTotal = round($singlePrice * $packageSize * $discountFactor, 2);
         $discount = round(($singlePrice * $packageSize) - $packageTotal, 2);
-        
+
         $commissionRate = 0.15;
         $commission = round($packageTotal * $commissionRate, 2);
         $netAmount = round($packageTotal - $commission, 2);
@@ -494,7 +495,7 @@ class PackageSettlementInvariantTest extends TestCase
 
             // Construct package lessons and transact payment
             $ctx = $this->bootstrapCustomPackage($packageCode, $packageSize, $pricePerHour);
-            
+
             $parent = $ctx['parent'];
             $children = $ctx['children'];
             $tx = $ctx['transaction'];
@@ -509,7 +510,7 @@ class PackageSettlementInvariantTest extends TestCase
             }
 
             // Verify totals
-            $settlements = \App\Models\LessonSettlement::query()
+            $settlements = LessonSettlement::query()
                 ->where('transaction_id', $tx->id)
                 ->get();
 
@@ -543,7 +544,7 @@ class PackageSettlementInvariantTest extends TestCase
             $packageCode = $packageSize === 4 ? 'pack_4' : 'pack_8';
 
             $ctx = $this->bootstrapCustomPackage($packageCode, $packageSize, $pricePerHour);
-            
+
             $parent = $ctx['parent'];
             $children = $ctx['children'];
             $tx = $ctx['transaction'];
@@ -553,10 +554,10 @@ class PackageSettlementInvariantTest extends TestCase
             // Settle parent
             $parent->update(['status' => Lesson::STATUS_COMPLETED]);
             app(PaymentService::class)->settleCompletedLesson($parent->fresh());
-            
+
             $parentSettlement = $parent->refresh()->settlement;
             $this->assertNotNull($parentSettlement);
-            
+
             // Check that parent net_share is exactly baseNetShare (since it is first)
             $this->assertSame($baseNetShare, (string) $parentSettlement->net_share);
 
@@ -600,7 +601,7 @@ class PackageSettlementInvariantTest extends TestCase
             $packageCode = $packageSize === 4 ? 'pack_4' : 'pack_8';
 
             $ctx = $this->bootstrapCustomPackage($packageCode, $packageSize, $pricePerHour);
-            
+
             $parent = $ctx['parent'];
             $children = $ctx['children'];
             $tx = $ctx['transaction'];
@@ -626,7 +627,7 @@ class PackageSettlementInvariantTest extends TestCase
             // Refund one child lesson that has NOT been settled
             $refundTargetIndex = mt_rand(max(0, $k - 1), $packageSize - 2);
             $refundTarget = $children[$refundTargetIndex];
-            
+
             app(PaymentService::class)->refundLessonPayment($refundTarget->fresh(), 'student_cancelled');
 
             // Tutor balance after refund
@@ -659,4 +660,3 @@ class PackageSettlementInvariantTest extends TestCase
         }
     }
 }
-

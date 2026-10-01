@@ -14,11 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    $promoPath = public_path('promo/index.html');
-    if (file_exists($promoPath)) {
-        return response()->file($promoPath);
-    }
-
     return view('home');
 })->name('home');
 
@@ -26,13 +21,34 @@ Route::get('/platform', function () {
     return view('home');
 })->name('platform');
 
+Route::redirect('/promo', '/', 301);
+Route::any('/promo/{any}', function () {
+    return redirect('/', 301);
+})->where('any', '.*');
+
+// 301 Redirects for Search Engines (Fixes Google Search Console 404s)
+Route::redirect('/index.html', '/', 301);
+Route::redirect('/index.php', '/', 301);
+Route::redirect('/privacy-policy.html', '/privacy-policy', 301);
+Route::redirect('/offer.html', '/offer', 301);
+Route::redirect('/refund-policy.html', '/refund-policy', 301);
+Route::redirect('/contacts.html', '/contacts', 301);
+Route::redirect('/payment-security.html', '/payment-security', 301);
+
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+
+use App\Http\Controllers\AiCopilotController;
+use App\Http\Controllers\AlfaBankWebhookController;
 use App\Http\Controllers\Auth\AuroraAuthController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\NewsController;
-use App\Http\Controllers\AlfaBankWebhookController;
+use App\Http\Controllers\Payment\AlfaBankHostedCheckoutController;
+use App\Http\Controllers\PwaController;
+use App\Http\Controllers\SitemapController;
 use App\Services\MultiAccountService;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 
 Route::get('/login', [AuroraAuthController::class, 'showAuthPage'])->name('login');
 Route::get('/register', [AuroraAuthController::class, 'showAuthPage'])->name('register');
@@ -40,7 +56,7 @@ Route::get('/auth', [AuroraAuthController::class, 'showAuthPage'])->name('auth')
 Route::get('/admin/login', [AuroraAuthController::class, 'showAuthPage'])->name('filament.admin.auth.login');
 Route::get('/site-admin/login', [AuroraAuthController::class, 'showAuthPage'])->name('filament.site-admin.auth.login');
 
-// ─── OAuth (Google & Yandex) ───
+// ─── OAuth (Google) ───
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('social.redirect');
 Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])->name('social.callback');
 
@@ -48,8 +64,14 @@ Route::post('/api/auth/login', [AuroraAuthController::class, 'login'])
     ->middleware('throttle:web.auth');
 Route::post('/api/auth/register', [AuroraAuthController::class, 'register'])
     ->middleware('throttle:web.auth');
-Route::post('/api/subscription/confirm-plan', [AuroraAuthController::class, 'confirmPlan']);
-Route::post('/api/subscription/init-alfa-sdk', [AuroraAuthController::class, 'initSubscriptionAlfaSdk']);
+Route::post('/api/auth/forgot-password', [AuroraAuthController::class, 'sendResetCode'])
+    ->middleware('throttle:5,1');
+Route::post('/api/auth/verify-reset-code', [AuroraAuthController::class, 'verifyResetCode'])
+    ->middleware('throttle:10,1');
+Route::post('/api/auth/reset-password', [AuroraAuthController::class, 'resetPassword'])
+    ->middleware('throttle:15,1');
+Route::post('/api/subscription/init-alfa-sdk', [AuroraAuthController::class, 'initSubscriptionAlfaSdk'])
+    ->middleware('throttle:15,1');
 
 Route::get('/for-tutors', function () {
     return view('for-tutors');
@@ -74,6 +96,8 @@ Route::view('/refund-policy', 'legal.refund-policy')->name('legal.refund');
 Route::view('/privacy-policy', 'legal.privacy-policy')->name('legal.privacy');
 Route::view('/payment-security', 'legal.payment-security')->name('legal.payment-security');
 Route::view('/contacts', 'legal.contacts')->name('contacts');
+Route::view('/about', 'about')->name('about');
+Route::redirect('/about-us', '/about', 301);
 
 Route::post('/logout', function (Request $request) {
     app(MultiAccountService::class)->clearAll();
@@ -111,6 +135,9 @@ Route::post('/checkout/{lesson}/pay', [CheckoutController::class, 'pay'])
 Route::post('/checkout/{lesson}/alfa-sdk-init', [CheckoutController::class, 'initAlfaSdk'])
     ->middleware(['auth', 'throttle:checkout.pay'])
     ->name('checkout.alfa-sdk.init');
+Route::post('/checkout/{lesson}/promo/apply', [CheckoutController::class, 'applyPromo'])
+    ->middleware(['auth', 'throttle:15,1'])
+    ->name('checkout.promo.apply');
 Route::get('/checkout/{lesson}/success', [CheckoutController::class, 'success'])
     ->middleware('auth')
     ->name('checkout.success');
@@ -135,18 +162,19 @@ Route::post('/webhooks/alfabank', AlfaBankWebhookController::class)
 Route::post('/api/v1/payments/alfabank/webhook', AlfaBankWebhookController::class)
     ->middleware('throttle:60,1')
     ->name('api.payments.alfabank.webhook');
-Route::post('/payments/webpay/webhook', AlfaBankWebhookController::class)
-    ->middleware('throttle:60,1')
-    ->name('payments.webpay.webhook');
-Route::post('/webhooks/webpay', AlfaBankWebhookController::class)
-    ->middleware('throttle:60,1')
-    ->name('webhooks.webpay');
+
+// ─── Alfa-Bank Hosted Payment Page (UAT Sandbox / Test Mock) ───
+Route::get('/payments/alfabank/hosted-test', [AlfaBankHostedCheckoutController::class, 'show'])
+    ->name('payments.alfabank.hosted-test');
 
 // ─── News Portal ───
 Route::get('/news', [NewsController::class, 'index'])->name('news.index');
 Route::get('/news/{slug}', [NewsController::class, 'show'])->name('news.show');
 
 // ─── Virtual Classroom ───
+Route::get('/classroom/{lesson}/join', [ClassroomController::class, 'join'])
+    ->name('classroom.join');
+
 Route::middleware('auth')->group(function (): void {
     Route::get('/classroom/{lesson}', [ClassroomController::class, 'show'])
         ->name('classroom.show');
@@ -163,8 +191,10 @@ Route::middleware('auth')->group(function (): void {
         ->name('classroom.files.upload');
 
     Route::get('/classroom/{lesson}/chat', [ClassroomController::class, 'getChat'])
+        ->withoutMiddleware([ThrottleRequests::class, 'throttle:120,1'])
         ->name('classroom.chat.get');
     Route::post('/classroom/{lesson}/chat', [ClassroomController::class, 'storeChat'])
+        ->withoutMiddleware([ThrottleRequests::class, 'throttle:120,1'])
         ->name('classroom.chat.store');
 
     Route::get('/classroom/{lesson}/homework', [ClassroomController::class, 'getHomework'])
@@ -180,9 +210,49 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/classroom/{lesson}/ai-chat', [ClassroomController::class, 'chatAi'])
         ->middleware('throttle:15,1')
         ->name('classroom.ai-chat');
+    Route::post('/classroom/{lesson}/meeting-link', [ClassroomController::class, 'updateMeetingLink'])
+        ->middleware('throttle:30,1')
+        ->name('classroom.meeting-link');
+    Route::get('/classroom/{lesson}/signal', [ClassroomController::class, 'getSignals'])
+        ->withoutMiddleware([ThrottleRequests::class, 'throttle:120,1'])
+        ->name('classroom.signal.get');
+    Route::post('/classroom/{lesson}/signal', [ClassroomController::class, 'sendSignal'])
+        ->withoutMiddleware([ThrottleRequests::class, 'throttle:120,1'])
+        ->name('classroom.signal.send');
+    Route::get('/classroom/{lesson}/whiteboard', [ClassroomController::class, 'getWhiteboardState'])
+        ->withoutMiddleware([ThrottleRequests::class, 'throttle:120,1'])
+        ->name('classroom.whiteboard.get');
+    Route::post('/classroom/{lesson}/whiteboard', [ClassroomController::class, 'saveWhiteboardStateHttp'])
+        ->withoutMiddleware([ThrottleRequests::class, 'throttle:120,1'])
+        ->name('classroom.whiteboard.save');
+    Route::post('/classroom/{lesson}/whiteboard/sync', [ClassroomController::class, 'syncWhiteboard'])
+        ->withoutMiddleware([ThrottleRequests::class, 'throttle:120,1'])
+        ->name('classroom.whiteboard.sync');
+    Route::get('/classroom/{lesson}/whiteboard/poll', [ClassroomController::class, 'pollWhiteboard'])
+        ->withoutMiddleware([ThrottleRequests::class, 'throttle:120,1'])
+        ->name('classroom.whiteboard.poll');
+    Route::post('/admin/ai-copilot/chat', [AiCopilotController::class, 'chat'])
+        ->middleware('throttle:30,1')
+        ->name('admin.ai-copilot.chat');
+    Route::post('/admin/ai-copilot/lesson-plan', [AiCopilotController::class, 'generateLessonPlan'])
+        ->middleware('throttle:20,1')
+        ->name('admin.ai-copilot.lesson-plan');
+    Route::post('/admin/ai-copilot/quiz', [AiCopilotController::class, 'generateQuiz'])
+        ->middleware('throttle:20,1')
+        ->name('admin.ai-copilot.quiz');
+    Route::post('/admin/ai-copilot/solve-task', [AiCopilotController::class, 'solveTask'])
+        ->middleware('throttle:20,1')
+        ->name('admin.ai-copilot.solve-task');
 });
 
 // ─── Internal API ───
 Route::post('/api/internal/classroom/{roomId}/whiteboard', [ClassroomController::class, 'saveWhiteboardState'])
     ->withoutMiddleware([ValidateCsrfToken::class])
+    ->middleware('throttle:60,1')
     ->name('internal.classroom.whiteboard');
+
+// ─── PWA Badging & Push Notifications ────────
+Route::get('/api/pwa/badge-count', [PwaController::class, 'badgeCount'])
+    ->middleware('throttle:60,1')
+    ->name('pwa.badge');
+Route::post('/api/pwa/subscribe', [PwaController::class, 'subscribe'])->middleware('auth')->name('pwa.subscribe');

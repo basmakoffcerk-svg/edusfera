@@ -19,7 +19,9 @@ use Illuminate\Support\Str;
 class SubscriptionService
 {
     public const FOUNDER_LIMIT = 50;
+
     public const TRIAL_DAYS = 14;
+
     public const GRACE_PERIOD_DAYS = 3;
 
     /**
@@ -31,7 +33,7 @@ class SubscriptionService
     }
 
     /**
-     * Ensure a 14-day trial is started for tutor if they don't have one yet.
+     * Ensure a plan-specific trial is started for tutor if they don't have one yet.
      */
     public function ensureTrialStarted(User $tutor, ?SubscriptionPlan $plan = null): Subscription
     {
@@ -45,15 +47,17 @@ class SubscriptionService
             $isFounder = $founderCount < self::FOUNDER_LIMIT;
 
             $now = CarbonImmutable::now();
+            $plan = $plan ?? SubscriptionPlan::PRO;
+            $trialDays = $plan->trialDays();
 
             return Subscription::create([
                 'tutor_id' => $tutor->id,
-                'plan' => $plan ?? SubscriptionPlan::PRO,
+                'plan' => $plan,
                 'status' => SubscriptionStatus::TRIAL,
                 'is_founder' => $isFounder,
-                'trial_ends_at' => $now->addDays(self::TRIAL_DAYS),
+                'trial_ends_at' => $now->addDays($trialDays),
                 'current_period_starts_at' => $now,
-                'current_period_ends_at' => $now->addDays(self::TRIAL_DAYS),
+                'current_period_ends_at' => $now->addDays($trialDays),
                 'grace_period_ends_at' => null,
                 'responses_used_this_month' => 0,
             ]);
@@ -61,7 +65,7 @@ class SubscriptionService
     }
 
     /**
-     * Start a free trial for a tutor with a specific plan (default PRO, 14 days).
+     * Start a free trial for a tutor with a specific plan (START: 5 days, PRO: 14 days, PREMIUM: 28 days).
      */
     public function startTrial(User $tutor, SubscriptionPlan $plan = SubscriptionPlan::PRO): Subscription
     {
@@ -75,15 +79,16 @@ class SubscriptionService
             $isFounder = $founderCount < self::FOUNDER_LIMIT;
 
             $now = CarbonImmutable::now();
+            $trialDays = $plan->trialDays();
 
             return Subscription::create([
                 'tutor_id' => $tutor->id,
                 'plan' => $plan,
                 'status' => SubscriptionStatus::TRIAL,
                 'is_founder' => $isFounder,
-                'trial_ends_at' => $now->addDays(self::TRIAL_DAYS),
+                'trial_ends_at' => $now->addDays($trialDays),
                 'current_period_starts_at' => $now,
-                'current_period_ends_at' => $now->addDays(self::TRIAL_DAYS),
+                'current_period_ends_at' => $now->addDays($trialDays),
                 'grace_period_ends_at' => null,
                 'responses_used_this_month' => 0,
             ]);
@@ -103,34 +108,45 @@ class SubscriptionService
             $now = CarbonImmutable::now();
             $subscription = Subscription::where('tutor_id', $tutor->id)->first();
 
+            $hasPaidBefore = SubscriptionInvoice::where('tutor_id', $tutor->id)
+                ->where('status', InvoiceStatus::PAID)
+                ->exists();
+
+            $trialBonusDays = ! $hasPaidBefore ? $plan->trialDays() : 0;
+
             if (! $subscription) {
                 $subscription = Subscription::create([
                     'tutor_id' => $tutor->id,
                     'plan' => $plan,
                     'status' => SubscriptionStatus::ACTIVE,
                     'is_founder' => false,
-                    'trial_ends_at' => null,
+                    'trial_ends_at' => $trialBonusDays > 0 ? $now->addDays($trialBonusDays) : null,
                     'current_period_starts_at' => $now,
-                    'current_period_ends_at' => $now->addMonths($periodMonths),
+                    'current_period_ends_at' => $now->addDays($trialBonusDays)->addMonths($periodMonths),
                     'grace_period_ends_at' => null,
                     'canceled_at' => null,
                     'responses_used_this_month' => 0,
                     'payment_token' => $paymentToken,
+                    'is_onboarded' => true,
                 ]);
             } else {
                 $currentEnd = ($subscription->current_period_ends_at && $subscription->current_period_ends_at->isFuture())
                     ? CarbonImmutable::parse($subscription->current_period_ends_at)
                     : $now;
-                $newEnd = $currentEnd->addMonths($periodMonths);
+                $newEnd = (! $hasPaidBefore)
+                    ? $now->addDays($trialBonusDays)->addMonths($periodMonths)
+                    : $currentEnd->addMonths($periodMonths);
 
                 $subscription->update([
                     'plan' => $plan,
                     'status' => SubscriptionStatus::ACTIVE,
                     'current_period_starts_at' => $now,
                     'current_period_ends_at' => $newEnd,
+                    'trial_ends_at' => $trialBonusDays > 0 ? $now->addDays($trialBonusDays) : $subscription->trial_ends_at,
                     'grace_period_ends_at' => null,
                     'canceled_at' => null,
                     'payment_token' => $paymentToken ?? $subscription->payment_token,
+                    'is_onboarded' => true,
                 ]);
             }
 
@@ -138,7 +154,7 @@ class SubscriptionService
             $invoice->update([
                 'status' => InvoiceStatus::PAID,
                 'paid_at' => $now,
-                'payment_method' => $paymentToken ? 'card' : 'erip',
+                'payment_method' => 'card',
             ]);
 
             return $subscription->fresh();
@@ -209,8 +225,6 @@ class SubscriptionService
             );
         } while (SubscriptionInvoice::where('invoice_number', $invoiceNumber)->exists());
 
-        $eripAccount = sprintf('EDU%05d', $subscription->tutor_id);
-
         return SubscriptionInvoice::create([
             'subscription_id' => $subscription->id,
             'tutor_id' => $subscription->tutor_id,
@@ -218,10 +232,10 @@ class SubscriptionService
             'plan' => $plan,
             'period_months' => $periodMonths,
             'amount_kopecks' => $amountKopecks,
-            'erip_account_number' => $eripAccount,
+            'erip_account_number' => null,
             'status' => InvoiceStatus::PENDING,
             'due_date' => $now->addDays(3),
-            'payment_method' => 'erip',
+            'payment_method' => 'card',
             'payload' => [
                 'tutor_name' => $subscription->tutor->name ?? '',
                 'generated_at' => $now->toIso8601String(),
@@ -234,7 +248,7 @@ class SubscriptionService
      */
     public function recordPayment(
         SubscriptionInvoice|string $invoice,
-        string $paymentMethod = 'erip',
+        string $paymentMethod = 'card',
         ?array $payload = null
     ): SubscriptionInvoice {
         return DB::transaction(function () use ($invoice, $paymentMethod, $payload) {
@@ -255,19 +269,40 @@ class SubscriptionService
             ]);
 
             $sub = $inv->subscription;
-            $currentEnd = $sub->current_period_ends_at && $sub->current_period_ends_at->isFuture()
+
+            // Проверяем, первая ли это успешная оплата подписки у репетитора
+            $hasPaidBefore = SubscriptionInvoice::where('tutor_id', $sub->tutor_id)
+                ->where('status', InvoiceStatus::PAID)
+                ->where('id', '!=', $inv->id)
+                ->exists();
+
+            $trialBonusDays = 0;
+            if (! $hasPaidBefore) {
+                // При первой оплате любого тарифа начисляется пробный период плана:
+                // Стандарт — 5 дней, Pro — 14 дней, Премиум — 28 дней
+                $trialBonusDays = $inv->plan->trialDays();
+            }
+
+            $currentEnd = ($sub->current_period_ends_at && $sub->current_period_ends_at->isFuture())
                 ? CarbonImmutable::parse($sub->current_period_ends_at)
                 : $now;
 
-            $newEnd = $currentEnd->addMonths($inv->period_months);
+            // Если это первая оплата, новый период отсчитывается от текущего момента + дни триала
+            if (! $hasPaidBefore) {
+                $newEnd = $now->addDays($trialBonusDays)->addMonths($inv->period_months);
+            } else {
+                $newEnd = $currentEnd->addMonths($inv->period_months);
+            }
 
             $sub->update([
                 'plan' => $inv->plan,
                 'status' => SubscriptionStatus::ACTIVE,
                 'current_period_starts_at' => $now,
                 'current_period_ends_at' => $newEnd,
+                'trial_ends_at' => $trialBonusDays > 0 ? $now->addDays($trialBonusDays) : $sub->trial_ends_at,
                 'grace_period_ends_at' => null,
                 'responses_used_this_month' => 0,
+                'is_onboarded' => true,
             ]);
 
             return $inv;
@@ -299,6 +334,7 @@ class SubscriptionService
         foreach ($expiringSubs as $sub) {
             if ($sub->canceled_at !== null) {
                 $sub->update(['status' => SubscriptionStatus::CANCELED]);
+
                 continue;
             }
 
@@ -316,6 +352,7 @@ class SubscriptionService
                     $this->subscribe($sub->tutor, $sub->plan, 1, $sub->payment_token);
                     $results['charged']++;
                     $results['invoices_created']++;
+
                     continue;
                 }
             }

@@ -3,14 +3,78 @@
 <head>
     <meta charset="utf-8">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @include('partials.pwa-meta')
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Edusfera для репетиторов — Больше не ищите учеников. Преподавайте.</title>
     <meta name="description" content="Edusfera приводит заявки от родителей, ведёт расписание, сама напоминает ученикам о занятиях и считает ваш доход. Первый месяц бесплатно.">
+    <meta name="keywords" content="работа репетитором беларусь, ученики для репетитора, платформа для репетиторов минск, преподавание цт цэ, репетиторство онлайн">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://edusfera.by/for-tutors">
 
-    <!-- Font: Montserrat -->
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_BY">
+    <meta property="og:site_name" content="Edusfera">
+    <meta property="og:title" content="Edusfera для репетиторов — Больше не ищите учеников. Преподавайте.">
+    <meta property="og:description" content="Готовые заявки, безопасная оплата уроков, умное расписание и интерактивный класс. Первый месяц бесплатно.">
+    <meta property="og:url" content="https://edusfera.by/for-tutors">
+    <meta property="og:image" content="https://edusfera.by/og-image.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Edusfera для репетиторов">
+    <meta name="twitter:description" content="Платформа для преподавателей ЦТ/ЦЭ: заявки от учеников, автоматизация и гарантия оплаты.">
+    <meta name="twitter:image" content="https://edusfera.by/og-image.png">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": "https://edusfera.by/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Репетиторам",
+              "item": "https://edusfera.by/for-tutors"
+            }
+          ]
+        },
+        {
+          "@type": "Service",
+          "name": "Платформа для репетиторов Edusfera",
+          "serviceType": "Образовательная SaaS платформа",
+          "provider": {
+            "@type": "EducationalOrganization",
+            "name": "Edusfera",
+            "url": "https://edusfera.by/"
+          },
+          "areaServed": "BY",
+          "description": "Автоматизированное привлечение учеников, биллинг занятий, виртуальный класс и защита от неявок для репетиторов.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "BYN",
+            "name": "Пробный период 30 дней",
+            "availability": "https://schema.org/InStock"
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Font: Geist & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     @php
         $authUser = auth()->user() ? [
@@ -23,8 +87,8 @@
         $linkedAccounts = $authUser ? app(\App\Services\MultiAccountService::class)->getLinkedAccounts() : [];
     @endphp
     <script>
-        window.EDUSFERA_USER = {!! json_encode($authUser) !!};
-        window.EDUSFERA_LINKED_ACCOUNTS = {!! json_encode($linkedAccounts) !!};
+        window.EDUSFERA_USER = @js($authUser);
+        window.EDUSFERA_LINKED_ACCOUNTS = @js($linkedAccounts);
         window.EDUSFERA_CSRF_TOKEN = "{{ csrf_token() }}";
     </script>
 
@@ -48,11 +112,11 @@
         }
 
         body, button, input, select, textarea, p, span, a, h1, h2, h3, h4, h5, h6 {
-            font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
         .font-rimma {
-            font-family: 'Rimma Sans', 'Montserrat', system-ui, sans-serif !important;
+            font-family: 'Rimma Sans', 'Inter', system-ui, sans-serif !important;
         }
 
         /* Subtle Dark Grid Texture */
@@ -74,24 +138,24 @@
 
         /* Tech Glass Card Styles */
         .wb-card {
-            background-color: var(--ed-surface-card);
-            border: 1px solid var(--ed-border);
-            border-radius: 1.25rem;
+            background-color: rgba(11, 15, 25, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             transition: border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
         }
 
         .wb-card:hover {
-            border-color: rgba(198, 255, 51, 0.4);
+            border-color: rgba(255, 255, 255, 0.2);
             transform: translateY(-2px);
             box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.6), 0 0 20px -4px var(--ed-lime-glow);
         }
 
         .wb-card-dark {
-            background-color: #07090E;
-            border: 1px solid rgba(51, 65, 85, 0.8);
-            border-radius: 1.25rem;
+            background-color: #0B0F19;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
         }
 
         /* High-Impact CTA Buttons */
@@ -234,7 +298,7 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body x-data="{ scrolled: false, mobileOpen: false }" @scroll.window="scrolled = (window.pageYOffset > 20)" class="nexum-body min-h-screen bg-[#010101] text-white selection:bg-[#C6FF33] selection:text-black overflow-x-hidden antialiased">
+<body x-data="{ scrolled: false, mobileOpen: false }" @scroll.window="scrolled = (window.pageYOffset > 20)" class="nexum-body min-h-screen bg-[#010101] text-white selection:bg-[#C6FF33] selection:text-black font-sans overflow-x-hidden antialiased">
     <div id="for-tutors-app" class="w-full">
 
     <!-- ─── HEADER / NAVIGATION (Liquid Glass Island: Canonical Logo + Tutor Badge + Glass 3 Tabs + Glass Login) ─── -->
@@ -931,14 +995,14 @@
             </div>
 
             <!-- 3 Pricing Cards Grid -->
-            <div class="grid lg:grid-cols-3 gap-6 lg:gap-8 items-stretch max-w-6xl">
+            <div class="grid lg:grid-cols-3 gap-6 lg:gap-8 items-stretch max-w-6xl mb-16">
                 
                 <!-- Plan 1: Basic -->
-                <div class="wb-card p-7 sm:p-8 flex flex-col justify-between bg-slate-900/60">
+                <div class="wb-card p-7 sm:p-8 flex flex-col justify-between bg-slate-900/60 border border-slate-800">
                     <div>
                         <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-800">
-                            <h3 class="text-xl font-bold text-white">Basic</h3>
-                            <span class="font-mono-tech text-xs text-slate-400 uppercase">Для старта</span>
+                            <h3 class="text-xl font-bold text-white">«Стандарт» (Basic)</h3>
+                            <span class="font-mono-tech text-xs text-slate-400 uppercase">Для своих учеников</span>
                         </div>
                         
                         <div class="mb-6">
@@ -952,123 +1016,285 @@
 
                         <ul class="space-y-3 text-xs text-slate-300 mb-8">
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> Базовый профиль (фото, предмет, цены)
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Неограниченно своих учеников</strong> и карточек в CRM
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> Просмотр входящих заявок
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Виртуальный класс (SFU)</strong> с видео до 45 мин
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> Базовый чат с учениками
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Интерактивная доска</strong> и демонстрация экрана
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> Email-уведомления
+                                <span class="text-[#C6FF33] font-bold">✓</span> Персональная страница и ссылка на запись
                             </li>
-                            <li class="flex items-start gap-2.5 text-slate-600 line-through">
-                                <span>✕</span> Онлайн-календарь и расписание
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-[#C6FF33] font-bold">✓</span> 1 ГБ облачного хранилища материалов
                             </li>
-                            <li class="flex items-start gap-2.5 text-slate-600 line-through">
-                                <span>✕</span> Отчёты для НПД и статистика
+                            <li class="flex items-start gap-2.5 text-slate-500 line-through">
+                                <span>✕</span> Без откликов на бирже заявок (0 откликов)
+                            </li>
+                            <li class="flex items-start gap-2.5 text-slate-500 line-through">
+                                <span>✕</span> Без ИИ-помощника и авто-чеков НПД
                             </li>
                         </ul>
                     </div>
 
                     <a href="/register?role=tutor&plan=basic" class="wb-btn wb-btn-secondary w-full text-xs py-3.5">
-                        Выбрать Basic (Trial) →
+                        Выбрать «Стандарт» (0 BYN пробный) →
                     </a>
                 </div>
 
-                <!-- Plan 2: Pro (Featured) -->
-                <div class="wb-card bg-[#0B0F19] border-2 border-[#C6FF33] p-7 sm:p-8 flex flex-col justify-between relative shadow-[0_0_40px_rgba(198,255,51,0.15)] lg:-translate-y-2">
-                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#C6FF33] text-black font-mono-tech font-black uppercase text-[10px] tracking-wider px-3.5 py-1 rounded-full shadow-lg">
-                        ВЫБОР РЕДАКЦИИ · ДЛЯ 5+ УЧЕНИКОВ
+                <!-- Plan 2: Pro -->
+                <div class="wb-card bg-[#0B0F19]/90 border border-slate-700 p-7 sm:p-8 flex flex-col justify-between relative shadow-lg">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-800 text-slate-300 border border-slate-600 font-mono-tech font-bold uppercase text-[10px] tracking-wider px-3.5 py-0.5 rounded-full">
+                        ОПТИМАЛЬНЫЙ ДЛЯ ПРАКТИКУЮЩИХ
                     </div>
 
                     <div>
                         <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-800 mt-2">
-                            <h3 class="text-2xl font-bold text-white">Pro</h3>
-                            <span class="font-mono-tech text-xs font-bold text-[#C6FF33] uppercase">Популярный</span>
+                            <h3 class="text-2xl font-bold text-white">«Про» (Pro)</h3>
+                            <span class="font-mono-tech text-xs font-bold text-emerald-400 uppercase">Автоматизация</span>
                         </div>
                         
                         <div class="mb-6">
                             <div class="flex items-baseline gap-1.5">
-                                <span class="font-extrabold text-5xl text-[#C6FF33]" x-text="yearly ? '32' : '40'">40</span>
+                                <span class="font-extrabold text-4xl text-white" x-text="yearly ? '32' : '40'">40</span>
                                 <span class="font-mono-tech text-xs text-slate-300">BYN / месяц</span>
                             </div>
                             <div class="font-mono-tech text-xs font-bold text-[#C6FF33] mt-1">1-й месяц бесплатно (0 BYN)</div>
-                            <div x-show="yearly" x-cloak class="font-mono-tech text-[11px] text-[#C6FF33] font-medium mt-1">384 BYN / год при оплате за год</div>
+                            <div x-show="yearly" x-cloak class="font-mono-tech text-[11px] text-slate-400 font-medium mt-1">384 BYN / год при оплате за год</div>
                         </div>
 
                         <ul class="space-y-3 text-xs text-slate-200 font-medium mb-8">
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Расширенный профиль</strong> (+ отзывы, дипломы)
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Все возможности тарифа «Стандарт»</strong>
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Отклик на заявки</strong> (до 10 в месяц)
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>До 10 откликов в месяц</strong> на заявки родителей
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Календарь + автонапоминания</strong>
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Приоритет x2</strong> в поисковой выдаче каталога
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> Чат с файлами и голосовыми сообщениями
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>ИИ-диагностика знаний (РИКЗ)</strong> пробелов
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Журнал доходов + отчёты для НПД</strong>
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>ИИ-ассистент</strong>: конспекты, тесты и ДЗ
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> Push + Email уведомления ученикам
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Авто-чеки НПД (МНС РБ)</strong> в 1 клик
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Уроки до 120 минут</strong> + 15 ГБ облака
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-[#C6FF33] font-bold">✓</span> SMS и Telegram напоминания ученикам
                             </li>
                         </ul>
                     </div>
 
-                    <a href="/register?role=tutor&plan=pro" class="wb-btn wb-btn-primary w-full text-xs py-4 shadow-[0_0_24px_rgba(198,255,51,0.35)]">
-                        Выбрать Pro (1 мес бесплатно) →
+                    <a href="/register?role=tutor&plan=pro" class="wb-btn wb-btn-secondary w-full text-xs py-3.5">
+                        Выбрать «Про» (0 BYN пробный) →
                     </a>
                 </div>
 
-                <!-- Plan 3: Premium -->
-                <div class="wb-card p-7 sm:p-8 flex flex-col justify-between bg-slate-900/60">
+                <!-- Plan 3: Premium (Flagship Hero) -->
+                <div class="wb-card bg-[#0B0F19] border-2 border-[#C6FF33] p-7 sm:p-8 flex flex-col justify-between relative shadow-[0_0_50px_rgba(198,255,51,0.2)] lg:-translate-y-2">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#C6FF33] text-black font-mono-tech font-black uppercase text-[10px] tracking-wider px-4 py-1 rounded-full shadow-lg flex items-center gap-1.5">
+                        <span>👑</span> ВЫБОР ТОП-РЕПЕТИТОРОВ · МАКСИМУМ ЗАЯВОК
+                    </div>
+
                     <div>
-                        <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-800">
-                            <h3 class="text-xl font-bold text-white">Premium</h3>
-                            <span class="font-mono-tech text-xs text-slate-400 uppercase">Топ-эксперт</span>
+                        <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-800 mt-2">
+                            <h3 class="text-2xl font-black text-white">«Премиум» (Premium)</h3>
+                            <span class="font-mono-tech text-xs font-bold text-[#C6FF33] uppercase">👑 Топ-эксперт</span>
                         </div>
                         
                         <div class="mb-6">
                             <div class="flex items-baseline gap-1.5">
-                                <span class="font-extrabold text-4xl text-white" x-text="yearly ? '48' : '60'">60</span>
-                                <span class="font-mono-tech text-xs text-slate-400">BYN / месяц</span>
+                                <span class="font-extrabold text-5xl text-[#C6FF33]" x-text="yearly ? '48' : '60'">60</span>
+                                <span class="font-mono-tech text-xs text-slate-300">BYN / месяц</span>
                             </div>
                             <div class="font-mono-tech text-xs font-bold text-[#C6FF33] mt-1">1-й месяц бесплатно (0 BYN)</div>
-                            <div x-show="yearly" x-cloak class="font-mono-tech text-[11px] text-slate-400 mt-1">576 BYN / год при оплате за год</div>
+                            <div x-show="yearly" x-cloak class="font-mono-tech text-[11px] text-[#C6FF33] font-medium mt-1">576 BYN / год при оплате за год</div>
                         </div>
 
-                        <ul class="space-y-3 text-xs text-slate-300 mb-8">
+                        <ul class="space-y-3 text-xs text-slate-200 font-medium mb-8">
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Топ-5 в поиске</strong> + видео-визитка
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Все возможности тарифов «Стандарт» и «Про»</strong>
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Безлимитные отклики</strong> + автоподбор
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>👑 ТОП-1 в каталоге</strong> + золотой бейдж «👑 Топ-эксперт»
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>🔥 БЕЗЛИМИТНЫЕ отклики на заявки</strong> + автоподбор
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Видео-визитка прямо в каталоге</strong> (x3 конверсия)
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Свой брендинг класса (White-label)</strong>: ваш логотип
                             </li>
                             <li class="flex items-start gap-2.5">
                                 <span class="text-[#C6FF33] font-bold">✓</span> <strong>Синхронизация с Google Calendar</strong>
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Встроенный видеокласс (до 45 мин)</strong>
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>100 ГБ облака + запись всех уроков в HD</strong>
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> Расширенная аналитика + экспорт
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Мгновенный вывод средств (0% комиссии)</strong>
                             </li>
                             <li class="flex items-start gap-2.5">
-                                <span class="text-[#C6FF33] font-bold">✓</span> SMS-уведомления + приоритет поддержки
+                                <span class="text-[#C6FF33] font-bold">✓</span> <strong>Персональный VIP-куратор 24/7</strong> в Telegram
                             </li>
                         </ul>
                     </div>
 
-                    <a href="/register?role=tutor&plan=premium" class="wb-btn wb-btn-secondary w-full text-xs py-3.5">
-                        Выбрать Premium (Trial) →
+                    <a href="/register?role=tutor&plan=premium" class="wb-btn wb-btn-primary w-full text-xs py-4 shadow-[0_0_30px_rgba(198,255,51,0.4)]">
+                        Выбрать Премиум (1 мес бесплатно) →
                     </a>
                 </div>
 
+            </div>
+
+            <!-- Detailed Comparison Table for Tutors Landing -->
+            <div class="wb-card bg-slate-900/70 border border-slate-800 p-6 sm:p-10 max-w-6xl mx-auto rounded-3xl">
+                <div class="max-w-2xl mb-8 text-left">
+                    <h3 class="text-2xl sm:text-3xl font-bold text-white mb-2">Сравнение возможностей тарифов</h3>
+                    <p class="text-xs sm:text-sm text-slate-400">
+                        Точные лимиты и опции каждого плана для комфортного выбора.
+                    </p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse min-w-[620px]">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 font-mono-tech uppercase text-[11px]">
+                                <th class="py-3 px-4 w-[40%]">Функция</th>
+                                <th class="py-3 px-4 w-[20%] text-center text-slate-300">«Стандарт»</th>
+                                <th class="py-3 px-4 w-[20%] text-center text-emerald-400">«Про»</th>
+                                <th class="py-3 px-4 w-[20%] text-center text-[#C6FF33] font-bold bg-white/5 rounded-t-xl">«Премиум» 👑</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                            <!-- Category 1 -->
+                            <tr class="bg-white/[0.02]">
+                                <td colspan="4" class="py-2.5 px-4 font-mono-tech text-[10px] uppercase tracking-wider text-slate-400 font-bold">1. Привлечение учеников и каталог</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Позиция в каталоге репетиторов</td>
+                                <td class="py-3 px-4 text-center text-slate-400">Базовая</td>
+                                <td class="py-3 px-4 text-center text-emerald-400 font-medium">Приоритет x2</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">👑 ТОП-1 выдачи</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Золотой бейдж «👑 Топ-эксперт» и золотая рамка</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Отклики на заявки с биржи в месяц</td>
+                                <td class="py-3 px-4 text-center text-slate-500">0 (только свои)</td>
+                                <td class="py-3 px-4 text-center text-white font-medium">До 10 заявок</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-extrabold bg-white/5">🔥 БЕЗЛИМИТ</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Видео-визитка прямо в каталоге</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Персональная ссылка для онлайн-записи</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33]">✓</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33]">✓</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓</td>
+                            </tr>
+
+                            <!-- Category 2 -->
+                            <tr class="bg-white/[0.02]">
+                                <td colspan="4" class="py-2.5 px-4 font-mono-tech text-[10px] uppercase tracking-wider text-slate-400 font-bold">2. Виртуальный класс и занятия</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Длительность 1 занятия в виртуальном классе SFU</td>
+                                <td class="py-3 px-4 text-center text-slate-400">До 45 мин</td>
+                                <td class="py-3 px-4 text-center text-white">До 120 мин</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">Без лимита</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Интерактивная доска, видео и экран</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33]">✓</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33]">✓</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Свой брендинг класса (White-label)</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Облачное хранилище материалов</td>
+                                <td class="py-3 px-4 text-center text-slate-400">1 ГБ</td>
+                                <td class="py-3 px-4 text-center text-white">15 ГБ</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">100 ГБ</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Запись всех онлайн-уроков в HD</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓</td>
+                            </tr>
+
+                            <!-- Category 3 -->
+                            <tr class="bg-white/[0.02]">
+                                <td colspan="4" class="py-2.5 px-4 font-mono-tech text-[10px] uppercase tracking-wider text-slate-400 font-bold">3. ИИ и автоматизация</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">ИИ-диагностика знаний (тесты РИКЗ)</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-white">До 30 / мес</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">БЕЗЛИМИТ</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">ИИ-ассистент (планы, тесты, конспекты)</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33]">✓</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓ GPT-4o / Claude</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Авто-чеки НПД для МНС Беларуси</td>
+                                <td class="py-3 px-4 text-center text-slate-500">Ручной ввод</td>
+                                <td class="py-3 px-4 text-center text-emerald-400">В 1 клик</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">Автопилот</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Синхронизация с Google Calendar</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-slate-600">✕</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓</td>
+                            </tr>
+
+                            <!-- Category 4 -->
+                            <tr class="bg-white/[0.02]">
+                                <td colspan="4" class="py-2.5 px-4 font-mono-tech text-[10px] uppercase tracking-wider text-slate-400 font-bold">4. Финансы и кураторство</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Вывод средств на карту РБ</td>
+                                <td class="py-3 px-4 text-center text-slate-400">1-3 дня</td>
+                                <td class="py-3 px-4 text-center text-white">24 часа</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">⚡ Мгновенно (0% комиссия)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Персональная поддержка</td>
+                                <td class="py-3 px-4 text-center text-slate-400">Чат сайта</td>
+                                <td class="py-3 px-4 text-center text-slate-300">Telegram</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">💎 VIP-куратор 24/7</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </section>
@@ -1255,8 +1481,9 @@
     </section>
 
     <!-- ─── SITE FOOTER ─── -->
-    @include('partials.site-footer')
+    @include('partials.site-footer', ['theme' => 'dark'])
 
     </div>
+    @include('partials.pwa-prompt')
 </body>
 </html>

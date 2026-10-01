@@ -15,8 +15,8 @@ class NewsControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
-        if (!file_exists(database_path('news.sqlite'))) {
+
+        if (! file_exists(database_path('news.sqlite'))) {
             touch(database_path('news.sqlite'));
         }
 
@@ -63,7 +63,7 @@ class NewsControllerTest extends TestCase
             'content' => '<p>Beautiful paragraph</p>',
             'status' => 'published',
             'published_at' => now()->subDay(),
-            'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ]);
 
         $response = $this->get(route('news.show', $article->slug));

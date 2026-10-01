@@ -111,7 +111,7 @@ class AiPromptLogResource extends Resource
                     ->alignEnd(),
                 Tables\Columns\TextColumn::make('cost')
                     ->label('Затраты ($)')
-                    ->formatStateUsing(fn ($state) => '$' . number_format((float)$state, 4))
+                    ->formatStateUsing(fn ($state) => '$'.number_format((float) $state, 4))
                     ->sortable()
                     ->alignEnd(),
                 Tables\Columns\IconColumn::make('is_error')

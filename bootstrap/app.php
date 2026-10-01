@@ -11,11 +11,14 @@ use App\Http\Middleware\MetricsAuth;
 use App\Http\Middleware\RecordHttpMetrics;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\StructuredLogging;
+use App\Http\Middleware\TrackUtmParameters;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Middleware\ThrottleRequests;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -58,6 +61,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // 120 req/min per IP is generous for a tutor marketplace.
         $middleware->appendToGroup('web', [
             ApplyRoleSessionLifetime::class,
+            TrackUtmParameters::class,
             SecurityHeaders::class,
             'throttle:120,1',
         ]);
@@ -93,14 +97,21 @@ return Application::configure(basePath: dirname(__DIR__))
             'throttle:web.auth' => ThrottleRequests::class.':web.auth',
         ]);
 
+        $middleware->trimStrings(except: [
+            'payload',
+            'sdp',
+            'payload.sdp',
+            '*.sdp',
+            fn (Request $request): bool => $request->is('classroom/*/signal'),
+        ]);
+
         $middleware->validateCsrfTokens(except: [
+            'classroom/*/signal',
             'api/internal/classroom/*/whiteboard',
             'payments/webhook',
             'payments/alfabank/webhook',
             'webhooks/alfabank',
             'api/v1/payments/alfabank/webhook',
-            'payments/webpay/webhook',
-            'webhooks/webpay',
         ]);
     })
     ->withCommands([
@@ -108,6 +119,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ])
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('lessons:complete')->everyTenMinutes();
+        $schedule->command('lessons:expire-locks')->everyMinute();
+        $schedule->command('wallet:reconcile-holds')->hourly();
+        $schedule->command('edusfera:subscriptions-process-billing')->dailyAt('02:00');
         $schedule->command('integration:publish-outbox')->everyMinute();
         $schedule->command('integration:cleanup-outbox')->dailyAt('03:30');
         $schedule->command('reconcile:lessons-with-ai')->dailyAt('03:00');
@@ -116,5 +130,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('queue:prune-failed --hours=168')->daily();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (ThrottleRequestsException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Слишком много попыток. Пожалуйста, подождите одну минуту и попробуйте снова.',
+                ], 429);
+            }
+        });
     })->create();

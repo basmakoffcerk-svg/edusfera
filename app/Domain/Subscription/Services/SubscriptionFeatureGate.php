@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Subscription\Services;
 
-use App\Domain\Subscription\Enums\SubscriptionPlan;
 use App\Domain\Subscription\Models\Subscription;
 use App\Models\User;
 
@@ -71,7 +70,7 @@ class SubscriptionFeatureGate
 
     /**
      * Check if tutor can customize room branding.
-     * Available for active PRO subscriptions.
+     * Available for active PRO subscriptions (and trial).
      */
     public function canCustomizeBranding(User $tutor): bool
     {
@@ -81,11 +80,37 @@ class SubscriptionFeatureGate
     }
 
     /**
-     * Check if tutor can respond to student requests.
+     * Check if tutor can respond to student requests / leads from the catalog.
+     * START/BASIC: 0 responses (works only with own direct students).
+     * PRO: up to 10 responses per month.
+     * PREMIUM: unlimited responses.
+     * Trial: full access.
      */
     public function canRespondToRequests(User $tutor): bool
     {
-        return $this->hasActiveSubscription($tutor);
+        if (! $this->hasActiveSubscription($tutor)) {
+            return false;
+        }
+
+        $sub = $this->getSubscription($tutor);
+        if (! $sub) {
+            return false;
+        }
+
+        if ($sub->isInTrial()) {
+            return true;
+        }
+
+        $limit = $sub->plan->maxResponsesPerMonth();
+        if ($limit === 0) {
+            return false;
+        }
+
+        if ($limit === null) {
+            return true;
+        }
+
+        return (int) $sub->responses_used_this_month < $limit;
     }
 
     /**
@@ -104,7 +129,7 @@ class SubscriptionFeatureGate
     }
 
     /**
-     * Check if tutor has access to advanced analytics.
+     * Check if tutor has access to basic analytics (PRO & PREMIUM).
      */
     public function canAccessAnalytics(User $tutor): bool
     {
@@ -112,15 +137,63 @@ class SubscriptionFeatureGate
     }
 
     /**
-     * Check if tutor can sync with Google Calendar.
+     * Check if tutor has access to advanced cohort/LTV analytics (PREMIUM only).
      */
-    public function canSyncCalendar(User $tutor): bool
+    public function canAccessDeepAnalytics(User $tutor): bool
     {
-        return $this->hasActiveSubscription($tutor);
+        $sub = $this->getSubscription($tutor);
+
+        return $sub !== null && $sub->isActive() && ($sub->isInTrial() || $sub->isPremium());
     }
 
     /**
-     * Check if tutor can host video calls up to 45 mins.
+     * Check if tutor can sync with Google Calendar (PREMIUM only).
+     */
+    public function canSyncCalendar(User $tutor): bool
+    {
+        $sub = $this->getSubscription($tutor);
+
+        return $sub !== null && $sub->isActive() && ($sub->isInTrial() || $sub->isPremium());
+    }
+
+    /**
+     * Check if tutor can add a video intro to their catalog card (PREMIUM only).
+     */
+    public function canUseVideoIntro(User $tutor): bool
+    {
+        $sub = $this->getSubscription($tutor);
+
+        return $sub !== null && $sub->isActive() && ($sub->isInTrial() || $sub->isPremium());
+    }
+
+    /**
+     * Get tutor storage limit in Megabytes based on tier.
+     */
+    public function getStorageLimitMb(User $tutor): int
+    {
+        $sub = $this->getSubscription($tutor);
+        if (! $sub || ! $sub->isActive()) {
+            return 1024;
+        }
+
+        return $sub->plan->storageLimitGb() * 1024;
+    }
+
+    /**
+     * Check maximum allowed duration per video lesson in minutes.
+     */
+    public function getMaxLessonDurationMinutes(User $tutor): int
+    {
+        $sub = $this->getSubscription($tutor);
+        if (! $sub || ! $sub->isActive()) {
+            return 45;
+        }
+
+        return $sub->plan->maxLessonDurationMinutes();
+    }
+
+    /**
+     * Check if tutor can host video calls.
      */
     public function canHostVideoCalls(User $tutor): bool
     {

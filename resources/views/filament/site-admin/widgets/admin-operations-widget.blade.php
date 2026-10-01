@@ -43,7 +43,7 @@
                                     </p>
                                     <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-semibold">
                                         <span>Отправлено:</span>
-                                        <span>{{ optional($profile->verification_submitted_at)->timezone(config('booking.display_timezone'))->format('d.m H:i') ?? 'только что' }}</span>
+                                        <span>{{ $profile->verification_submitted_at?->timezone(config('booking.display_timezone', 'Europe/Minsk'))?->format('d.m H:i') ?? 'только что' }}</span>
                                     </div>
                                 </div>
                             @empty
@@ -116,7 +116,7 @@
                                     {{ $transaction->lesson?->student?->name ?? 'Ученик' }} → {{ $transaction->lesson?->tutor?->name ?? 'Репетитор' }}
                                 </p>
                                 <p class="text-[11px] font-medium text-slate-400">
-                                    {{ optional($transaction->paid_at)->timezone(config('booking.display_timezone'))->format('d.m.Y H:i') ?? 'Без даты' }}
+                                    {{ $transaction->paid_at?->timezone(config('booking.display_timezone', 'Europe/Minsk'))?->format('d.m.Y H:i') ?? 'Без даты' }}
                                 </p>
                             </div>
                             <div class="text-right">
@@ -149,7 +149,7 @@
                             <div>
                                 <p class="text-xs font-extrabold text-slate-900">{{ $lesson->tutor?->name ?? 'Репетитор' }} / {{ $lesson->student?->name ?? 'Ученик' }}</p>
                                 <p class="text-[11px] text-slate-400 font-medium mt-0.5">
-                                    {{ $lesson->start_time->timezone(config('booking.display_timezone'))->format('d.m.Y H:i') }}
+                                    {{ $lesson->start_time?->timezone(config('booking.display_timezone', 'Europe/Minsk'))?->format('d.m.Y H:i') ?? '—' }}
                                 </p>
                             </div>
                             <span class="rounded-full px-2.5 py-1 text-[10px] font-black {{ $lesson->status === \App\Models\Lesson::STATUS_PENDING ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-700' }}">

@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Models\Transaction;
-use App\Services\Payment\PaymentService;
 use App\Support\BynMoneyFormatter;
 use Filament\Facades\Filament;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -73,21 +72,6 @@ class TransactionResource extends Resource
                     ->formatStateUsing(fn ($state): string => $state?->setTimezone(config('booking.display_timezone'))->format('d.m.Y H:i') ?? '—'),
             ])
             ->actions([])
-            ->headerActions([
-                Tables\Actions\Action::make('request_payout')
-                    ->label('Запросить выплату')
-                    ->icon('heroicon-o-arrow-up-on-square')
-                    ->visible(fn (): bool => auth()->user()?->isTutor() ?? false)
-                    ->requiresConfirmation()
-                    ->action(function (): void {
-                        app(PaymentService::class)->requestPayout(auth()->id());
-
-                        Notification::make()
-                            ->title('Заявка на выплату зафиксирована')
-                            ->success()
-                            ->send();
-                    }),
-            ])
             ->bulkActions([]);
     }
 
@@ -123,8 +107,7 @@ class TransactionResource extends Resource
         }
 
         return match (auth()->user()?->role) {
-            \App\Enums\UserRole::Tutor => 'История выплат',
-            \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent => 'Мои оплаты',
+            UserRole::Student, UserRole::Parent => 'Мои оплаты',
             default => 'История операций',
         };
     }
@@ -136,7 +119,7 @@ class TransactionResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'История выплат';
+        return 'История операций';
     }
 
     public static function getNavigationGroup(): ?string
@@ -146,8 +129,11 @@ class TransactionResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        $user = auth()->user();
+        return auth()->user()?->isAdmin() ?? false;
+    }
 
-        return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent, \App\Enums\UserRole::Admin], true);
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
     }
 }

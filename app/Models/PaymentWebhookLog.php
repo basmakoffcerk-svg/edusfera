@@ -7,13 +7,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class WebpayWebhookLog extends Model
+class PaymentWebhookLog extends Model
 {
     use HasFactory;
 
     public const UPDATED_AT = null;
 
-    protected $table = 'webpay_webhook_logs';
+    protected $table = 'payment_webhook_logs';
 
     protected $fillable = [
         'event',

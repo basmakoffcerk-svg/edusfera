@@ -1,201 +1,498 @@
-<footer class="w-full bg-[#010101] text-white pt-12 pb-16 font-sans mt-16">
-    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {{-- Outer Layered Card --}}
-        <div class="bg-[#0B0F19]/90 rounded-[40px] sm:rounded-[48px] border border-slate-800/80 shadow-2xl overflow-hidden backdrop-blur-2xl">
+@php
+    $isDark = ($theme ?? null) === 'dark';
+@endphp
+
+<footer class="site-footer {{ $isDark ? 'site-footer--dark' : 'site-footer--light' }}">
+    <div class="site-footer__container">
+        {{-- Main Navigation Grid --}}
+        <div class="site-footer__grid">
             
-            {{-- Inner Box --}}
-            <div class="bg-[#101726]/85 rounded-[32px] sm:rounded-[40px] m-2 sm:m-3 border border-slate-700/40 p-6 sm:p-10 lg:p-12 shadow-inner">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
-                    
-                    {{-- Brand Column (lg:col-span-4) --}}
-                    <div class="lg:col-span-4 space-y-6">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7D39EB] to-[#5B21B6] border border-violet-400/40 flex items-center justify-center shadow-lg shadow-violet-900/30 shrink-0">
-                                <svg width="22" height="22" viewBox="0 0 64 64" class="w-5 h-5">
-                                    <path d="M32 10L54 32L32 54L10 32L32 10Z" fill="none" stroke="#C6FF33" stroke-width="6" stroke-linejoin="round" />
-                                    <path d="M32 22L42 32L32 42L22 32L32 22Z" fill="#C6FF33" />
-                                </svg>
-                            </div>
-                            <a href="{{ route('home') }}" class="text-2xl font-black tracking-tight text-white uppercase font-rimma">
-                                EDUSFERA
-                            </a>
-                        </div>
-                        
-                        <p class="text-slate-400 text-sm leading-relaxed max-w-sm font-normal">
-                            Первая белорусская платформа умной подготовки к ЦТ и ЦЭ с ИИ-агентами, подбором проверенных репетиторов из реестра и безопасными платежами.
-                        </p>
-
-                        <div class="pt-1">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-700/60 text-xs font-semibold text-[#C6FF33]">
-                                <span class="w-2 h-2 rounded-full bg-[#C6FF33] animate-pulse"></span>
-                                Платформа 2026 · Реестр РБ
-                            </span>
-                        </div>
+            {{-- Column 1: Brand & Identity --}}
+            <div class="site-footer__col-brand">
+                <a href="{{ route('home') }}" class="site-footer__brand-link">
+                    <div class="site-footer__brand-icon">
+                        <svg width="18" height="18" viewBox="0 0 64 64">
+                            <path d="M32 10L54 32L32 54L10 32L32 10Z" fill="none" stroke="#C6FF33" stroke-width="6" stroke-linejoin="round" />
+                            <path d="M32 22L42 32L32 42L22 32L32 22Z" fill="#C6FF33" />
+                        </svg>
                     </div>
-
-                    {{-- Col 2: ПЛАТФОРМА --}}
-                    <div class="lg:col-span-2 space-y-4">
-                        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-widest">
-                            Платформа
-                        </h4>
-                        <ul class="space-y-3 text-sm">
-                            <li>
-                                <a href="{{ route('tutors.index') }}" class="text-slate-400 hover:text-[#C6FF33] transition-colors">
-                                    Каталог репетиторов
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('for-tutors') }}" class="text-slate-400 hover:text-[#C6FF33] transition-colors">
-                                    Преподавателям
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('diagnostic.show') }}" class="text-slate-400 hover:text-[#C6FF33] transition-colors flex items-center justify-between">
-                                    <span>ИИ-Диагностика</span>
-                                    <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-violet-500/20 text-violet-300 border border-violet-500/30 font-bold">2026</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('news.index') }}" class="text-slate-400 hover:text-[#C6FF33] transition-colors">
-                                    Новости и статьи
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {{-- Col 3: ПРАВОВЫЕ ДОКУМЕНТЫ --}}
-                    <div class="lg:col-span-3 space-y-4">
-                        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-widest">
-                            Документы
-                        </h4>
-                        <ul class="space-y-3 text-sm">
-                            <li>
-                                <a href="{{ route('legal.offer') }}" class="text-slate-400 hover:text-white transition-colors">
-                                    Публичная оферта и тарифы
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('legal.privacy') }}" class="text-slate-400 hover:text-white transition-colors">
-                                    Конфиденциальность (99-З)
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('legal.payment-security') }}" class="text-slate-400 hover:text-white transition-colors">
-                                    Безопасность платежей
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('legal.refund') }}" class="text-slate-400 hover:text-white transition-colors">
-                                    Правила возврата и отмены
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {{-- Col 4: КОНТАКТЫ И РЕЖИМ РАБОТЫ --}}
-                    <div class="lg:col-span-3 space-y-4">
-                        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-widest">
-                            Контакты и офис
-                        </h4>
-                        <ul class="space-y-3 text-sm">
-                            <li>
-                                <a href="{{ route('contacts') }}" class="text-slate-300 font-semibold hover:text-[#C6FF33] transition-colors">
-                                    Контакты ООО «Эдусфера»
-                                </a>
-                            </li>
-                            <li>
-                                <a href="mailto:edusferaby@gmail.com" class="text-slate-400 hover:text-white transition-colors">
-                                    edusferaby@gmail.com
-                                </a>
-                            </li>
-                            <li>
-                                <a href="tel:+375295190821" class="text-slate-300 font-bold hover:text-[#C6FF33] transition-colors">
-                                    +375 (29) 519-08-21
-                                </a>
-                            </li>
-                        </ul>
-                        <p class="text-xs text-slate-500 pt-1 leading-relaxed">
-                            Режим работы: Пн-Пт 09:00 – 18:00 (Минск)
-                        </p>
-                    </div>
-
-                </div>
-
-                {{-- Payment Systems & Acquiring Logos Strip --}}
-                <div class="mt-8 pt-8 border-t border-slate-800/80">
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 text-center sm:text-left">
-                        Принимаем к онлайн-оплате через интернет-эквайринг ЗАО «Альфа-Банк»
-                    </p>
-                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                        <div class="bg-white rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-sm h-11 border border-slate-700/30">
-                            <img src="/logo/alfa-bank.svg" alt="ЗАО «Альфа-Банк»" class="h-6 max-w-[115px] object-contain">
-                        </div>
-                        <div class="bg-white rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-sm h-11 border border-slate-700/30">
-                            <img src="/logo/belkart.png" alt="БЕЛКАРТ" class="h-7 max-w-[90px] object-contain">
-                        </div>
-                        <div class="bg-white rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-sm h-11 border border-slate-700/30">
-                            <img src="/logo/belkart-internetparol.svg" alt="Белкарт ИнтернетПароль" class="h-6 max-w-[110px] object-contain">
-                        </div>
-                        <div class="bg-white rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-sm h-11 border border-slate-700/30">
-                            <img src="/logo/visa.svg" alt="VISA" class="h-5 max-w-[70px] object-contain">
-                        </div>
-                        <div class="bg-white rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-sm h-11 border border-slate-700/30">
-                            <img src="/logo/visa-secure.svg" alt="Visa Secure" class="h-7 max-w-[65px] object-contain">
-                        </div>
-                        <div class="bg-white rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-sm h-11 border border-slate-700/30">
-                            <img src="/logo/mastercard.svg" alt="MasterCard" class="h-6 max-w-[75px] object-contain">
-                        </div>
-                        <div class="bg-white rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-sm h-11 border border-slate-700/30">
-                            <img src="/logo/mastercard-id-check.svg" alt="Mastercard Identity Check" class="h-7 max-w-[100px] object-contain">
-                        </div>
-                        <div class="bg-white rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-sm h-11 border border-slate-700/30">
-                            <img src="/logo/apple-pay.svg" alt="Apple Pay" class="h-5 max-w-[60px] object-contain">
-                        </div>
-                        <div class="bg-white rounded-xl px-3.5 py-1.5 flex items-center justify-center shadow-sm h-11 border border-slate-700/30">
-                            <img src="/logo/samsung-pay.svg" alt="Samsung Pay" class="h-5 max-w-[95px] object-contain">
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Legal Information & Bank Details Grid --}}
-                <div class="mt-8 pt-6 border-t border-slate-800/80 grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs text-slate-400 leading-relaxed">
-                    <div class="space-y-1.5 bg-slate-900/40 p-4 rounded-2xl border border-slate-800/60">
-                        <h5 class="font-bold text-white text-xs uppercase tracking-wide">Юридическая информация</h5>
-                        <p><strong>ООО «Эдусфера»</strong> · УНП 192854899 · Зарегистрировано Минским горисполкомом 04.05.2026 г.</p>
-                        <p><strong>Юридический адрес:</strong> 220100, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29 (Страна нахождения: Республика Беларусь).</p>
-                        <p><strong>Тел:</strong> +375 (29) 519-08-21 · <strong>Email:</strong> edusferaby@gmail.com · <strong>Режим работы:</strong> Пн-Пт 09:00 – 18:00</p>
-                        <p class="text-slate-500 text-[11px]">Деятельность не подлежит лицензированию в соответствии с законодательством Республики Беларусь.</p>
-                    </div>
-
-                    <div class="space-y-1.5 bg-slate-900/40 p-4 rounded-2xl border border-slate-800/60">
-                        <h5 class="font-bold text-white text-xs uppercase tracking-wide">Платёжный эквайринг и безопасность</h5>
-                        <p><strong>Интернет-эквайринг:</strong> ЗАО «Альфа-Банк» · Защита платежей по стандарту PCI DSS v4.0</p>
-                        <p><strong>Поддерживаемые карты:</strong> VISA, Visa Secure, MasterCard, MasterCard ID Check, БЕЛКАРТ, Белкарт ИнтернетПароль, Apple Pay, Samsung Pay.</p>
-                        <p class="text-slate-500 text-[11px]">Безопасность передачи данных обеспечивается шифрованием TLS/SSL (256-bit) и технологиями 3D-Secure 2.0.</p>
-                    </div>
-                </div>
-
+                    <span class="site-footer__brand-name">EDUSFERA</span>
+                </a>
+                
+                <p class="site-footer__brand-desc">
+                    Белорусская образовательная платформа для репетиторов и подготовки к ЦТ/ЦЭ. Интерактивный класс, автоматические чеки для самозанятых и безопасная оплата с 0% комиссии на уроки.
+                </p>
             </div>
 
-            {{-- Bottom Bar: Copyright & Platform Info --}}
-            <div class="px-6 sm:px-12 py-5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
-                <p class="text-slate-400 font-medium text-center md:text-left">
-                    © {{ date('Y') }} ООО «Эдусфера». Все права защищены.
-                </p>
+            {{-- Column 2: Платформа --}}
+            <div class="site-footer__col">
+                <h4 class="site-footer__col-title">Платформа</h4>
+                <ul class="site-footer__links">
+                    <li><a href="{{ route('about') }}" class="site-footer__about-link font-semibold">О компании</a></li>
+                    <li><a href="{{ route('tutors.index') }}">Каталог репетиторов</a></li>
+                    <li><a href="{{ route('for-tutors') }}">Преподавателям</a></li>
+                    <li>
+                        <a href="{{ route('diagnostic.show') }}" class="site-footer__badge-link">
+                            <span>ИИ-Диагностика</span>
+                            <span class="site-footer__tag">ЦЭ/ЦТ</span>
+                        </a>
+                    </li>
+                    <li><a href="{{ route('news.index') }}">Новости и статьи</a></li>
+                </ul>
+            </div>
 
-                <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-slate-400 font-medium">
-                    <span>Минск, Беларусь</span>
-                    <div class="w-[1px] h-3.5 bg-slate-700 hidden sm:block"></div>
-                    <a href="{{ route('legal.offer') }}" class="hover:text-white transition-colors">
-                        Пользовательское соглашение
-                    </a>
-                    <div class="w-[1px] h-3.5 bg-slate-700 hidden sm:block"></div>
-                    <span class="inline-flex items-center gap-1 text-[#C6FF33]">
-                        ⚡ Платформа v2.0
-                    </span>
-                </div>
+            {{-- Column 3: Документы --}}
+            <div class="site-footer__col">
+                <h4 class="site-footer__col-title">Документы</h4>
+                <ul class="site-footer__links">
+                    <li><a href="{{ route('legal.offer') }}">Публичная оферта и тарифы</a></li>
+                    <li><a href="{{ route('legal.privacy') }}">Конфиденциальность (99-З)</a></li>
+                    <li><a href="{{ route('legal.payment-security') }}">Безопасность платежей</a></li>
+                    <li><a href="{{ route('legal.refund') }}">Правила возврата и отмены</a></li>
+                </ul>
+            </div>
+
+            {{-- Column 4: Связь и поддержка --}}
+            <div class="site-footer__col">
+                <h4 class="site-footer__col-title">Связь и поддержка</h4>
+                <ul class="site-footer__links">
+                    <li>
+                        <a href="tel:+375295190821" class="site-footer__phone">
+                            +375 (29) 519-08-21
+                        </a>
+                    </li>
+                    <li>
+                        <a href="mailto:edusferaby@gmail.com">
+                            edusferaby@gmail.com
+                        </a>
+                    </li>
+                    <li class="site-footer__hours">
+                        Пн–Пт 09:00 – 18:00 (Минск)
+                    </li>
+                    <li>
+                        <a href="{{ route('contacts') }}" class="site-footer__requisites-link">
+                            Контакты и реквизиты →
+                        </a>
+                    </li>
+                </ul>
             </div>
 
         </div>
+
+        {{-- Payments Row: Large prominent payment badges --}}
+        <div class="site-footer__payments-section">
+            <p class="site-footer__payments-title">
+                Принимаем к онлайн-оплате через интернет-эквайринг ЗАО «Альфа-Банк»
+            </p>
+            <div class="site-footer__payments-grid">
+                <div class="site-footer__pay-badge" title="ЗАО «Альфа-Банк»">
+                    <img src="/logo/alfa-bank.svg" alt="ЗАО «Альфа-Банк»" class="site-footer__pay-img site-footer__pay-img--alfa">
+                </div>
+                <div class="site-footer__pay-badge" title="БЕЛКАРТ">
+                    <img src="/logo/belkart.png" alt="БЕЛКАРТ" class="site-footer__pay-img site-footer__pay-img--belkart">
+                </div>
+                <div class="site-footer__pay-badge" title="Белкарт ИнтернетПароль">
+                    <img src="/logo/belkart-internetparol.svg" alt="Белкарт ИнтернетПароль" class="site-footer__pay-img site-footer__pay-img--belkart-ip">
+                </div>
+                <div class="site-footer__pay-badge" title="VISA">
+                    <img src="/logo/visa.svg" alt="VISA" class="site-footer__pay-img site-footer__pay-img--visa">
+                </div>
+                <div class="site-footer__pay-badge" title="Visa Secure">
+                    <img src="/logo/visa-secure.svg" alt="Visa Secure" class="site-footer__pay-img site-footer__pay-img--visa-sec">
+                </div>
+                <div class="site-footer__pay-badge" title="MasterCard">
+                    <img src="/logo/mastercard.svg" alt="MasterCard" class="site-footer__pay-img site-footer__pay-img--mc">
+                </div>
+                <div class="site-footer__pay-badge" title="Mastercard Identity Check">
+                    <img src="/logo/mastercard-id-check.svg" alt="Mastercard Identity Check" class="site-footer__pay-img site-footer__pay-img--mc-id">
+                </div>
+                <div class="site-footer__pay-badge" title="Apple Pay">
+                    <img src="/logo/apple-pay.svg" alt="Apple Pay" class="site-footer__pay-img site-footer__pay-img--apple">
+                </div>
+                <div class="site-footer__pay-badge" title="Samsung Pay">
+                    <img src="/logo/samsung-pay.svg" alt="Samsung Pay" class="site-footer__pay-img site-footer__pay-img--samsung">
+                </div>
+            </div>
+        </div>
+
+        {{-- Legal & Compliance text --}}
+        <div class="site-footer__legal-section">
+            <p>
+                <strong>ООО «Эдусфера»</strong> · УНП 192854899 · Зарегистрировано Минским горисполкомом 04.05.2026 г. Юридический адрес: 220100, Республика Беларусь, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29.
+            </p>
+            <p>
+                Деятельность не подлежит лицензированию в соответствии с законодательством Республики Беларусь. Передача данных защищена 256-битным шифрованием TLS/SSL и технологиями 3D-Secure 2.0.
+            </p>
+        </div>
+
+        {{-- Bottom Copyright Line --}}
+        <div class="site-footer__bottom-bar">
+            <p class="site-footer__copyright">
+                © {{ date('Y') }} ООО «Эдусфера». Все права защищены.
+            </p>
+            <div class="site-footer__bottom-links">
+                <span>Минск, Беларусь</span>
+                <span class="site-footer__dot-sep">·</span>
+                <a href="{{ route('legal.offer') }}">Пользовательское соглашение</a>
+                <span class="site-footer__dot-sep">·</span>
+                <a href="{{ route('legal.privacy') }}">Конфиденциальность</a>
+                <span class="site-footer__dot-sep">·</span>
+                <a href="{{ route('legal.payment-security') }}">Безопасность платежей</a>
+            </div>
+        </div>
     </div>
 </footer>
+
+<style>
+/* ========================================================
+   ENCAPSULATED SITE FOOTER (Apple Minimalist & Scoped)
+   Guaranteed immunity against global CSS resets & resets
+   ======================================================== */
+.site-footer {
+    width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    box-sizing: border-box;
+}
+
+/* Light Theme (Default) */
+.site-footer--light {
+    background-color: #f5f5f7;
+    color: #6e6e73;
+    border-top: 1px solid #d2d2d7;
+}
+.site-footer--light a {
+    color: #6e6e73;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.site-footer--light a:hover {
+    color: #1d1d1f;
+}
+.site-footer--light .site-footer__col-title {
+    color: #1d1d1f;
+}
+.site-footer--light .site-footer__brand-name {
+    color: #1d1d1f;
+}
+.site-footer--light .site-footer__phone {
+    color: #1d1d1f;
+}
+.site-footer--light .site-footer__phone:hover {
+    color: #7D39EB;
+}
+.site-footer--light .site-footer__requisites-link {
+    color: #7D39EB;
+}
+.site-footer--light .site-footer__requisites-link:hover {
+    color: #5B21B6;
+}
+.site-footer--light .site-footer__pay-badge {
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.site-footer--light .site-footer__pay-badge:hover {
+    border-color: #c7c7cc;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.site-footer--light .site-footer__tag {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+.site-footer--light .site-footer__payments-section,
+.site-footer--light .site-footer__legal-section,
+.site-footer--light .site-footer__bottom-bar {
+    border-top: 1px solid #e5e5ea;
+}
+.site-footer--light .site-footer__dot-sep {
+    color: #d2d2d7;
+}
+
+/* Dark Theme */
+.site-footer--dark {
+    background-color: #000000;
+    color: #86868b;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.site-footer--dark a {
+    color: #9ca3af;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.site-footer--dark a:hover {
+    color: #ffffff;
+}
+.site-footer--dark .site-footer__col-title {
+    color: #ffffff;
+}
+.site-footer--dark .site-footer__brand-name {
+    color: #ffffff;
+}
+.site-footer--dark .site-footer__brand-desc {
+    color: #9ca3af;
+}
+.site-footer--dark .site-footer__phone {
+    color: #ffffff;
+}
+.site-footer--dark .site-footer__phone:hover {
+    color: #C6FF33;
+}
+.site-footer--dark .site-footer__requisites-link {
+    color: #a78bfa;
+}
+.site-footer--dark .site-footer__requisites-link:hover {
+    color: #c4b5fd;
+}
+.site-footer--dark .site-footer__pay-badge {
+    background: #ffffff;
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.site-footer--dark .site-footer__pay-badge:hover {
+    border-color: #C6FF33;
+    transform: translateY(-1px);
+}
+.site-footer--dark .site-footer__tag {
+    background: rgba(125,57,235,0.25);
+    color: #c4b5fd;
+}
+.site-footer--dark .site-footer__payments-section,
+.site-footer--dark .site-footer__legal-section,
+.site-footer--dark .site-footer__bottom-bar {
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+.site-footer--dark .site-footer__dot-sep {
+    color: rgba(255,255,255,0.2);
+}
+
+/* Layout Core */
+.site-footer__container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 3.5rem;
+    box-sizing: border-box;
+}
+
+.site-footer__grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.25fr 1.25fr;
+    gap: 2.5rem;
+    align-items: start;
+    box-sizing: border-box;
+}
+
+.site-footer__col-brand {
+    box-sizing: border-box;
+}
+
+.site-footer__brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    text-decoration: none;
+    margin-bottom: 0.85rem;
+}
+
+.site-footer__brand-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #7D39EB, #5B21B6);
+    border: 1px solid rgba(198,255,51,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.site-footer__brand-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+}
+
+.site-footer__brand-desc {
+    font-size: 13px;
+    line-height: 1.65;
+    max-width: 360px;
+    margin: 0 0 1rem 0;
+}
+
+.site-footer__col {
+    box-sizing: border-box;
+}
+
+.site-footer__col-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 1rem 0;
+}
+
+.site-footer__links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.site-footer__badge-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.site-footer__tag {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.03em;
+}
+
+.site-footer__phone {
+    font-weight: 700;
+    font-size: 13.5px;
+}
+
+.site-footer__hours {
+    font-size: 12px;
+    color: #86868b;
+    padding-top: 2px;
+}
+
+.site-footer__requisites-link {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Payments Section */
+.site-footer__payments-section {
+    margin-top: 2.75rem;
+    padding-top: 2rem;
+    box-sizing: border-box;
+}
+
+.site-footer__payments-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 1.15rem 0;
+}
+
+.site-footer__payments-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.site-footer__pay-badge {
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    cursor: default;
+}
+
+.site-footer__pay-img {
+    display: block;
+    object-fit: contain;
+}
+.site-footer__pay-img--alfa { height: 28px; max-width: 125px; }
+.site-footer__pay-img--belkart { height: 28px; max-width: 100px; }
+.site-footer__pay-img--belkart-ip { height: 28px; max-width: 110px; }
+.site-footer__pay-img--visa { height: 22px; max-width: 75px; }
+.site-footer__pay-img--visa-sec { height: 26px; max-width: 90px; }
+.site-footer__pay-img--mc { height: 28px; max-width: 65px; }
+.site-footer__pay-img--mc-id { height: 28px; max-width: 90px; }
+.site-footer__pay-img--apple { height: 24px; max-width: 65px; }
+.site-footer__pay-img--samsung { height: 24px; max-width: 85px; }
+
+/* Legal & Compliance */
+.site-footer__legal-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    font-size: 11.5px;
+    line-height: 1.65;
+    color: #86868b;
+    box-sizing: border-box;
+}
+.site-footer__legal-section p {
+    margin: 0 0 0.5rem 0;
+}
+.site-footer__legal-section p:last-child {
+    margin-bottom: 0;
+}
+
+/* Bottom Bar */
+.site-footer__bottom-bar {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 12px;
+    color: #86868b;
+    box-sizing: border-box;
+}
+
+.site-footer__copyright {
+    margin: 0;
+}
+
+.site-footer__bottom-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+    .site-footer__grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    .site-footer__col-brand {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 640px) {
+    .site-footer__container {
+        padding: 2.5rem 1rem 6rem; /* Extra bottom padding for mobile sticky bar */
+    }
+    .site-footer__grid {
+        grid-template-columns: 1fr;
+        gap: 1.75rem;
+    }
+    .site-footer__bottom-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    .site-footer__payments-grid {
+        gap: 8px;
+    }
+    .site-footer__pay-badge {
+        height: 42px;
+        padding: 0 12px;
+    }
+}
+</style>

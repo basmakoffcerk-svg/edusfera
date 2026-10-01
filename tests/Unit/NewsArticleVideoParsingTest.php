@@ -13,7 +13,7 @@ class NewsArticleVideoParsingTest extends TestCase
     public function test_it_parses_youtube_urls(): void
     {
         $article = new NewsArticle([
-            'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+            'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         ]);
 
         $this->assertEquals('https://www.youtube.com/embed/dQw4w9WgXcQ', $article->embed_video_url);
@@ -31,7 +31,7 @@ class NewsArticleVideoParsingTest extends TestCase
     public function test_it_parses_vimeo_urls(): void
     {
         $article = new NewsArticle([
-            'video_url' => 'https://vimeo.com/47123456'
+            'video_url' => 'https://vimeo.com/47123456',
         ]);
 
         $this->assertEquals('https://player.vimeo.com/video/47123456', $article->embed_video_url);
@@ -43,7 +43,7 @@ class NewsArticleVideoParsingTest extends TestCase
     public function test_it_returns_null_for_invalid_urls(): void
     {
         $article = new NewsArticle([
-            'video_url' => ''
+            'video_url' => '',
         ]);
 
         $this->assertNull($article->embed_video_url);

@@ -7,7 +7,6 @@ namespace Tests\Feature\Adversarial;
 use App\Enums\UserRole;
 use App\Models\Lesson;
 use App\Models\StudentBalance;
-use App\Models\StudentBalanceLedgerEntry;
 use App\Models\Transaction;
 use App\Models\TutorBalance;
 use App\Models\User;
@@ -17,7 +16,6 @@ use App\Services\Payment\PaymentService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -162,10 +160,10 @@ class FinancialAndPaymentAdversarialTest extends TestCase
     /**
      * FIX 3: Webhook signature enforcement prevents unsigned and forged webhook execution.
      *
-     * In WebPayWebhookController:
+     * In AlfaBankWebhookController:
      * Unsigned and forged webhooks are rejected with HTTP 403 Forbidden.
      */
-    public function test_unsigned_webpay_webhook_is_rejected_and_does_not_topup_wallet(): void
+    public function test_unsigned_payment_webhook_is_rejected_and_does_not_topup_wallet(): void
     {
         $student = User::factory()->create(['role' => UserRole::Student]);
 
@@ -175,16 +173,16 @@ class FinancialAndPaymentAdversarialTest extends TestCase
             'amount' => '150.00',
             'currency' => 'BYN',
             'status' => 'pending',
-            'gateway' => 'webpay',
-            'gateway_transaction_id' => 'WEBPAY_FAKE_TX_99999',
+            'gateway' => 'alfabank',
+            'gateway_transaction_id' => 'ALFA_FAKE_TX_99999',
         ]);
 
         Config::set('payments.webhook_require_signature', true);
 
         // Malicious actor posts unsigned webhook notification
-        $response = $this->postJson('/payments/webpay/webhook', [
+        $response = $this->postJson('/payments/alfabank/webhook', [
             'payment_type' => 'completion',
-            'transaction_id' => 'WEBPAY_FAKE_TX_99999',
+            'transaction_id' => 'ALFA_FAKE_TX_99999',
             'status' => 'completed',
         ]);
 
@@ -201,7 +199,7 @@ class FinancialAndPaymentAdversarialTest extends TestCase
     /**
      * FIX 3.2: Invalid signature is rejected even when signature header/field is passed.
      */
-    public function test_forged_webpay_webhook_is_rejected(): void
+    public function test_forged_payment_webhook_is_rejected(): void
     {
         $student = User::factory()->create(['role' => UserRole::Student]);
 
@@ -210,19 +208,19 @@ class FinancialAndPaymentAdversarialTest extends TestCase
             'amount' => '150.00',
             'currency' => 'BYN',
             'status' => 'pending',
-            'gateway' => 'webpay',
-            'gateway_transaction_id' => 'WEBPAY_FORGED_TX_88888',
+            'gateway' => 'alfabank',
+            'gateway_transaction_id' => 'ALFA_FORGED_TX_88888',
         ]);
 
-        Config::set('payments.webpay.secret_key', 'real_secret_key');
+        Config::set('payments.webhook_secret', 'real_secret_key');
         Config::set('payments.webhook_require_signature', true);
 
         // Post with wrong signature
-        $response = $this->postJson('/payments/webpay/webhook', [
+        $response = $this->postJson('/payments/alfabank/webhook', [
             'payment_type' => 'completion',
-            'transaction_id' => 'WEBPAY_FORGED_TX_88888',
+            'transaction_id' => 'ALFA_FORGED_TX_88888',
             'status' => 'completed',
-            'ws_signature' => 'invalid_forged_md5_hash',
+            'signature' => 'invalid_forged_md5_hash',
         ]);
 
         $response->assertStatus(403);
@@ -230,4 +228,3 @@ class FinancialAndPaymentAdversarialTest extends TestCase
         $this->assertEquals('pending', $topup->status);
     }
 }
-

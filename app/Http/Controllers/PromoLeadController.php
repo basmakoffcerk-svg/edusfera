@@ -19,7 +19,7 @@ class PromoLeadController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -33,12 +33,12 @@ class PromoLeadController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Ваша заявка успешно отправлена!'
+                'message' => 'Ваша заявка успешно отправлена!',
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Произошла ошибка при отправке заявки. Пожалуйста, попробуйте позже.'
+                'message' => 'Произошла ошибка при отправке заявки. Пожалуйста, попробуйте позже.',
             ], 500);
         }
     }

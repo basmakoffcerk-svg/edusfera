@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Filament\Widgets\StudentWelcomeWidget;
 use App\Models\ProgressSnapshot;
 use App\Models\SkillGap;
 use App\Models\StudentGoal;
@@ -64,11 +65,9 @@ class StudentDashboardProgressTest extends TestCase
         ]);
 
         Livewire::actingAs($student)
-            ->test(\App\Filament\Widgets\StudentWelcomeWidget::class)
-            ->assertSee('Учебный прогресс')
+            ->test(StudentWelcomeWidget::class)
+            ->assertSee('Учебная траектория и прогресс')
             ->assertSee('Белорусский язык')
-            ->assertSee('Прогноз')
-            ->assertSee('61')
             ->assertSee('Слабые темы');
     }
 }

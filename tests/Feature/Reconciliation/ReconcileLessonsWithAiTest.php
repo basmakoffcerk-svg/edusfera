@@ -12,6 +12,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
 use Tests\TestCase;
 
 /**
@@ -152,7 +153,7 @@ class ReconcileLessonsWithAiTest extends TestCase
         $lesson = $this->makeCompletedLesson($tutor, $student);
 
         // Любой вызов Log::channel(...) вернёт spy-логгер, на котором проверим info().
-        $logSpy = \Mockery::spy(\Psr\Log\LoggerInterface::class);
+        $logSpy = \Mockery::spy(LoggerInterface::class);
         Log::shouldReceive('channel')->andReturn($logSpy);
 
         $this->artisan('reconcile:lessons-with-ai')->assertSuccessful();

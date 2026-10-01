@@ -6,8 +6,10 @@ namespace Tests\Feature;
 
 use App\Models\Lesson;
 use App\Models\Transaction;
+use App\Models\TutorProfile;
 use App\Models\User;
 use App\Models\WalletTopup;
+use App\Services\Finance\StudentBalanceService;
 use App\Services\Payment\AlfaBankPaymentGateway;
 use App\Services\Payment\PaymentGatewayInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -158,7 +160,7 @@ class AlfaBankIntegrationTest extends TestCase
     {
         $student = User::factory()->create(['role' => 'student']);
         $tutor = User::factory()->create(['role' => 'tutor']);
-        \App\Models\TutorProfile::create(['user_id' => $tutor->id]);
+        TutorProfile::create(['user_id' => $tutor->id]);
 
         $lesson = Lesson::forceCreate([
             'tutor_id' => $tutor->id,
@@ -198,7 +200,7 @@ class AlfaBankIntegrationTest extends TestCase
     public function test_subscription_init_alfa_sdk_returns_md_order_for_tutor(): void
     {
         $tutor = User::factory()->create(['role' => 'tutor']);
-        \App\Models\TutorProfile::create(['user_id' => $tutor->id]);
+        TutorProfile::create(['user_id' => $tutor->id]);
 
         $response = $this->actingAs($tutor)
             ->postJson('/api/subscription/init-alfa-sdk', [
@@ -301,7 +303,7 @@ class AlfaBankIntegrationTest extends TestCase
         $student = User::factory()->create(['role' => 'student']);
 
         // Fund student wallet
-        $balance = app(\App\Services\Finance\StudentBalanceService::class)->getOrCreate($student->id);
+        $balance = app(StudentBalanceService::class)->getOrCreate($student->id);
         $balance->update(['available_amount' => '100.00']);
 
         $lesson = Lesson::forceCreate([

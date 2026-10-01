@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -105,7 +106,7 @@ final class RouteServiceProvider extends ServiceProvider
      * Резолвит пользователя best-effort: сначала дефолтный guard, затем `sanctum`.
      * Любые ошибки резолвинга трактуются как «пользователь не аутентифицирован».
      */
-    private function resolveAuthenticatedUser(Request $request): ?\Illuminate\Contracts\Auth\Authenticatable
+    private function resolveAuthenticatedUser(Request $request): ?Authenticatable
     {
         try {
             $user = $request->user();

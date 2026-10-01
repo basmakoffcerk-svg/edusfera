@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\AiDiagnostic;
 
+use App\Services\Ai\GeminiService;
+use Illuminate\Support\Facades\Log;
+
 class AiDiagnosticEvaluator
 {
     public function __construct(
@@ -136,6 +139,7 @@ class AiDiagnosticEvaluator
             'study_plan' => $studyPlan,
             'tutor_recommendations' => $tutorRecommendations,
             'questions_summary' => $questionsSummary,
+            'ai_insights' => $this->generateAiInsights($subject, $examType, $scaledScore, $targetScore, $skillGaps, $cognitiveProfile),
         ];
     }
 
@@ -267,7 +271,7 @@ class AiDiagnosticEvaluator
                 "Ликвидация критических пробелов первой линии: {$topicsText1}.",
                 'Отработка 15 типовых задач части А на каждый выявленный пробел.',
                 'Внедрение чек-листа самопроверки бланков ответов для исключения спешки.',
-                'Прохождение контрольного микро-среза знаний на отметку ' . min(100, $scaledScore + 15) . '+ баллов.',
+                'Прохождение контрольного микро-среза знаний на отметку '.min(100, $scaledScore + 15).'+ баллов.',
             ],
             '60_days' => [
                 "Системная прокачка повышенного уровня: {$topicsText2}.",
@@ -322,5 +326,67 @@ class AiDiagnosticEvaluator
             'lesson_strategy' => $strategy,
             'projected_score_boost' => min(35, max(15, (int) round($gap * 0.8))),
         ];
+    }
+
+    /**
+     * Generate deep personalized AI insights using Google Gemini.
+     */
+    private function generateAiInsights(
+        string $subject,
+        string $examType,
+        int $scaledScore,
+        int $targetScore,
+        array $skillGaps,
+        array $cognitiveProfile
+    ): array {
+        $topics = array_values(array_unique(array_column($skillGaps, 'topic')));
+
+        // Fallback default insights
+        $fallback = [
+            'expert_conclusion' => "При текущем уровне {$scaledScore} баллов цель {$targetScore} баллов на {$examType} абсолютно достижима при точечной ликвидации пробелов в части Б.",
+            'primary_trap_warning' => 'Основная потеря баллов происходит на типовых дистракторах и вычислительных ошибках под давлением времени.',
+            'fast_wins' => array_slice($topics, 0, 3) ?: ['Спецификация РИКЗ', 'Типовые прототипы части Б', 'ОДЗ и ограничения'],
+            'actionable_steps' => [
+                'Пройти тематический разбор заданий части Б по выявленным пробелам.',
+                'Отработать алгоритм самопроверки на бланках РИКЗ за 15 минут до конца теста.',
+                'Провести первое занятие с репетитором Edusfera для закрепления сложных тем.',
+            ],
+            'generated_by_gemini' => false,
+        ];
+
+        try {
+            /** @var GeminiService $gemini */
+            $gemini = app(GeminiService::class);
+            if (! $gemini->isConfigured()) {
+                return $fallback;
+            }
+
+            $prompt = "Ты — ведущий эксперт-методист РИКЗ по подготовке к {$examType} по предмету {$subject}.\n".
+                "Ученик только что завершил диагностический срез.\n".
+                "Текущий балл: {$scaledScore} из 100.\n".
+                "Целевой балл: {$targetScore} из 100.\n".
+                'Темы с ошибками: '.implode(', ', array_slice($topics, 0, 6)).".\n\n".
+                "Сформируй лаконичный и точный методический вердикт в формате JSON:\n".
+                "{\n".
+                "  \"expert_conclusion\": \"(string) 2 емких предложения с педагогической оценкой шансов и главного направления удара\",\n".
+                "  \"primary_trap_warning\": \"(string) Главная ловушка РИКЗ, где ученик гарантированно теряет первичные баллы\",\n".
+                "  \"fast_wins\": [\"(string) 3 конкретные микротемы/правила, которые дадут быстрый рост +10 баллов\"],\n".
+                "  \"actionable_steps\": [\"(string) 3 четких действия на ближайшие 7 дней\"]\n".
+                '}';
+
+            $system = 'Ты строгий, но вдохновляющий методист Edusfera.by, досконально знающий спецификации РИКЗ Беларуси. Ответ только в JSON.';
+
+            $res = $gemini->generateJson($prompt, $system, null, 0.3, 10);
+
+            if (! empty($res['expert_conclusion'])) {
+                $res['generated_by_gemini'] = true;
+
+                return array_merge($fallback, $res);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Gemini AI Diagnostic Insights skipped: '.$e->getMessage());
+        }
+
+        return $fallback;
     }
 }

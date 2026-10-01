@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 
 class OptimizeStorageCommand extends Command
 {
@@ -14,26 +15,54 @@ class OptimizeStorageCommand extends Command
 
     public function handle(): int
     {
-        $this->info('Starting storage optimization process...');
-        
-        $this->line('1. Analyzing classroom files and media attachments...');
-        usleep(300000); // 300ms delay to make it realistic
-        $this->info('-> Found 14 uncompressed images older than 30 days.');
-        $this->line('-> Compressing images...');
-        usleep(400000);
-        $this->info('-> Image compression completed. Saved: 185.4 MB.');
+        $this->info('Запуск процесса оптимизации хранилища...');
+        $freedBytes = 0;
 
-        $this->line('2. Scanning inactive virtual classroom boards...');
-        usleep(300000);
-        $this->info('-> Found 24 completed lessons with cached board history older than 90 days.');
-        $this->line('-> Cleaning board JSON cache tables...');
-        usleep(400000);
-        $this->info('-> Board cache cleaned. Saved: 264.2 MB.');
+        // 1. Очистка временных файлов загрузок (старше 24 часов)
+        $this->line('1. Анализ временных файлов загрузок (tmp)...');
+        $tmpDirs = [
+            storage_path('app/tmp'),
+            storage_path('app/livewire-tmp'),
+            storage_path('framework/testing'),
+        ];
 
+        $deletedTmpCount = 0;
+        foreach ($tmpDirs as $dir) {
+            if (! is_dir($dir)) {
+                continue;
+            }
+            $files = File::files($dir);
+            foreach ($files as $file) {
+                if ($file->getMTime() < (time() - 86400)) {
+                    $freedBytes += $file->getSize();
+                    File::delete($file->getPathname());
+                    $deletedTmpCount++;
+                }
+            }
+        }
+        $this->info("-> Удалено устаревших временных файлов: {$deletedTmpCount}.");
+
+        // 2. Очистка устаревших кэшей представлений и логов
+        $this->line('2. Оптимизация кэша представлений...');
+        $viewsDir = storage_path('framework/views');
+        $deletedViewsCount = 0;
+        if (is_dir($viewsDir)) {
+            $files = File::files($viewsDir);
+            foreach ($files as $file) {
+                if ($file->getMTime() < (time() - 7 * 86400)) {
+                    $freedBytes += $file->getSize();
+                    File::delete($file->getPathname());
+                    $deletedViewsCount++;
+                }
+            }
+        }
+        $this->info("-> Удалено устаревших скомпилированных шаблонов: {$deletedViewsCount}.");
+
+        $freedMb = round($freedBytes / (1024 * 1024), 2);
         $this->info('----------------------------------------------');
-        $this->info('SUCCESS: Storage optimization completed!');
-        $this->info('Total disk space freed: 449.6 MB.');
-        
+        $this->info('УСПЕХ: Оптимизация хранилища завершена.');
+        $this->info("Освобождено места на диске: {$freedMb} МБ.");
+
         return self::SUCCESS;
     }
 }

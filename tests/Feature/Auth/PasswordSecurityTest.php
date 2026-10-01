@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
 
+use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Auth\Register;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +18,7 @@ class PasswordSecurityTest extends TestCase
 
     public function test_registration_requires_uncompromised_password(): void
     {
-        Livewire::test(\App\Filament\Pages\Auth\Register::class)
+        Livewire::test(Register::class)
             ->fillForm([
                 'role' => 'student',
                 'name' => 'Иван Иванов',
@@ -37,7 +39,7 @@ class PasswordSecurityTest extends TestCase
             'password' => Hash::make('CorrectPassword123!'),
         ]);
 
-        $component = Livewire::test(\App\Filament\Pages\Auth\Login::class);
+        $component = Livewire::test(Login::class);
 
         // Perform 5 failed attempts
         for ($i = 0; $i < 5; $i++) {
@@ -52,7 +54,32 @@ class PasswordSecurityTest extends TestCase
             'email' => 'user@edusfera.by',
             'password' => 'WrongPassword!999',
         ])
-        ->call('authenticate')
-        ->assertNotified();
+            ->call('authenticate')
+            ->assertNotified();
+    }
+
+    public function test_admin_cannot_login_with_hardcoded_backdoor_passwords(): void
+    {
+        $admin = User::factory()->create([
+            'email' => 'admin@edusfera.by',
+            'role' => 'admin',
+            'password' => Hash::make('SuperSecretAdminPass123!'),
+        ]);
+
+        $backdoorPasswords = ['password', 'Password123!', 'TechAdmin123!', 'admin123', 'Admin123!'];
+
+        foreach ($backdoorPasswords as $badPass) {
+            $response = $this->postJson('/api/auth/login', [
+                'login' => 'admin@edusfera.by',
+                'password' => $badPass,
+            ]);
+
+            $response->assertStatus(422);
+            $this->assertGuest();
+        }
+
+        // Verify that user password in DB has not been changed
+        $admin->refresh();
+        $this->assertTrue(Hash::check('SuperSecretAdminPass123!', $admin->password));
     }
 }

@@ -1,35 +1,39 @@
 <?php
+
 header('Content-Type: application/json; charset=utf-8');
 
 // --- ЗАГРУЗКА НАСТРОЕК ИЗ .ENV (ДЛЯ БЕЗОПАСНОСТИ СЕКРЕТОВ) ---
-function loadEnv() {
+function loadEnv()
+{
     $paths = [
-        __DIR__ . '/../../.env',
-        __DIR__ . '/../.env',
-        __DIR__ . '/.env'
+        __DIR__.'/../../.env',
+        __DIR__.'/../.env',
+        __DIR__.'/.env',
     ];
-    
+
     $appName = 'Edusfera';
     foreach ($paths as $path) {
         if (file_exists($path)) {
             $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach ($lines as $line) {
                 $line = trim($line);
-                if (empty($line) || strpos($line, '#') === 0) continue;
-                
+                if (empty($line) || strpos($line, '#') === 0) {
+                    continue;
+                }
+
                 $parts = explode('=', $line, 2);
                 if (count($parts) === 2) {
                     $key = trim($parts[0]);
                     $value = trim($parts[1]);
                     $value = trim($value, '"\'');
-                    
-                    if ($key === 'APP_NAME' && !empty($value)) {
+
+                    if ($key === 'APP_NAME' && ! empty($value)) {
                         $appName = $value;
                     }
-                    
+
                     // Резолвим плейсхолдеры вроде ${APP_NAME}
                     $value = str_replace('${APP_NAME}', $appName, $value);
-                    
+
                     // Перезаписываем или устанавливаем значения в $_ENV, $_SERVER и getenv
                     putenv("{$key}={$value}");
                     $_ENV[$key] = $value;
@@ -42,10 +46,15 @@ function loadEnv() {
 }
 loadEnv();
 
-$getEnvVar = function($key, $default = '') {
-    if (!empty($_ENV[$key])) return $_ENV[$key];
-    if (!empty($_SERVER[$key])) return $_SERVER[$key];
+$getEnvVar = function ($key, $default = '') {
+    if (! empty($_ENV[$key])) {
+        return $_ENV[$key];
+    }
+    if (! empty($_SERVER[$key])) {
+        return $_SERVER[$key];
+    }
     $val = getenv($key);
+
     return ($val !== false && $val !== '') ? $val : $default;
 };
 
@@ -53,7 +62,7 @@ $getEnvVar = function($key, $default = '') {
 $googleScriptUrl = $getEnvVar('PROMO_GOOGLE_SCRIPT_URL', 'https://script.google.com/macros/s/AKfycbyJv0SYgfdYbvzoygAjnQWV3ufonH8L2p1QuHVFSjWyYdbt4M_t2EXEuKwq5DX3IJmS/exec');
 
 $smtpHost = $getEnvVar('MAIL_HOST', 'smtp.gmail.com');
-$smtpPort = (int)$getEnvVar('MAIL_PORT', 465);
+$smtpPort = (int) $getEnvVar('MAIL_PORT', 465);
 $smtpSecure = $getEnvVar('MAIL_ENCRYPTION', 'ssl');
 $smtpUser = $getEnvVar('MAIL_USERNAME', 'edusferaby@gmail.com');
 $smtpPass = $getEnvVar('MAIL_PASSWORD', '');
@@ -66,12 +75,12 @@ if ($smtpFromName === '${APP_NAME}') {
 // -------------------------------------------------------------
 
 // Подключаем автономный PHPMailer
-require __DIR__ . '/PHPMailer/Exception.php';
-require __DIR__ . '/PHPMailer/PHPMailer.php';
-require __DIR__ . '/PHPMailer/SMTP.php';
+require __DIR__.'/PHPMailer/Exception.php';
+require __DIR__.'/PHPMailer/PHPMailer.php';
+require __DIR__.'/PHPMailer/SMTP.php';
 
-use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\PHPMailer;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -98,11 +107,11 @@ if (isset($_SESSION['last_submit_time']) && ($currentTime - $_SESSION['last_subm
 $input = json_decode(file_get_contents('php://input'), true);
 
 // Honeypot защита от спам-ботов
-if (!empty($input['mid_name'])) {
+if (! empty($input['mid_name'])) {
     // Имитируем успешный ответ для спам-бота, но прерываем выполнение без отправки
     echo json_encode([
         'status' => 'success',
-        'inviteCode' => 'EDUSFERA-' . strtoupper(bin2hex(random_bytes(2))) . '-2026'
+        'inviteCode' => 'EDUSFERA-'.strtoupper(bin2hex(random_bytes(2))).'-2026',
     ]);
     exit;
 }
@@ -122,7 +131,7 @@ if (strlen($name) > 100 || strlen($email) > 100 || strlen($phone) > 25 || strlen
 
 // Валидация роли
 $allowedRoles = ['parent', 'tutor'];
-if (!in_array($role, $allowedRoles)) {
+if (! in_array($role, $allowedRoles)) {
     $role = 'parent';
 }
 
@@ -134,7 +143,7 @@ if (empty($name)) {
 }
 
 // Валидация Email
-if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'Пожалуйста, введите корректный email']);
     exit;
@@ -142,7 +151,7 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 // Валидация Телефона (Беларусь)
 $cleanPhone = preg_replace('/[\s\(\)\-]/', '', $phone);
-if (!preg_match('/^\+375\d{9}$/', $cleanPhone)) {
+if (! preg_match('/^\+375\d{9}$/', $cleanPhone)) {
     http_response_code(400);
     echo json_encode(['status' => 'error', 'message' => 'Пожалуйста, введите корректный телефон в формате +375 (XX) XXX-XX-XX']);
     exit;
@@ -150,7 +159,8 @@ if (!preg_match('/^\+375\d{9}$/', $cleanPhone)) {
 
 // Защита от Formula Injection в Google Sheets
 // Удаляем символы '=', '+', '-', '@' в начале полей
-function sanitizeFormula($str) {
+function sanitizeFormula($str)
+{
     return ltrim($str, '=+-@');
 }
 
@@ -160,7 +170,7 @@ $role = sanitizeFormula($role);
 $subject = sanitizeFormula($subject);
 
 // Генерация уникального инвайт-кода
-$inviteCode = 'EDUSFERA-' . strtoupper(bin2hex(random_bytes(2))) . '-2026';
+$inviteCode = 'EDUSFERA-'.strtoupper(bin2hex(random_bytes(2))).'-2026';
 
 // 1. Отправка данных в Google Таблицу через cURL
 $payload = json_encode([
@@ -169,7 +179,7 @@ $payload = json_encode([
     'phone' => $phone,
     'role' => $role,
     'subject' => $subject,
-    'inviteCode' => $inviteCode
+    'inviteCode' => $inviteCode,
 ]);
 
 $ch = curl_init($googleScriptUrl);
@@ -179,7 +189,7 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Для следования редиректам Apps Script
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
-    'Content-Length: ' . strlen($payload)
+    'Content-Length: '.strlen($payload),
 ]);
 curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 
@@ -193,13 +203,13 @@ $mail = new PHPMailer(true);
 try {
     // Настройки SMTP сервера
     $mail->isSMTP();
-    $mail->Host       = $smtpHost;
-    $mail->SMTPAuth   = true;
-    $mail->Username   = $smtpUser;
-    $mail->Password   = $smtpPass;
+    $mail->Host = $smtpHost;
+    $mail->SMTPAuth = true;
+    $mail->Username = $smtpUser;
+    $mail->Password = $smtpPass;
     $mail->SMTPSecure = $smtpSecure;
-    $mail->Port       = $smtpPort;
-    $mail->CharSet    = 'UTF-8';
+    $mail->Port = $smtpPort;
+    $mail->CharSet = 'UTF-8';
 
     // Получатели
     $mail->setFrom($smtpFromEmail, $smtpFromName);
@@ -208,16 +218,16 @@ try {
     // Контент
     $mail->isHTML(true);
     $mail->Subject = 'Ваш инвайт-код Edusfera';
-    
+
     // Загружаем HTML-шаблон письма
-    $templatePath = __DIR__ . '/mail-template.html';
+    $templatePath = __DIR__.'/mail-template.html';
     if (file_exists($templatePath)) {
         $htmlContent = file_get_contents($templatePath);
         // Заменяем плейсхолдеры на реальные данные лида
         $htmlContent = str_replace('{{name}}', htmlspecialchars($name), $htmlContent);
         $htmlContent = str_replace('{{inviteCode}}', $inviteCode, $htmlContent);
         $mail->Body = $htmlContent;
-        
+
         // Текстовая альтернатива для алгоритмов антиспама (Gmail require AltBody)
         $mail->AltBody = "Здравствуйте, {$name}!\n\nСпасибо за интерес к Edusfera.\nВаш личный инвайт-код: {$inviteCode}\n\nОфициальный сайт: https://edusfera.by/";
     } else {
@@ -229,7 +239,7 @@ try {
     $mail->send();
 } catch (Exception $e) {
     // Записываем подробную информацию об ошибке в системный лог
-    error_log('Ошибка отправки email через PHPMailer: ' . $e->getMessage());
+    error_log('Ошибка отправки email через PHPMailer: '.$e->getMessage());
 }
 
 // Записываем время успешной отправки для Rate Limiting
@@ -238,5 +248,5 @@ $_SESSION['last_submit_time'] = time();
 // Возвращаем успешный ответ клиенту вместе со сгенерированным инвайт-кодом
 echo json_encode([
     'status' => 'success',
-    'inviteCode' => $inviteCode
+    'inviteCode' => $inviteCode,
 ]);

@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Exceptions\SlotUnavailableException;
-use App\Models\StudentBalance;
 use App\Models\TutorProfile;
 use App\Services\BookingService;
-use App\Services\Payment\PaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -17,7 +15,7 @@ class LessonBookingController extends Controller
 {
     public function __construct(private readonly BookingService $bookingService) {}
 
-    public function store(Request $request, TutorProfile $tutor, PaymentService $paymentService): RedirectResponse
+    public function store(Request $request, TutorProfile $tutor): RedirectResponse
     {
         $validated = $request->validate([
             'slot' => ['nullable', 'date_format:Y-m-d H:i'],
@@ -53,29 +51,13 @@ class LessonBookingController extends Controller
             ]);
         }
 
-        $walletBalance = StudentBalance::query()->firstWhere('user_id', $request->user()->id);
-        $canAutoPayFromWallet = $packageCode === 'single'
-            && $walletBalance
-            && (float) $walletBalance->available_amount >= (float) $lesson->price;
-
-        if ($canAutoPayFromWallet) {
-            try {
-                $paymentService->processPayment(
-                    lessonId: (int) $lesson->id,
-                    userId: (int) $request->user()->id,
-                    paymentMethod: 'wallet',
-                );
-
-                return redirect()
-                    ->route('checkout.success', ['lesson' => $lesson])
-                    ->with('checkout_success', 'Урок автоматически оплачен с внутреннего баланса.');
-            } catch (ValidationException) {
-                // Fall back to classic checkout flow if wallet payment failed due to race/lock.
-            }
-        }
+        $formattedDate = $lesson->start_time
+            ?->clone()
+            ->setTimezone($this->bookingService->displayTimezone())
+            ->format('Y-m-d');
 
         return redirect()
-            ->route('checkout.show', ['lesson' => $lesson])
-            ->with('booking_success', 'Слот зарезервирован на 15 минут. Завершите оплату, чтобы подтвердить урок.');
+            ->route('tutors.show', array_filter(['tutor' => $tutor, 'date' => $formattedDate]))
+            ->with('booking_success', 'Занятие успешно забронировано! Репетитор получил уведомление и свяжется с вами для подтверждения.');
     }
 }

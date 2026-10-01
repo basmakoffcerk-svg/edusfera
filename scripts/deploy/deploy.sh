@@ -79,7 +79,7 @@ chmod -R 775 storage bootstrap/cache
 if [ "$MODE" = "docker" ]; then
   echo "🐳 Rebuilding and restarting Docker services..."
   docker compose -f docker-compose.prod.yml build app
-  docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps app queue scheduler
+  docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps app queue scheduler coturn
   docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload
 else
   echo "🔧 Reloading Nginx..."

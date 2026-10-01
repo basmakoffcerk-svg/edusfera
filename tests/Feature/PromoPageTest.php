@@ -45,8 +45,6 @@ class PromoPageTest extends TestCase
         $this->assertStringContainsString('ЕРИП, БЕЛКАРТ, Visa/Mastercard (BYN)', $content);
     }
 
-
-
     /**
      * Test that promo page contains Waitlist lead magnet and social proof badge.
      */

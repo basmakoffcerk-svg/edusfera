@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
 use App\Models\Conversation;
 use App\Models\Lesson;
 use App\Models\Message;
@@ -62,7 +63,7 @@ class MessagesPage extends Page
 
     public function mount(?int $conversation = null): void
     {
-        abort_unless(in_array(auth()->user()?->role, [\App\Enums\UserRole::Admin, \App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true), 403);
+        abort_unless(in_array(auth()->user()?->role, [UserRole::Admin, UserRole::Tutor, UserRole::Student, UserRole::Parent], true), 403);
 
         $requestedConversationId = $conversation ?? $this->conversationId;
 
@@ -89,6 +90,14 @@ class MessagesPage extends Page
         $this->editingMessageText = '';
 
         app(ChatService::class)->markAsRead(auth()->id(), $conversationId);
+    }
+
+    public function closeConversation(): void
+    {
+        $this->conversationId = null;
+        $this->warningMessage = null;
+        $this->editingMessageId = null;
+        $this->editingMessageText = '';
     }
 
     public function setFilter(string $filter): void
@@ -266,7 +275,7 @@ class MessagesPage extends Page
             return $user?->isAdmin() ?? false;
         }
 
-        return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true);
+        return in_array($user?->role, [UserRole::Tutor, UserRole::Student, UserRole::Parent], true);
     }
 
     public static function getNavigationGroup(): ?string
@@ -330,7 +339,7 @@ class MessagesPage extends Page
 
         $conversations = match ($this->filter) {
             'unread' => $conversations->filter(fn (Conversation $conversation): bool => (int) $conversation->unread_count > 0)->values(),
-            'paid' => $conversations->filter(fn (Conversation $conversation): bool => $conversation->lesson?->payment_status === \App\Models\Lesson::PAYMENT_PAID)->values(),
+            'paid' => $conversations->filter(fn (Conversation $conversation): bool => $conversation->lesson?->payment_status === Lesson::PAYMENT_PAID)->values(),
             default => $conversations,
         };
 
@@ -452,8 +461,8 @@ class MessagesPage extends Page
             return null;
         }
 
-        if (in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
-            if ($conversation->lesson && $conversation->lesson->payment_status !== \App\Models\Lesson::PAYMENT_PAID) {
+        if (in_array($user->role, [UserRole::Student, UserRole::Parent], true)) {
+            if ($conversation->lesson && $conversation->lesson->payment_status !== Lesson::PAYMENT_PAID) {
                 return [
                     'label' => 'Забронировать',
                     'url' => route('checkout.show', $conversation->lesson),
@@ -510,7 +519,7 @@ class MessagesPage extends Page
             return false;
         }
 
-        return in_array($conversation->lesson->status, [\App\Models\Lesson::STATUS_PENDING, \App\Models\Lesson::STATUS_CONFIRMED], true);
+        return in_array($conversation->lesson->status, [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED], true);
     }
 
     private function reviewState(Conversation $conversation): ?array

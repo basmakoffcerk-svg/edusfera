@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\UserRole;
+use App\Models\User;
 use Tests\TestCase;
 
 class PublicPagesTest extends TestCase
@@ -13,7 +15,12 @@ class PublicPagesTest extends TestCase
         $this->get(route('legal.offer'))->assertOk()->assertSee('Публичная оферта');
         $this->get(route('legal.refund'))->assertOk()->assertSee('Правила возврата');
         $this->get(route('legal.privacy'))->assertOk()->assertSee('Политика конфиденциальности');
-        $this->get(route('contacts'))->assertOk()->assertSee('Контакты и поддержка');
+        $this->get(route('legal.payment-security'))->assertOk()->assertSee('Правила оплаты и безопасность');
+        $this->get(route('contacts'))->assertOk()->assertSee('Контакты и реквизиты');
+        $this->get(route('about'))->assertOk()
+            ->assertSee('ООО «Эдусфера»')
+            ->assertSee('192854899')
+            ->assertSee('программное обеспечение', false);
     }
 
     public function test_for_tutors_landing_page_renders_with_warm_brutalism_and_conversion_elements(): void
@@ -27,7 +34,7 @@ class PublicPagesTest extends TestCase
         $response->assertSee('Подписка стоит как <strong>один ваш урок</strong>', false);
         $response->assertSee('Калькулятор', false);
         $response->assertSee('потерь', false);
-        
+
         // Check 3 pain points
         $response->assertSee('Пустые окна и сорванные уроки', false);
         $response->assertSee('Рутина съедает вечера', false);
@@ -97,9 +104,9 @@ class PublicPagesTest extends TestCase
 
     public function test_for_tutors_landing_page_renders_for_authenticated_tutor(): void
     {
-        $user = \App\Models\User::factory()->create([
+        $user = User::factory()->create([
             'name' => 'Александр Репетиторов',
-            'role' => \App\Enums\UserRole::Tutor,
+            'role' => UserRole::Tutor,
         ]);
 
         $response = $this->actingAs($user)->get(route('for-tutors'));
@@ -107,5 +114,28 @@ class PublicPagesTest extends TestCase
         $response->assertSee('Александр Репетиторов');
         $response->assertSee('Личный кабинет');
         $response->assertSee('Мои финансы');
+    }
+
+    public function test_storage_fallback_prevents_directory_traversal_and_sensitive_files(): void
+    {
+        // 1. Directory traversal attempts must return 404
+        $this->get('/storage/../../.env')->assertStatus(404);
+        $this->get('/storage/../storage/app/ai_settings.json')->assertStatus(404);
+        $this->get('/storage/..%2F..%2Fconfig%2Fapp.php')->assertStatus(404);
+
+        // 2. Non-existent files return 404
+        $this->get('/storage/non-existent-file.png')->assertStatus(404);
+
+        // 3. Legitimate public file can be served
+        $publicTestFile = storage_path('app/public/test_asset.txt');
+        @file_put_contents($publicTestFile, 'hello public asset');
+
+        try {
+            $response = $this->get('/storage/test_asset.txt');
+            $response->assertOk();
+            $this->assertStringContainsString('hello public asset', $response->streamedContent());
+        } finally {
+            @unlink($publicTestFile);
+        }
     }
 }

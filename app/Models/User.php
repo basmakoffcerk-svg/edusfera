@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\Subscription\Models\Subscription;
 use App\Enums\UserRole;
-
+use App\Services\MultiAccountService;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,10 +19,68 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::saved(function (User $user): void {
+            if ($user->wasChanged('avatar') && ! empty($user->avatar)) {
+                $tutorProfile = $user->tutorProfile;
+                if ($tutorProfile && $tutorProfile->avatar_path !== $user->avatar) {
+                    $tutorProfile->updateQuietly([
+                        'avatar_path' => $user->avatar,
+                    ]);
+                }
+            }
+        });
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->getFilamentAvatarUrl();
+    }
+
+    public function getFilamentAvatarUrl(): ?string
+    {
+        $avatar = $this->avatar ?: $this->tutorProfile?->avatar_path;
+        if (! $avatar) {
+            return null;
+        }
+
+        if (str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://')) {
+            return $avatar;
+        }
+
+        $clean = ltrim(str_replace('storage/', '', $avatar), '/');
+
+        // Self-healing: ensure file exists in public storage and public/storage directory
+        $publicFile = storage_path('app/public/'.$clean);
+        $privateFile = storage_path('app/private/'.$clean);
+        $appFile = storage_path('app/'.$clean);
+        $publicDirFile = public_path('storage/'.$clean);
+
+        if (! file_exists($publicFile)) {
+            @mkdir(dirname($publicFile), 0775, true);
+            if (file_exists($privateFile) && is_file($privateFile)) {
+                @copy($privateFile, $publicFile);
+            } elseif (file_exists($appFile) && is_file($appFile)) {
+                @copy($appFile, $publicFile);
+            }
+        }
+
+        if (! is_link(public_path('storage')) && ! file_exists($publicDirFile)) {
+            @mkdir(dirname($publicDirFile), 0775, true);
+            $src = file_exists($publicFile) ? $publicFile : (file_exists($privateFile) ? $privateFile : $appFile);
+            if (file_exists($src) && is_file($src)) {
+                @copy($src, $publicDirFile);
+            }
+        }
+
+        return asset('storage/'.$clean);
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +92,8 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'phone',
+        'role',
+        'is_verified',
         'google_id',
         'yandex_id',
         'avatar',
@@ -70,15 +133,11 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'admin') {
-            return in_array($this->role, UserRole::allPanelRoles(), true);
+            return $this->isAdmin() || in_array($this->role, UserRole::allPanelRoles(), true);
         }
 
         if ($panel->getId() === 'site-admin') {
-            $technicalEmail = mb_strtolower((string) config('site_admin.email', ''));
-
-            return $this->role === UserRole::Admin
-                && $technicalEmail !== ''
-                && mb_strtolower($this->email) === $technicalEmail;
+            return $this->isAdmin();
         }
 
         return false;
@@ -122,7 +181,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function getRoleLabelAttribute(): string
     {
-        return \App\Services\MultiAccountService::roleLabel($this->role);
+        return MultiAccountService::roleLabel($this->role);
     }
 
     public function tutorProfile(): HasOne
@@ -132,7 +191,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function subscription(): HasOne
     {
-        return $this->hasOne(\App\Domain\Subscription\Models\Subscription::class, 'tutor_id');
+        return $this->hasOne(Subscription::class, 'tutor_id');
     }
 
     public function tutorLessons(): HasMany

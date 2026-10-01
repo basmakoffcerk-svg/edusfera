@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Lesson;
 use Illuminate\Validation\ValidationException;
 
 class PackageService
@@ -49,7 +50,7 @@ class PackageService
     /**
      * Apply a package selection to a lesson and update its price fields.
      */
-    public function applyToLesson(\App\Models\Lesson $lesson, string $packageCode): void
+    public function applyToLesson(Lesson $lesson, string $packageCode): void
     {
         $singlePrice = (float) $lesson->price;
         $package = $this->resolve($packageCode, $singlePrice);

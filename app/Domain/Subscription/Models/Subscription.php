@@ -29,6 +29,7 @@ class Subscription extends Model
         'canceled_at',
         'responses_used_this_month',
         'payment_token',
+        'is_onboarded',
     ];
 
     protected function casts(): array
@@ -37,6 +38,7 @@ class Subscription extends Model
             'plan' => SubscriptionPlan::class,
             'status' => SubscriptionStatus::class,
             'is_founder' => 'boolean',
+            'is_onboarded' => 'boolean',
             'trial_ends_at' => 'datetime',
             'current_period_starts_at' => 'datetime',
             'current_period_ends_at' => 'datetime',
@@ -105,7 +107,12 @@ class Subscription extends Model
 
     public function isPro(): bool
     {
-        return $this->plan === SubscriptionPlan::PRO;
+        return in_array($this->plan, [SubscriptionPlan::PRO, SubscriptionPlan::PREMIUM], true);
+    }
+
+    public function isPremium(): bool
+    {
+        return $this->plan === SubscriptionPlan::PREMIUM;
     }
 
     public function isOperational(): bool
@@ -120,6 +127,7 @@ class Subscription extends Model
         }
 
         $now = CarbonImmutable::now();
+
         return (int) max(0, ceil($now->diffInHours($this->grace_period_ends_at, false) / 24));
     }
 
@@ -127,5 +135,9 @@ class Subscription extends Model
     {
         return $this->isActive() && $this->daysRemaining() <= 3 && $this->daysRemaining() > 0;
     }
-}
 
+    public function hasPaymentToken(): bool
+    {
+        return ! empty($this->payment_token);
+    }
+}

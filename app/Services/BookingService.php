@@ -120,15 +120,15 @@ class BookingService
                 'price' => number_format($price, 2, '.', ''),
                 'platform_commission' => '0.00',
                 'net_amount' => number_format($netAmount, 2, '.', ''),
-                'status' => Lesson::STATUS_CONFIRMED,
-                'payment_status' => Lesson::PAYMENT_PAID,
+                'status' => Lesson::STATUS_PENDING,
+                'payment_status' => Lesson::PAYMENT_UNPAID,
                 'package_code' => $package['code'],
                 'package_lessons' => $package['lessons'],
                 'package_lessons_remaining' => $package['lessons'],
                 'package_total' => number_format($package['total'], 2, '.', ''),
                 'package_discount' => number_format($package['discount'], 2, '.', ''),
                 'payment_lock_expires_at' => null,
-                'checkout_started_at' => now('UTC'),
+                'checkout_started_at' => null,
                 'notes' => $notes,
             ]);
 
@@ -303,15 +303,15 @@ class BookingService
                 'price' => number_format($price, 2, '.', ''),
                 'platform_commission' => '0.00',
                 'net_amount' => number_format($netAmount, 2, '.', ''),
-                'status' => Lesson::STATUS_CONFIRMED,
-                'payment_status' => Lesson::PAYMENT_PAID,
+                'status' => Lesson::STATUS_PENDING,
+                'payment_status' => Lesson::PAYMENT_UNPAID,
                 'package_code' => $package['code'],
                 'package_lessons' => $package['lessons'],
                 'package_lessons_remaining' => $package['lessons'],
                 'package_total' => number_format($package['total'], 2, '.', ''),
                 'package_discount' => number_format($package['discount'], 2, '.', ''),
                 'payment_lock_expires_at' => null,
-                'checkout_started_at' => $checkoutStartedAt,
+                'checkout_started_at' => null,
                 'notes' => $notes,
             ]);
 
@@ -326,8 +326,8 @@ class BookingService
                     'price' => number_format($price, 2, '.', ''),
                     'platform_commission' => '0.00',
                     'net_amount' => '0.00',
-                    'status' => Lesson::STATUS_CONFIRMED,
-                    'payment_status' => Lesson::PAYMENT_PAID,
+                    'status' => Lesson::STATUS_PENDING,
+                    'payment_status' => Lesson::PAYMENT_UNPAID,
                     'package_code' => $package['code'],
                     'package_lessons' => 1,
                     'package_lessons_remaining' => null,
@@ -335,7 +335,7 @@ class BookingService
                     'package_total' => null,
                     'package_discount' => '0.00',
                     'payment_lock_expires_at' => null,
-                    'checkout_started_at' => $parentLesson->checkout_started_at,
+                    'checkout_started_at' => null,
                 ]);
             });
 

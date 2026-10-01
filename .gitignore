@@ -41,6 +41,9 @@ scratch/
 test_script.php
 codegraph.html
 *.zip
+*.tar.gz
+*.tgz
+alfa-check.php
 screenshots/
 .user.ini
 /Документы на платформу/
@@ -55,4 +58,9 @@ ORIGINAL_REQUEST.md
 /edusfera-ledger/edusfera-ledger
 /edusfera-media/loadtest
 /edusfera-workspace/server
+
+# Marketing and ad render assets
+/ad-assets/
+/public/ad-assets/
+/.marketing/
 

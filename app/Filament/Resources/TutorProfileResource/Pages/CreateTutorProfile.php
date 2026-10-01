@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\TutorProfileResource\Pages;
 
 use App\Filament\Resources\TutorProfileResource;
+use App\Models\TutorProfile;
+use App\Services\TutorVerificationService;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTutorProfile extends CreateRecord
@@ -22,7 +24,7 @@ class CreateTutorProfile extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['user_id'] = auth()->id();
-        $data['is_verified'] = auth()->user()?->role === 'admin'
+        $data['is_verified'] = auth()->user()?->isAdmin()
             ? (bool) ($data['is_verified'] ?? false)
             : false;
         $data['verification_status'] = $data['is_verified'] ? 'approved' : 'pending';
@@ -35,6 +37,16 @@ class CreateTutorProfile extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return static::getResource()::getUrl('index');
+    }
+
+    protected function afterCreate(): void
+    {
+        /** @var TutorProfile $profile */
+        $profile = $this->record;
+
+        if (auth()->user()?->isTutor()) {
+            app(TutorVerificationService::class)->submitForReview($profile);
+        }
     }
 
     protected function getFormActions(): array

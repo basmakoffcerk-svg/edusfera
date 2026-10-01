@@ -31,7 +31,7 @@ final class InternalAuthController
         if (! $authorization || ! str_starts_with($authorization, 'Bearer ')) {
             return response()->json([
                 'error' => 'Unauthorized',
-                'message' => 'Missing or invalid Authorization header'
+                'message' => 'Missing or invalid Authorization header',
             ], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -39,7 +39,7 @@ final class InternalAuthController
         if ($tokenString === false || $tokenString === '') {
             return response()->json([
                 'error' => 'Unauthorized',
-                'message' => 'Empty token'
+                'message' => 'Empty token',
             ], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -73,6 +73,7 @@ final class InternalAuthController
 
                 if ($isValid) {
                     $user = $tokenModel->tokenable;
+
                     return response()->json(['status' => 'ok'])
                         ->header('X-User-Id', (string) $user->id)
                         ->header('X-User-Role', $user->role instanceof \UnitEnum ? $user->role->value : (string) $user->role);
@@ -84,7 +85,7 @@ final class InternalAuthController
 
         // 3. Попытка валидации как Passport OAuth2 Token (S2S / User JWT)
         try {
-            $psrRequest = (new PsrHttpFactory())->createRequest($request);
+            $psrRequest = (new PsrHttpFactory)->createRequest($request);
             $resourceServer = app(ResourceServer::class);
             $psrRequest = $resourceServer->validateAuthenticatedRequest($psrRequest);
 
@@ -100,7 +101,7 @@ final class InternalAuthController
                 }
             } elseif ($clientId) {
                 return response()->json(['status' => 'ok'])
-                    ->header('X-User-Id', 'client-' . $clientId)
+                    ->header('X-User-Id', 'client-'.$clientId)
                     ->header('X-User-Role', 'service');
             }
         } catch (\Throwable $e) {
@@ -109,7 +110,7 @@ final class InternalAuthController
 
         return response()->json([
             'error' => 'Unauthorized',
-            'message' => 'Invalid token signature or expired'
+            'message' => 'Invalid token signature or expired',
         ], Response::HTTP_UNAUTHORIZED);
     }
 }

@@ -8,6 +8,9 @@ use App\Contracts\Classroom\ClassroomTokenIssuer;
 use App\Models\ClassroomSession;
 use App\Models\Lesson;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -35,6 +38,16 @@ class ClassroomService
             return $existing;
         }
 
+        if ($lesson->status === Lesson::STATUS_COMPLETED) {
+            $lastEnded = ClassroomSession::query()
+                ->where('lesson_id', $lesson->id)
+                ->latest('id')
+                ->first();
+            if ($lastEnded) {
+                return $lastEnded;
+            }
+        }
+
         return ClassroomSession::query()->create([
             'lesson_id' => $lesson->id,
             'room_id' => (string) Str::uuid(),
@@ -51,6 +64,10 @@ class ClassroomService
 
     public function canAccess(Lesson $lesson, User $user): bool
     {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
         if (! in_array($user->id, [$lesson->tutor_id, $lesson->student_id], true)) {
             return false;
         }
@@ -97,15 +114,65 @@ class ClassroomService
     {
         $servers = (array) config('classroom.ice_servers', []);
 
-        $turnUrl = config('classroom.turn.url');
+        // 1. Metered Cloud TURN integration (if API key provided)
+        $meteredApp = (string) config('classroom.metered.app_name');
+        $meteredKey = (string) config('classroom.metered.api_key');
+        if ($meteredApp !== '' && $meteredKey !== '') {
+            try {
+                $meteredServers = Cache::remember(
+                    'classroom:metered_ice:'.$meteredApp,
+                    43200, // 12 hours
+                    function () use ($meteredApp, $meteredKey) {
+                        $res = Http::timeout(3)
+                            ->get("https://{$meteredApp}.metered.live/api/v1/turn/credentials?apiKey={$meteredKey}");
+                        if ($res->successful() && is_array($res->json())) {
+                            return $res->json();
+                        }
 
-        if ($turnUrl !== null && $turnUrl !== '') {
+                        return null;
+                    }
+                );
+                if (is_array($meteredServers)) {
+                    $servers = array_merge($servers, $meteredServers);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to fetch Metered TURN credentials: '.$e->getMessage());
+            }
+        }
+
+        // 2. Custom Coturn integration (ONLY if explicitly set in .env)
+        $turnUrl = (string) config('classroom.turn.url');
+        if ($turnUrl !== '') {
+            $urls = [$turnUrl];
+            if (! str_contains($turnUrl, 'transport=')) {
+                $separator = str_contains($turnUrl, '?') ? '&' : '?';
+                $urls[] = $turnUrl.$separator.'transport=tcp';
+            }
+            if (str_contains($turnUrl, ':3478')) {
+                $secureUrl = str_replace(':3478', ':5349', $turnUrl);
+                $secureUrl = preg_replace('/\?.*$/', '', $secureUrl);
+                $urls[] = str_replace('turn:', 'turns:', $secureUrl).'?transport=tcp';
+            }
+
             $servers[] = [
-                'urls' => $turnUrl,
-                'username' => (string) config('classroom.turn.username'),
-                'credential' => (string) config('classroom.turn.credential'),
+                'urls' => $urls,
+                'username' => (string) config('classroom.turn.username', 'edusfera'),
+                'credential' => (string) config('classroom.turn.credential', 'change-me-strong-password'),
             ];
         }
+
+        // 3. Always include verified OpenRelay TURN servers on ports 80 & 443 (TCP & UDP)
+        // Tested and verified open worldwide for bypassing cellular CGNAT (4G/LTE)
+        $servers[] = [
+            'urls' => [
+                'turn:openrelay.metered.ca:80',
+                'turn:openrelay.metered.ca:443',
+                'turn:openrelay.metered.ca:443?transport=tcp',
+                'turns:openrelay.metered.ca:443?transport=tcp',
+            ],
+            'username' => 'openrelayproject',
+            'credential' => 'openrelayproject',
+        ];
 
         return $servers;
     }

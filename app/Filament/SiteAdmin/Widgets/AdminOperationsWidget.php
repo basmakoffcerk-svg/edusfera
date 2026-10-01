@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\SiteAdmin\Widgets;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\LessonRequestResource;
 use App\Filament\Resources\TransactionResource;
 use App\Filament\Resources\TutorProfileResource;
@@ -24,7 +25,7 @@ class AdminOperationsWidget extends Widget
     {
         $role = auth()->user()?->role;
 
-        return $role === \App\Enums\UserRole::Admin || (is_object($role) ? $role->value : $role) === 'admin';
+        return $role === UserRole::Admin || (is_object($role) ? $role->value : $role) === 'admin';
     }
 
     protected function getViewData(): array

@@ -9,6 +9,7 @@ use App\Domain\Subscription\Enums\SubscriptionStatus;
 use App\Domain\Subscription\Models\Subscription;
 use App\Domain\Subscription\Services\SubscriptionService;
 use App\Models\Lesson;
+use App\Models\User;
 use Filament\Widgets\Widget;
 
 class CommissionLadderWidget extends Widget
@@ -21,12 +22,12 @@ class CommissionLadderWidget extends Widget
 
     public static function canView(): bool
     {
-        return auth()->user()?->isTutor() ?? false;
+        return false;
     }
 
     protected function getViewData(): array
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = auth()->user();
 
         $subscription = Subscription::where('tutor_id', $user->id)->first();
@@ -58,42 +59,49 @@ class CommissionLadderWidget extends Widget
             ->where('payment_status', Lesson::PAYMENT_PAID)
             ->whereMonth('start_time', now()->month)
             ->whereYear('start_time', now()->year)
-            ->sum('amount');
+            ->sum('net_amount');
 
         $plansInfo = [
             [
-                'plan' => SubscriptionPlan::BASIC,
-                'name' => 'Basic',
-                'price' => '20 BYN/мес',
-                'responses' => '0 откликов',
-                'isActive' => $plan === SubscriptionPlan::BASIC,
+                'plan' => SubscriptionPlan::START,
+                'name' => SubscriptionPlan::START->title(),
+                'price' => SubscriptionPlan::START->monthlyPriceByn().' BYN/мес',
+                'responses' => 'Безлимит учеников',
+                'isActive' => in_array($plan, [SubscriptionPlan::START, SubscriptionPlan::BASIC], true),
             ],
             [
                 'plan' => SubscriptionPlan::PRO,
-                'name' => 'Pro',
-                'price' => '40 BYN/мес',
-                'responses' => '10 откликов/мес',
-                'isActive' => $plan === SubscriptionPlan::PRO,
-            ],
-            [
-                'plan' => SubscriptionPlan::PREMIUM,
-                'name' => 'Premium',
-                'price' => '60 BYN/мес',
-                'responses' => 'Безлимит откликов',
-                'isActive' => $plan === SubscriptionPlan::PREMIUM,
+                'name' => SubscriptionPlan::PRO->title(),
+                'price' => SubscriptionPlan::PRO->monthlyPriceByn().' BYN/мес',
+                'responses' => 'ИИ-помощник + Авто-НПД',
+                'isActive' => in_array($plan, [SubscriptionPlan::PRO, SubscriptionPlan::PREMIUM], true),
             ],
         ];
+
+        $isLifetime = (bool) ($subscription->current_period_ends_at && $subscription->current_period_ends_at->year >= 2037);
+
+        $activeHint = match (true) {
+            $isLifetime => 'Бессрочный доступ',
+            $daysRemaining > 365 => 'На '.((int) ceil($daysRemaining / 365)).' г.',
+            $daysRemaining > 0 => "Осталось {$daysRemaining} дн.",
+            default => 'Активна',
+        };
+
+        $trialHint = match (true) {
+            $daysRemaining > 0 => "Осталось {$daysRemaining} дн.",
+            default => 'Истекает сегодня',
+        };
 
         $statusBadge = match ($status) {
             SubscriptionStatus::TRIAL => [
                 'label' => 'Пробный период (0 BYN)',
                 'color' => 'trial',
-                'hint' => $daysRemaining > 0 ? "Осталось {$daysRemaining} дн." : 'Истекает сегодня',
+                'hint' => $trialHint,
             ],
             SubscriptionStatus::ACTIVE => [
                 'label' => 'Подписка активна',
                 'color' => 'active',
-                'hint' => $daysRemaining > 0 ? "Осталось {$daysRemaining} дн." : 'Активна',
+                'hint' => $activeHint,
             ],
             SubscriptionStatus::PAST_DUE => [
                 'label' => 'Ожидает оплаты',

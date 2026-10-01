@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Ai;
 
-use App\Models\ClassroomNote;
 use App\Models\ClassroomSession;
-use App\Models\HomeworkAssignment;
 use App\Models\Lesson;
 use App\Models\SkillGap;
 use App\Models\StudentGoal;
@@ -22,8 +20,11 @@ class ClassroomAiAgentTest extends TestCase
     use RefreshDatabase;
 
     private User $tutor;
+
     private User $student;
+
     private Lesson $lesson;
+
     private ClassroomSession $session;
 
     protected function setUp(): void
@@ -314,5 +315,238 @@ class ClassroomAiAgentTest extends TestCase
         $this->assertSame('С чего начнем повторение темы?', $history[0]['text']);
         $this->assertSame('assistant', $history[1]['role']);
         $this->assertSame('Привет! Готов разобрать сложные задачи.', $history[1]['text']);
+    }
+
+    public function test_ai_agent_resolves_skill_gap_via_gemini_action(): void
+    {
+        $goal = StudentGoal::create([
+            'student_id' => $this->student->id,
+            'tutor_id' => $this->tutor->id,
+            'subject' => 'Математика',
+            'exam_type' => 'ЦТ/ЦЭ',
+            'status' => 'active',
+        ]);
+
+        $gap = SkillGap::create([
+            'student_id' => $this->student->id,
+            'student_goal_id' => $goal->id,
+            'subject' => 'Математика',
+            'topic' => 'Теорема о трех перпендикулярах',
+            'severity' => 'high',
+            'status' => 'open',
+            'last_detected_at' => now(),
+        ]);
+
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'reply' => 'Отлично! Пробел по теореме о трех перпендикулярах закрыт.',
+                                        'actions' => [
+                                            [
+                                                'action' => 'skill_gap.resolve',
+                                                'payload' => [
+                                                    'id' => $gap->id,
+                                                    'topic' => 'Теорема о трех перпендикулярах',
+                                                ],
+                                            ],
+                                        ],
+                                    ]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $aiService = app(AiService::class);
+        $result = $aiService->chat(
+            'Ученик успешно решил задачу, закрой пробел по теореме о трех перпендикулярах',
+            $this->session->room_id,
+            $this->lesson,
+            $this->tutor
+        );
+
+        $this->assertCount(1, $result['created_entities']['resolved_gaps']);
+        $this->assertSame('resolved', $gap->fresh()->status);
+    }
+
+    public function test_ai_agent_updates_student_goal_via_gemini_action(): void
+    {
+        $goal = StudentGoal::create([
+            'student_id' => $this->student->id,
+            'tutor_id' => $this->tutor->id,
+            'subject' => 'Математика',
+            'exam_type' => 'ЦТ/ЦЭ',
+            'current_score' => 60,
+            'target_score' => 80,
+            'status' => 'active',
+        ]);
+
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'reply' => 'Цель повышена до 95 баллов!',
+                                        'actions' => [
+                                            [
+                                                'action' => 'student_goal.update',
+                                                'payload' => [
+                                                    'target_score' => 95,
+                                                    'current_score' => 70,
+                                                ],
+                                            ],
+                                        ],
+                                    ]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $aiService = app(AiService::class);
+        $result = $aiService->chat(
+            'Повысь цель до 95 баллов',
+            $this->session->room_id,
+            $this->lesson,
+            $this->tutor
+        );
+
+        $this->assertCount(1, $result['created_entities']['goals']);
+        $this->assertSame(95, $goal->fresh()->target_score);
+        $this->assertSame(70, $goal->fresh()->current_score);
+    }
+
+    public function test_ai_agent_drafts_lesson_report_and_creates_note(): void
+    {
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'reply' => 'Отчет составлен.',
+                                        'actions' => [
+                                            [
+                                                'action' => 'report.draft',
+                                                'payload' => [
+                                                    'summary' => 'Успешно разобрана тема тригонометрических уравнений.',
+                                                    'achievements' => 'Быстро решил задания типа Б3.',
+                                                    'recommendations' => 'Повторить формулы приведения.',
+                                                ],
+                                            ],
+                                        ],
+                                    ]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $aiService = app(AiService::class);
+        $result = $aiService->chat(
+            'Составь отчет по итогам урока',
+            $this->session->room_id,
+            $this->lesson,
+            $this->tutor
+        );
+
+        $this->assertCount(1, $result['created_entities']['reports']);
+        $this->assertSame('Успешно разобрана тема тригонометрических уравнений.', $this->lesson->fresh()->tutor_report_focus);
+        $this->assertDatabaseHas('classroom_notes', [
+            'classroom_session_id' => $this->session->id,
+            'author_id' => $this->tutor->id,
+            'is_shared' => true,
+        ]);
+    }
+
+    public function test_offline_mock_chat_handles_all_extended_branches(): void
+    {
+        $aiService = new AiService(['provider' => 'mock', 'gemini_key' => '']);
+
+        $goal = StudentGoal::create([
+            'student_id' => $this->student->id,
+            'tutor_id' => $this->tutor->id,
+            'subject' => 'Математика',
+            'exam_type' => 'ЦТ/ЦЭ',
+            'current_score' => 50,
+            'target_score' => 70,
+            'status' => 'active',
+        ]);
+
+        // 1. Resolve gap via mock
+        $gap = SkillGap::create([
+            'student_id' => $this->student->id,
+            'student_goal_id' => $goal->id,
+            'subject' => 'Математика',
+            'topic' => 'Логарифмы',
+            'severity' => 'medium',
+            'status' => 'open',
+            'last_detected_at' => now(),
+        ]);
+        $resGapResolve = $aiService->chat(
+            'Закрой пробел по логарифмам',
+            $this->session->room_id,
+            $this->lesson,
+            $this->tutor
+        );
+        $this->assertStringContainsString('ликвидированный', $resGapResolve['reply']);
+        $this->assertCount(1, $resGapResolve['created_entities']['resolved_gaps']);
+        $this->assertSame('resolved', $gap->fresh()->status);
+
+        // 2. Goal update via mock
+        $resGoal = $aiService->chat(
+            'Обнови цель: 90 баллов',
+            $this->session->room_id,
+            $this->lesson,
+            $this->tutor
+        );
+        $this->assertStringContainsString('90 баллов', $resGoal['reply']);
+        $this->assertCount(1, $resGoal['created_entities']['goals']);
+        $this->assertSame(90, $goal->fresh()->target_score);
+
+        // 3. Report draft via mock
+        $resReport = $aiService->chat(
+            'Составь отчет по уроку',
+            $this->session->room_id,
+            $this->lesson,
+            $this->tutor
+        );
+        $this->assertStringContainsString('составлен', $resReport['reply']);
+        $this->assertCount(1, $resReport['created_entities']['reports']);
+        $this->assertNotEmpty($this->lesson->fresh()->tutor_report_focus);
+
+        // 4. Quiz create via mock
+        $resQuiz = $aiService->chat(
+            'Создай квиз по тригонометрии',
+            $this->session->room_id,
+            $this->lesson,
+            $this->tutor
+        );
+        $this->assertStringContainsString('Интерактивный квиз', $resQuiz['reply']);
+
+        // 5. Board clear via mock
+        $resClear = $aiService->chat(
+            'Очисти доску',
+            $this->session->room_id,
+            $this->lesson,
+            $this->tutor
+        );
+        $this->assertStringContainsString('очищена', $resClear['reply']);
     }
 }

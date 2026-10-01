@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Lesson;
-use App\Models\StudentBalance;
-use App\Models\Transaction;
 use App\Models\TutorBalance;
 use App\Models\User;
 use App\Services\Payment\PaymentService;
@@ -118,7 +116,7 @@ class PaymentServiceSettlementAndRefundTest extends TestCase
         // net_amount = 148.36. Share = floor(148.36 / 4, 2) = 37.09
         $this->assertSame('37.09', (string) $balance->available_amount);
         $this->assertSame('111.27', (string) $balance->pending_amount); // 148.36 - 37.09
-        
+
         $settlement = $parent->refresh()->settlement;
         $this->assertNotNull($settlement);
         $this->assertSame('37.09', (string) $settlement->net_share);

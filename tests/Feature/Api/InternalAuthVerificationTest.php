@@ -8,7 +8,7 @@ use App\Contracts\Classroom\ClassroomTokenIssuer;
 use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
+use Laravel\Passport\ClientRepository;
 use Tests\TestCase;
 
 /**
@@ -19,7 +19,9 @@ class InternalAuthVerificationTest extends TestCase
     use RefreshDatabase;
 
     private User $tutor;
+
     private User $student;
+
     private Lesson $lesson;
 
     protected function setUp(): void
@@ -60,7 +62,7 @@ class InternalAuthVerificationTest extends TestCase
     public function test_returns_401_for_invalid_bearer_format(): void
     {
         $response = $this->withHeaders([
-            'Authorization' => 'InvalidToken'
+            'Authorization' => 'InvalidToken',
         ])->getJson('/api/internal/v1/auth/verify');
 
         $response->assertStatus(401);
@@ -78,7 +80,7 @@ class InternalAuthVerificationTest extends TestCase
         $response->assertOk();
         $response->assertHeader('X-User-Id', (string) $this->tutor->id);
         $response->assertHeader('X-User-Role', 'tutor');
-        $response->assertHeader('X-Classroom-Room-Id', 'lesson-' . $this->lesson->id);
+        $response->assertHeader('X-Classroom-Room-Id', 'lesson-'.$this->lesson->id);
     }
 
     public function test_successfully_verifies_sanctum_pat(): void
@@ -97,7 +99,7 @@ class InternalAuthVerificationTest extends TestCase
     public function test_successfully_verifies_passport_s2s_token(): void
     {
         // Создаем Passport клиента для client_credentials напрямую через репозиторий
-        $clientRepository = app(\Laravel\Passport\ClientRepository::class);
+        $clientRepository = app(ClientRepository::class);
         $client = $clientRepository->createClientCredentialsGrantClient('test-s2s-client');
 
         $this->assertNotNull($client);
@@ -118,7 +120,7 @@ class InternalAuthVerificationTest extends TestCase
             ->getJson('/api/internal/v1/auth/verify');
 
         $response->assertOk();
-        $response->assertHeader('X-User-Id', 'client-' . $client->id);
+        $response->assertHeader('X-User-Id', 'client-'.$client->id);
         $response->assertHeader('X-User-Role', 'service');
     }
 }

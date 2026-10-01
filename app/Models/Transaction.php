@@ -18,6 +18,8 @@ class Transaction extends Model
 
     public const STATUS_SUCCESS = 'success';
 
+    public const STATUS_SETTLED = 'success';
+
     public const STATUS_FAILED = 'failed';
 
     public const STATUS_VOIDED = 'voided';
@@ -32,6 +34,8 @@ class Transaction extends Model
         'lesson_id',
         'user_id',
         'amount',
+        'promo_code_id',
+        'discount_amount',
         'platform_commission',
         'acquiring_fee',
         'net_amount',
@@ -47,6 +51,7 @@ class Transaction extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'platform_commission' => 'decimal:2',
             'acquiring_fee' => 'decimal:2',
             'net_amount' => 'decimal:2',
@@ -58,6 +63,11 @@ class Transaction extends Model
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
+    }
+
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(PromoCode::class);
     }
 
     public function user(): BelongsTo

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Enums\UserRole;
 use App\Models\StudentGoal;
 use App\Services\DiagnosticService;
 use Filament\Notifications\Notification;
@@ -75,7 +76,7 @@ class DiagnosticPage extends Page
     {
         $user = auth()->user();
 
-        if (! $user || ! in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)) {
+        if (! $user || ! in_array($user->role, [UserRole::Student, UserRole::Parent], true)) {
             return null;
         }
 

@@ -9,6 +9,7 @@ use App\Models\Conversation;
 use App\Models\Lesson;
 use App\Models\TutorProfile;
 use App\Models\User;
+use App\Notifications\ChatBypassAttemptNotification;
 use App\Services\ChatService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -238,7 +239,7 @@ class ChatServiceTest extends TestCase
 
         $this->assertSame(0, $profile->contact_bypass_attempts);
         $this->assertNull($profile->search_penalized_until);
-        Notification::assertNotSentTo($admin, \App\Notifications\ChatBypassAttemptNotification::class);
+        Notification::assertNotSentTo($admin, ChatBypassAttemptNotification::class);
     }
 
     public function test_messages_page_does_not_open_foreign_conversation(): void
@@ -296,5 +297,25 @@ class ChatServiceTest extends TestCase
             ->assertOk();
 
         $this->assertDatabaseCount('conversations', 0);
+    }
+
+    public function test_user_can_close_conversation_to_return_to_list(): void
+    {
+        $tutor = User::factory()->create([
+            'role' => 'tutor',
+        ]);
+
+        $student = User::factory()->create([
+            'role' => 'student',
+        ]);
+
+        $service = app(ChatService::class);
+        $conversation = $service->getOrCreateConversation($tutor->id, $student->id);
+
+        Livewire::actingAs($tutor)
+            ->test(MessagesPage::class, ['conversation' => $conversation->id])
+            ->assertSet('conversationId', $conversation->id)
+            ->call('closeConversation')
+            ->assertSet('conversationId', null);
     }
 }

@@ -116,18 +116,68 @@ export default function NexumHero() {
     <div className="w-full bg-[#010101] text-white font-sans selection:bg-[#C6FF33] selection:text-black">
       
 
-      {/* ─── 1. HERO SECTION (WITH PHOTO/VIDEO BACKGROUND) ─── */}
+      {/* ─── 1. HERO SECTION (WITH PHOTO/VIDEO OR VIBRANT MOBILE AURORA) ─── */}
       <section className="relative min-h-screen w-full overflow-hidden select-none font-geist flex flex-col justify-between bg-gradient-to-br from-neutral-950 via-slate-900 to-black">
+        {/* Desktop Video (hidden on mobile to save 14.6 MB) */}
         <video
           src="/videos/hero-bg.mp4"
           autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 h-full w-full object-cover z-0"
+          preload="none"
+          className="hidden md:block absolute inset-0 h-full w-full object-cover z-0 pointer-events-none"
         />
 
-        <div className="absolute inset-0 bg-black/45 z-0 pointer-events-none" />
+        {/* ─── VIBRANT ANIMATED MOBILE BACKGROUND (Rich, Colorful, High-Energy Aurora & Cyber Grid) ─── */}
+        <div className="md:hidden absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          {/* Deep vibrant cosmic foundation */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#13072b] via-[#0a0d24] to-[#030308]" />
+
+          {/* Animated Neon Violet Blob (Top-Left / Center) */}
+          <div 
+            className="absolute -top-[10%] -left-[15%] w-[115vw] h-[115vw] rounded-full mix-blend-screen opacity-80 filter blur-[55px] animate-aurora-1"
+            style={{
+              background: 'radial-gradient(circle, rgba(125,57,235,0.85) 0%, rgba(147,51,234,0.5) 40%, rgba(99,102,241,0.2) 65%, transparent 75%)',
+            }}
+          />
+
+          {/* Animated Signature Neon Lime Blob (Center-Right / Bottom) */}
+          <div 
+            className="absolute top-[22%] -right-[20%] w-[110vw] h-[110vw] rounded-full mix-blend-screen opacity-75 filter blur-[60px] animate-aurora-2"
+            style={{
+              background: 'radial-gradient(circle, rgba(198,255,51,0.75) 0%, rgba(163,230,53,0.45) 35%, rgba(56,189,248,0.25) 60%, transparent 72%)',
+            }}
+          />
+
+          {/* Pulsing Central Energy Burst behind Headline & CTA */}
+          <div 
+            className="absolute top-[48%] -left-[10%] w-[95vw] h-[95vw] rounded-full mix-blend-screen opacity-65 filter blur-[50px] animate-aurora-3"
+            style={{
+              background: 'radial-gradient(circle, rgba(168,85,247,0.6) 0%, rgba(56,189,248,0.35) 45%, rgba(198,255,51,0.2) 65%, transparent 75%)',
+            }}
+          />
+
+          {/* High-Tech Cyber Pattern Overlay */}
+          <div 
+            className="absolute inset-0 opacity-20 bg-[radial-gradient(#C6FF33_1px,transparent_1px)] [background-size:24px_24px]" 
+          />
+
+          {/* Floating animated glowing light particles / sparkles */}
+          <div className="absolute inset-0">
+            <span className="absolute top-[18%] left-[12%] w-2 h-2 rounded-full bg-[#C6FF33] shadow-[0_0_12px_#C6FF33] animate-particle-drift" />
+            <span className="absolute top-[32%] right-[16%] w-2.5 h-2.5 rounded-full bg-[#7D39EB] shadow-[0_0_14px_#7D39EB] animate-particle-drift" style={{ animationDelay: '1.2s' }} />
+            <span className="absolute top-[58%] left-[22%] w-2 h-2 rounded-full bg-[#38BDF8] shadow-[0_0_10px_#38BDF8] animate-particle-drift" style={{ animationDelay: '2.4s' }} />
+            <span className="absolute top-[76%] right-[14%] w-2.5 h-2.5 rounded-full bg-[#C6FF33] shadow-[0_0_14px_#C6FF33] animate-particle-drift" style={{ animationDelay: '3.6s' }} />
+          </div>
+
+          {/* Subtle top/bottom contrast ramps for readability */}
+          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#010101] via-[#010101]/70 to-transparent" />
+        </div>
+
+        {/* Desktop overlay */}
+        <div className="hidden md:block absolute inset-0 bg-black/45 z-0 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col min-h-screen justify-between">
           {/* Header Bar */}
@@ -385,7 +435,7 @@ export default function NexumHero() {
             {/* Mobile Hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle Menu"
+              aria-label="Главное меню"
               className="md:hidden relative z-50 h-10 w-10 rounded-full bg-white/10 backdrop-blur-lg flex items-center justify-center text-white transition-colors focus:outline-none cursor-pointer border border-white/10"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -563,7 +613,7 @@ export default function NexumHero() {
               </h1>
 
               <p className="mt-4 text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl">
-                Узнайте свой реальный прогнозный балл за 15 минут и закрывайте пробелы с проверенными репетиторами из госреестра без переплат и посредников.
+                Узнайте свой реальный прогнозный балл за 15 минут и закрывайте пробелы с проверенными дипломированными репетиторами без переплат и посредников.
               </p>
 
               {user ? (
@@ -671,7 +721,7 @@ export default function NexumHero() {
             </div>
             <h3 className="text-xl font-bold text-white">Подбор проверенного репетитора</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Платформа предлагает преподавателей из госреестра с опытом подготовки от 5 лет. Выбирайте по рейтингу, отзывам и видео-визиткам.
+              Платформа предлагает проверенных преподавателей с опытом подготовки от 5 лет. Выбирайте по рейтингу, отзывам и видео-визиткам.
             </p>
             <div className="pt-2 flex items-center gap-2 text-xs font-bold text-lime-400">
               <span>Только дипломированные эксперты</span>
@@ -724,7 +774,7 @@ export default function NexumHero() {
                 </div>
                 <div className="flex items-center gap-3 text-sm text-slate-200">
                   <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">✓</div>
-                  <span>Оплата через WebPAY и ЕРИП с мгновенным чеком</span>
+                  <span>Оплата картой через Альфа-Банк с мгновенным чеком</span>
                 </div>
               </div>
 
@@ -873,7 +923,7 @@ export default function NexumHero() {
                 </li>
                 <li className="flex items-center gap-3">
                   <div className="w-5 h-5 rounded-full bg-[#C6FF33]/20 text-[#C6FF33] flex items-center justify-center font-bold text-xs">✓</div>
-                  <span><strong>Безопасная сделка</strong> (Эскроу через Альфа-Банк и ЕРИП)</span>
+                  <span><strong>Безопасная сделка</strong> (Эскроу через Альфа-Банк)</span>
                 </li>
               </ul>
             </div>
@@ -951,7 +1001,7 @@ export default function NexumHero() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-3">
             <FileCheck className="w-8 h-8 text-violet-400 mb-2" />
-            <h4 className="text-base font-bold text-white">Верификация в госреестре</h4>
+            <h4 className="text-base font-bold text-white">Верификация дипломов</h4>
             <p className="text-slate-400 text-xs leading-relaxed">
               Все репетиторы проходят проверку дипломов и зарегистрированы в налоговых органах РБ (НПД).
             </p>
@@ -967,9 +1017,9 @@ export default function NexumHero() {
 
           <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 space-y-3">
             <DollarSign className="w-8 h-8 text-[#C6FF33] mb-2" />
-            <h4 className="text-base font-bold text-white">Прямой ЕРИП</h4>
+            <h4 className="text-base font-bold text-white">Прямой расчет</h4>
             <p className="text-slate-400 text-xs leading-relaxed">
-              Удобные платежи через систему «Расчёт» (ЕРИП) напрямую и без посредников.
+              Удобные прямые расчеты между учеником и преподавателем без скрытых комиссий платформы.
             </p>
           </div>
 
@@ -1019,6 +1069,7 @@ export default function NexumHero() {
           <div className="relative w-full max-w-md bg-neutral-900 border border-white/10 rounded-2xl p-6 sm:p-8 text-white shadow-2xl">
             <button
               onClick={() => setRegisterModalOpen(false)}
+              aria-label="Закрыть модальное окно"
               className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />

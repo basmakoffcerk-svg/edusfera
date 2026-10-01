@@ -18,6 +18,7 @@ use Illuminate\View\View;
 class DiagnosticController extends Controller
 {
     private const SESSION_KEY = 'diagnostic_progress';
+
     private const AI_RESULT_SESSION_KEY = 'ai_diagnostic_result';
 
     private const SUBJECTS = [
@@ -111,7 +112,7 @@ class DiagnosticController extends Controller
             currentSelfScore: $currentScore,
         );
 
-        if (!empty($validated['notes'])) {
+        if (! empty($validated['notes'])) {
             $evalResult['notes'] = $validated['notes'];
         }
 
@@ -234,7 +235,7 @@ class DiagnosticController extends Controller
 
         $user = $request->user();
 
-        if ($aiResult === null && $user && $user->role === UserRole::Student && !empty($subject)) {
+        if ($aiResult === null && $user && $user->role === UserRole::Student && ! empty($subject)) {
             $saveData = array_merge($data, [
                 'subject' => $subject,
                 'exam_type' => $examType,

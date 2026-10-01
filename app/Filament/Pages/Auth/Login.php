@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages\Auth;
 
+use App\Enums\UserRole;
 use App\Models\User;
+use App\Services\MultiAccountService;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -14,10 +16,12 @@ use Filament\Forms\Form;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class Login extends \Filament\Pages\Auth\Login
 {
     protected static string $view = 'filament.admin.pages.auth.login';
+
     protected static string $layout = 'filament-panels::components.layout.base';
 
     public function mount(): void
@@ -92,8 +96,12 @@ class Login extends \Filament\Pages\Auth\Login
         $login = trim((string) ($data['email'] ?? ''));
 
         $user = $this->resolveUserFromLogin($login);
+        $passwordValid = false;
+        if ($user && Hash::check((string) ($data['password'] ?? ''), (string) $user->password)) {
+            $passwordValid = true;
+        }
 
-        if (! $user || ! Hash::check((string) ($data['password'] ?? ''), (string) $user->password)) {
+        if (! $user || ! $passwordValid) {
             // Anti-Brute force: задержка при неверном пароле для защиты от автоматизированного перебора
             usleep(300000);
             $this->throwFailureValidationException();
@@ -113,7 +121,7 @@ class Login extends \Filament\Pages\Auth\Login
         session()->regenerate();
 
         // Automatically link this account to the persistent cookie on this browser
-        app(\App\Services\MultiAccountService::class)->addId($user->id);
+        app(MultiAccountService::class)->addId($user->id);
 
         return app(LoginResponse::class);
     }
@@ -133,13 +141,18 @@ class Login extends \Filament\Pages\Auth\Login
         }
 
         if ($user->isTutor()) {
+            $sub = $user->subscription;
+            if (! $sub || ! $sub->isActive() || ! $sub->is_onboarded) {
+                return route('filament.admin.pages.tutor-subscription-page');
+            }
+
             return $user->tutorProfile()->exists()
                 ? '/admin'
                 : '/admin/tutor-profiles/create';
         }
 
         if ($user->isAdmin()) {
-            return '/site-admin';
+            return '/admin';
         }
 
         $hasLessons = $user->studentLessons()->exists() || $user->parentLessons()->exists();
@@ -166,7 +179,7 @@ class Login extends \Filament\Pages\Auth\Login
 
     protected function throwFailureValidationException(): never
     {
-        throw \Illuminate\Validation\ValidationException::withMessages([
+        throw ValidationException::withMessages([
             'data.email' => 'Неверный email/телефон или пароль.',
         ]);
     }
@@ -179,11 +192,44 @@ class Login extends \Filament\Pages\Auth\Login
                 ->first();
         }
 
-        $normalizedPhone = $this->normalizePhone($login);
+        $cleanLogin = mb_strtolower($login);
 
-        return User::query()
-            ->where('phone', $normalizedPhone)
-            ->first();
+        // Handle Admin & TechAdmin aliases
+        if (in_array($cleanLogin, ['admin', 'administrator', 'админ', 'администратор'], true)) {
+            return User::query()
+                ->where('email', 'admin@edusfera.by')
+                ->orWhere(function ($q) {
+                    $q->where('role', 'admin')->orWhere('role', UserRole::Admin);
+                })
+                ->first();
+        }
+
+        if (in_array($cleanLogin, ['tech-admin', 'tech_admin', 'techadmin', 'техадмин', 'техадминистратор'], true)) {
+            $techEmail = mb_strtolower((string) config('site_admin.email', 'tech-admin@edusfera.by'));
+
+            return User::query()->where('email', $techEmail)->first()
+                ?? User::query()->where('email', 'tech-admin@edusfera.by')->first();
+        }
+
+        $byPrefix = User::query()->whereRaw('LOWER(email) = ?', [$cleanLogin.'@edusfera.by'])->first()
+            ?? User::query()->whereRaw('LOWER(email) LIKE ?', [$cleanLogin.'@%'])->first();
+
+        if ($byPrefix) {
+            return $byPrefix;
+        }
+
+        $normalizedPhone = $this->normalizePhone($login);
+        $rawDigits = preg_replace('/\D/', '', $login) ?? '';
+
+        if ($normalizedPhone !== '' && $rawDigits !== '') {
+            return User::query()
+                ->where('phone', $normalizedPhone)
+                ->orWhere('phone', ltrim($normalizedPhone, '+'))
+                ->orWhere('phone', $rawDigits)
+                ->first();
+        }
+
+        return null;
     }
 
     private function normalizePhone(string $phone): string

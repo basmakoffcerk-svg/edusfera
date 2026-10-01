@@ -5,7 +5,6 @@ declare(strict_types=1);
 /**
  * Polyfill for PHP bcmath extension when ext-bcmath is disabled on web hosting servers.
  */
-
 if (! function_exists('bcadd')) {
     function bcadd(string $left, string $right, int $scale = 0): string
     {
@@ -38,7 +37,7 @@ if (! function_exists('bcdiv')) {
     {
         $r = (float) $right;
         if ($r === 0.0) {
-            throw new \DivisionByZeroError('Division by zero in bcdiv polyfill');
+            throw new DivisionByZeroError('Division by zero in bcdiv polyfill');
         }
         $res = (float) $left / $r;
 

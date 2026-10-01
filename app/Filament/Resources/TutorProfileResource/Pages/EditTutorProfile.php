@@ -4,8 +4,10 @@ namespace App\Filament\Resources\TutorProfileResource\Pages;
 
 use App\Filament\Resources\TutorProfileResource;
 use App\Models\TutorProfile;
+use App\Services\TutorVerificationService;
 use Filament\Actions;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
@@ -51,23 +53,36 @@ class EditTutorProfile extends EditRecord
     {
         /** @var TutorProfile $profile */
         $profile = $this->record;
+        $user = auth()->user();
 
-        if (! auth()->user()?->isAdmin()) {
+        if ($user?->isTutor()) {
+            app(TutorVerificationService::class)->submitForReview($profile);
+
+            Notification::make()
+                ->title('Анкета отправлена на проверку')
+                ->body('Технический администратор проверит данные.')
+                ->info()
+                ->send();
+
             return;
         }
 
-        $profile->user?->update([
-            'is_verified' => $profile->is_verified,
-        ]);
+        if ($user?->isAdmin()) {
+            if ($profile->verification_status === 'approved') {
+                app(TutorVerificationService::class)->approve($profile, $user);
+            } elseif ($profile->verification_status === 'rejected') {
+                app(TutorVerificationService::class)->reject($profile, $user);
+            }
 
-        Notification::make()
-            ->title(match ($profile->verification_status) {
-                'approved' => 'Анкета одобрена и опубликована в каталоге',
-                'rejected' => 'Анкета отклонена',
-                default => 'Анкета возвращена в статус проверки',
-            })
-            ->success()
-            ->send();
+            Notification::make()
+                ->title(match ($profile->verification_status) {
+                    'approved' => 'Анкета одобрена и опубликована в каталоге',
+                    'rejected' => 'Анкета отклонена',
+                    default => 'Анкета сохранена',
+                })
+                ->success()
+                ->send();
+        }
     }
 
     protected function getRedirectUrl(): string
@@ -94,25 +109,22 @@ class EditTutorProfile extends EditRecord
 
         return [
             Actions\Action::make('approve')
-                ->label('Одобрить')
+                ->label('Одобрить анкету')
                 ->icon('heroicon-o-check-badge')
                 ->color('success')
                 ->requiresConfirmation()
+                ->modalHeading('Одобрить анкету репетитора?')
+                ->modalDescription('Профиль получит статус «✓ Диплом проверен», будет опубликован в каталоге, а репетитор получит уведомление.')
+                ->modalSubmitActionLabel('Да, одобрить')
                 ->action(function (): void {
                     /** @var TutorProfile $profile */
                     $profile = $this->record;
 
-                    $profile->update([
-                        'verification_status' => 'approved',
-                        'is_verified' => true,
-                    ]);
-
-                    $profile->user?->update([
-                        'is_verified' => true,
-                    ]);
+                    app(TutorVerificationService::class)->approve($profile, auth()->user());
 
                     Notification::make()
                         ->title('Анкета одобрена и опубликована')
+                        ->body('Репетитор получил уведомление.')
                         ->success()
                         ->send();
 
@@ -122,22 +134,28 @@ class EditTutorProfile extends EditRecord
                 ->label('Отклонить')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->requiresConfirmation()
-                ->action(function (): void {
+                ->modalHeading('Отклонить анкету репетитора?')
+                ->modalDescription('Профиль будет снят с публикации. Репетитору будет отправлено уведомление.')
+                ->modalSubmitActionLabel('Отклонить анкету')
+                ->form([
+                    Textarea::make('reason')
+                        ->label('Причина отклонения / комментарий для репетитора')
+                        ->placeholder('Например: Пожалуйста, обновите скан диплома...')
+                        ->rows(3),
+                ])
+                ->action(function (array $data): void {
                     /** @var TutorProfile $profile */
                     $profile = $this->record;
 
-                    $profile->update([
-                        'verification_status' => 'rejected',
-                        'is_verified' => false,
-                    ]);
-
-                    $profile->user?->update([
-                        'is_verified' => false,
-                    ]);
+                    app(TutorVerificationService::class)->reject(
+                        $profile,
+                        auth()->user(),
+                        $data['reason'] ?? null
+                    );
 
                     Notification::make()
                         ->title('Анкета отклонена')
+                        ->body('Репетитор получил уведомление.')
                         ->danger()
                         ->send();
 

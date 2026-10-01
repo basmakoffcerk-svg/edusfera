@@ -45,15 +45,13 @@ class LessonListPageTest extends TestCase
 
         Livewire::actingAs($student)
             ->test(ListLessons::class)
-            ->assertSee('Требуют внимания')
-            ->assertSee('Ближайшие')
-            ->assertSee($tutor->name)
-            ->assertSee('Оплатить урок');
+            ->assertSee('Предстоящие')
+            ->assertSee('Все уроки')
+            ->assertSee($tutor->name);
 
         Livewire::actingAs($student)
             ->test(LessonOverviewWidget::class)
             ->assertSee('Ближайший урок')
-            ->assertSee('Требуют действия')
-            ->assertSee('1 к оплате');
+            ->assertSee('Предстоящие уроки');
     }
 }

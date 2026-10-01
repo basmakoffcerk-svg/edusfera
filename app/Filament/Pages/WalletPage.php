@@ -10,11 +10,13 @@ use App\Models\StudentBalanceLedgerEntry;
 use App\Models\Transaction;
 use App\Models\WalletTopup;
 use App\Services\Finance\StudentBalanceService;
+use App\Services\Payment\AlfaBankPaymentGateway;
 use App\Services\Payment\PaymentGatewayInterface;
 use App\Support\BynMoneyFormatter;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class WalletPage extends Page
 {
@@ -38,16 +40,14 @@ class WalletPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        $user = auth()->user();
-
-        return $user && ($user->isStudent() || $user->isParent());
+        return false;
     }
 
     public static function canAccess(): bool
     {
         $user = auth()->user();
 
-        return $user && ($user->isStudent() || $user->isParent() || $user->isAdmin());
+        return $user !== null && ($user->isAdmin() || $user->isStudent() || $user->isParent());
     }
 
     public static function getNavigationGroup(): ?string
@@ -131,7 +131,7 @@ class WalletPage extends Page
             return;
         }
 
-        // WebPAY возвращает status=authorized (холд до ввода карты/3-D Secure
+        // Платежный шлюз (Альфа-Банк) возвращает status=authorized (холд до ввода карты/3-D Secure
         // ещё не подтверждён) — деньги при этом НЕ получены. Кредитуем баланс
         // только после подтверждения (webhook / checkPendingTopups).
         // Мгновенное зачисление допустимо лишь для синхронных шлюзов (mock),
@@ -199,7 +199,7 @@ class WalletPage extends Page
     public function getViewData(): array
     {
         $user = auth()->user();
-        abort_unless($user && in_array($user->role, [UserRole::Student, UserRole::Parent], true), 403);
+        abort_unless($user && ($user->isStudent() || $user->isParent() || $user->isAdmin()), 403);
 
         $balance = app(StudentBalanceService::class)->getOrCreate($user->id);
 
@@ -250,20 +250,52 @@ class WalletPage extends Page
         }
 
         $gateway = app(PaymentGatewayInterface::class);
+        $checkOrderId = request()->query('orderId');
+        $paymentParam = request()->query('payment');
 
         foreach ($pendingTopups as $topup) {
-            if ($topup->gateway_transaction_id && $gateway->verifyPayment($topup->gateway_transaction_id)) {
-                DB::transaction(function () use ($topup, $user) {
+            $txId = $topup->gateway_transaction_id ?: $checkOrderId;
+            if (! $txId) {
+                continue;
+            }
+
+            $isSuccess = false;
+            $failMessage = null;
+
+            if ($gateway instanceof AlfaBankPaymentGateway) {
+                $statusDetails = $gateway->getPaymentStatusDetails($txId);
+                $isSuccess = $statusDetails['success'];
+                $failMessage = $statusDetails['message'];
+            } else {
+                $isSuccess = $gateway->verifyPayment($txId);
+                $failMessage = 'Платёж не был подтверждён шлюзом оплаты.';
+            }
+
+            if ($isSuccess) {
+                DB::transaction(function () use ($topup, $user, $gateway, $txId) {
                     // Атомарная смена статуса — защита от двойного зачисления
                     // при гонке с webhook (кто первый перевёл pending→success,
                     // тот и кредитует баланс).
                     $claimed = WalletTopup::query()
                         ->whereKey($topup->id)
                         ->where('status', 'pending')
-                        ->update(['status' => 'success']);
+                        ->update([
+                            'status' => 'success',
+                            'gateway_transaction_id' => $txId,
+                        ]);
 
                     if ($claimed === 0) {
                         return;
+                    }
+
+                    try {
+                        $gateway->capturePayment($txId, (float) $topup->amount);
+                    } catch (\Throwable $e) {
+                        Log::error('Failed to capture wallet topup in gateway', [
+                            'topup_id' => $topup->id,
+                            'gateway_transaction_id' => $txId,
+                            'error' => $e->getMessage(),
+                        ]);
                     }
 
                     app(StudentBalanceService::class)->credit(
@@ -273,7 +305,7 @@ class WalletPage extends Page
                         type: StudentBalanceLedgerEntry::TYPE_TOPUP,
                         meta: [
                             'source' => 'auto_verification',
-                            'gateway_transaction_id' => $topup->gateway_transaction_id,
+                            'gateway_transaction_id' => $txId,
                             'wallet_topup_id' => $topup->id,
                         ],
                     );
@@ -283,6 +315,15 @@ class WalletPage extends Page
                     ->title('Платеж подтвержден!')
                     ->body('Баланс успешно пополнен на '.number_format((float) $topup->amount, 2, '.', ' ').' BYN')
                     ->success()
+                    ->send();
+            } elseif (! empty($checkOrderId) || $paymentParam === 'failed') {
+                $topup->update(['status' => 'failed']);
+
+                Notification::make()
+                    ->title('Пополнение баланса не выполнено')
+                    ->body($failMessage.' Пожалуйста, повторите попытку.')
+                    ->danger()
+                    ->persistent()
                     ->send();
             }
         }

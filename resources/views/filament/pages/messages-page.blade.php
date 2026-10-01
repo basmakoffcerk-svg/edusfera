@@ -586,45 +586,135 @@
 
         @media (max-width: 768px) {
             .ef-chat {
-                gap: 1rem;
+                display: block;
+                gap: 0;
                 min-height: auto;
             }
 
+            .ef-chat.has-active-conversation .ef-sidebar {
+                display: none !important;
+            }
+
+            .ef-chat:not(.has-active-conversation) .ef-room {
+                display: none !important;
+            }
+
+            .ef-chat:not(.has-active-conversation) .ef-sidebar {
+                display: flex !important;
+                width: 100%;
+                min-height: 70vh;
+            }
+
             .ef-panel {
-                border-radius: 20px;
+                border-radius: 16px;
             }
 
             .ef-room-header {
                 position: sticky;
                 top: 0;
-                padding: 0.9rem;
+                padding: 0.75rem 0.85rem;
+                gap: 0.6rem;
+                align-items: center;
+                flex-wrap: nowrap;
             }
 
             .ef-back {
                 display: inline-flex;
+                width: 2.25rem;
+                height: 2.25rem;
+                min-width: 2.25rem;
+                min-height: 2.25rem;
+                align-items: center;
+                justify-content: center;
+                border-radius: 999px;
+                border: 1px solid #d7dbe4;
+                background: #f9fafb;
+                color: #111827;
+                flex-shrink: 0;
+                padding: 0;
+                cursor: pointer;
+            }
+
+            .ef-avatar {
+                width: 2.35rem;
+                height: 2.35rem;
+                min-width: 2.35rem;
+                flex-shrink: 0;
+                font-size: 0.85rem;
+            }
+
+            .ef-room-heading {
+                min-width: 0;
+                flex: 1 1 auto;
+                overflow: hidden;
+            }
+
+            .ef-room-title {
+                font-size: 0.92rem;
+                font-weight: 800;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .ef-room-copy {
+                font-size: 0.72rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             .ef-actions {
-                width: 100%;
-                justify-content: flex-start;
-                margin-top: 0.6rem;
+                width: auto;
+                flex-shrink: 0;
+                margin-top: 0;
+                justify-content: flex-end;
+                gap: 0.35rem;
+            }
+
+            .ef-actions .ef-btn {
+                width: auto;
+                min-height: 2.1rem;
+                padding: 0 0.75rem;
+                font-size: 0.75rem;
+                white-space: nowrap;
+                flex-shrink: 0;
             }
 
             .ef-bubble {
                 max-width: 88%;
             }
 
+            .ef-quick-replies {
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .ef-quick-replies::-webkit-scrollbar {
+                display: none;
+            }
+
+            .ef-quick-reply {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+
             .ef-compose-row {
                 grid-template-columns: 1fr;
             }
 
-            .ef-btn {
+            .ef-compose-field textarea {
+                font-size: 16px !important; /* Prevents iOS Safari unwanted zoom */
+            }
+
+            .ef-compose-row .ef-btn {
                 width: 100%;
+                min-height: 2.85rem;
             }
         }
     </style>
 
-    <div class="ef-chat" wire:poll.5s>
+    <div class="ef-chat {{ $selectedConversation ? 'has-active-conversation' : '' }}" wire:poll.5s>
         <aside class="ef-panel ef-sidebar">
             <div class="ef-sidebar-top">
                 <h2 class="ef-sidebar-title">Чаты</h2>
@@ -658,7 +748,11 @@
                         @endphp
 
                         <button type="button" wire:click="openConversation({{ $conversation->id }})" class="ef-item {{ $isActive ? 'is-active' : '' }}">
-                            <span class="ef-avatar">{{ mb_substr($otherUser?->name ?? 'U', 0, 1) }}</span>
+                            @if($otherUser?->getFilamentAvatarUrl())
+                                <img src="{{ $otherUser->getFilamentAvatarUrl() }}" class="ef-avatar" style="object-fit:cover; padding:0;">
+                            @else
+                                <span class="ef-avatar">{{ mb_substr($otherUser?->name ?? 'U', 0, 1) }}</span>
+                            @endif
 
                             <span style="min-width: 0;">
                                 <p class="ef-item-name">{{ $otherUser?->name ?? 'Пользователь' }}</p>
@@ -667,7 +761,7 @@
                             </span>
 
                             <span class="ef-item-meta">
-                                <span class="ef-item-time">{{ optional($conversation->last_message_at)->setTimezone(config('booking.display_timezone'))->format('H:i') }}</span>
+                                <span class="ef-item-time">{{ $conversation->last_message_at?->timezone(config('booking.display_timezone', 'Europe/Minsk'))?->format('H:i') ?? '' }}</span>
                                 @if ($conversation->unread_count > 0)
                                     <span class="ef-unread">{{ $conversation->unread_count }}</span>
                                 @endif
@@ -706,8 +800,16 @@
                 @endphp
 
                 <header class="ef-room-header">
-                    <button type="button" class="ef-back" onclick="window.history.back()">←</button>
-                    <span class="ef-avatar">{{ mb_substr($otherUser?->name ?? 'U', 0, 1) }}</span>
+                    <button type="button" class="ef-back" wire:click="closeConversation" title="Назад к списку чатов">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 1.15rem; height: 1.15rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                        </svg>
+                    </button>
+                    @if($otherUser?->getFilamentAvatarUrl())
+                        <img src="{{ $otherUser->getFilamentAvatarUrl() }}" class="ef-avatar" style="object-fit:cover; padding:0;">
+                    @else
+                        <span class="ef-avatar">{{ mb_substr($otherUser?->name ?? 'U', 0, 1) }}</span>
+                    @endif
 
                     <div class="ef-room-heading">
                         <h3 class="ef-room-title">{{ $otherUser?->name ?? 'Пользователь' }}</h3>

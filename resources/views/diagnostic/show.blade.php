@@ -4,12 +4,68 @@
     <meta charset="utf-8">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ИИ-Диагностика уровня ЦТ/ЦЭ 2026 — Edusfera</title>
-    <meta name="description" content="Бесплатная интеллектуальная диагностика готовности к ЦЭ/ЦТ 2026. Точное выявление пробелов спецификации РИКЗ и прогноз баллов за 4 минуты.">
+    <title>ИИ-диагностика готовности к ЦТ и ЦЭ 2026 — Edusfera</title>
+    <meta name="description" content="Индивидуальная экспресс-диагностика готовности к ЦЭ и ЦТ. Задания по спецификации РИКЗ, расчет прогнозного балла и карта пробелов за 4 минуты.">
+    <meta name="keywords" content="тест цт онлайн, диагностика знаний цэ, проверить уровень цт, рикз тесты, подготовка к цт бесплатно">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://edusfera.by/diagnostic">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_BY">
+    <meta property="og:site_name" content="Edusfera">
+    <meta property="og:title" content="ИИ-диагностика уровня ЦТ/ЦЭ за 4 минуты — Edusfera">
+    <meta property="og:description" content="Пройдите интерактивную диагностику по стандартам РИКЗ: узнайте свой прогнозный балл и слабые темы прямо сейчас.">
+    <meta property="og:url" content="https://edusfera.by/diagnostic">
+    <meta property="og:image" content="https://edusfera.by/og-image.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ИИ-диагностика уровня ЦТ и ЦЭ — Edusfera">
+    <meta name="twitter:description" content="Калиброванные задания по спецификации РИКЗ. Мгновенная карта пробелов.">
+    <meta name="twitter:image" content="https://edusfera.by/og-image.png">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": "https://edusfera.by/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "ИИ-диагностика",
+              "item": "https://edusfera.by/diagnostic"
+            }
+          ]
+        },
+        {
+          "@type": "Quiz",
+          "name": "ИИ-диагностика готовности к ЦТ и ЦЭ",
+          "description": "Индивидуальный экспресс-тест для определения текущего уровня подготовки к ЦТ/ЦЭ по спецификациям РИКЗ.",
+          "educationalLevel": "Среднее образование, Абитуриенты",
+          "provider": {
+            "@type": "EducationalOrganization",
+            "name": "Edusfera",
+            "url": "https://edusfera.by/"
+          },
+          "isAccessibleForFree": true
+        }
+      ]
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@700;800&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
@@ -17,85 +73,385 @@
     <style>
         [x-cloak] { display: none !important; }
 
-        :root {
-            --ed-lime: #C6FF33;
-            --ed-lime-glow: rgba(198, 255, 51, 0.35);
-            --ed-violet: #7D39EB;
-            --ed-violet-glow: rgba(125, 57, 235, 0.25);
-            --ed-bg: #010101;
-        }
-
-        body.nexum-body {
-            background-color: var(--ed-bg) !important;
-            color: #ffffff;
-            font-family: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fbfbfd;
+            color: #1d1d1f;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
-        .font-rimma {
-            font-family: 'Rimma Sans', 'Inter', system-ui, sans-serif !important;
-        }
-
-        /* Tactical Range Slider styling */
-        input[type=range].ed-slider {
+        /* Apple Range Slider */
+        input[type=range].apple-slider {
             -webkit-appearance: none;
             appearance: none;
             width: 100%;
-            height: 8px;
-            border-radius: 9999px;
-            background: #14161f;
+            height: 6px;
+            border-radius: 999px;
+            background: #e5e5ea;
             outline: none;
             cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        input[type=range].ed-slider::-webkit-slider-thumb {
+        input[type=range].apple-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 24px;
-            height: 24px;
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
-            background: #C6FF33;
-            border: 3px solid #010101;
-            box-shadow: 0 0 18px rgba(198, 255, 51, 0.75);
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.06);
             cursor: grab;
-            transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.15s ease;
         }
-        input[type=range].ed-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
+        input[type=range].apple-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
         }
-        input[type=range].ed-slider::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
+        input[type=range].apple-slider::-moz-range-thumb {
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
-            background: #C6FF33;
-            border: 3px solid #010101;
-            box-shadow: 0 0 18px rgba(198, 255, 51, 0.75);
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             cursor: grab;
-            transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        input[type=range].ed-slider::-moz-range-thumb:hover {
-            transform: scale(1.2);
         }
 
-        /* Radar animations */
-        @keyframes radar-sweep {
+        /* Apple-style smooth spinner */
+        @keyframes apple-spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .radar-spinner {
-            animation: radar-sweep 3.5s linear infinite;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.9); opacity: 0.7; }
-            50% { transform: scale(1.08); opacity: 0.25; }
-            100% { transform: scale(0.9); opacity: 0.7; }
-        }
-        .pulse-ambient {
-            animation: pulse-ring 3s ease-in-out infinite;
+        .apple-spinner {
+            animation: apple-spin 1s linear infinite;
         }
     </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between" x-data="diagnosticApp()" x-init="init()" @keydown.window="handleKey($event)">
+
+    {{-- Top Navigation Bar --}}
+    <header class="sticky top-0 w-full z-40 bg-white/80 backdrop-blur-xl border-b border-[#e5e5ea] py-3.5 sm:py-4 transition-all">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="{{ route('home') }}" class="flex items-center gap-2.5 text-[#1d1d1f] transition-opacity hover:opacity-80">
+                    <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#7D39EB] to-[#5B21B6] border border-violet-400/30 flex items-center justify-center shrink-0 shadow-xs">
+                        <svg width="18" height="18" viewBox="0 0 64 64">
+                            <path d="M32 10L54 32L32 54L10 32L32 10Z" fill="none" stroke="#C6FF33" stroke-width="6" stroke-linejoin="round" />
+                            <path d="M32 22L42 32L32 42L22 32L32 22Z" fill="#C6FF33" />
+                        </svg>
+                    </div>
+                    <span class="text-lg font-bold tracking-tight uppercase font-rimma">EDUSFERA</span>
+                </a>
+
+                <span class="hidden sm:inline-block w-px h-4 bg-[#e5e5ea]"></span>
+
+                <span class="text-xs font-semibold text-[#86868b] hidden sm:inline">
+                    Диагностика РИКЗ 2026
+                </span>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <template x-if="phase === 'testing'">
+                    <button @click="confirmExit()" class="text-xs font-semibold text-[#6e6e73] hover:text-[#1d1d1f] px-3 py-1.5 rounded-full hover:bg-slate-100 transition-colors">
+                        Прервать тест
+                    </button>
+                </template>
+
+                <template x-if="phase === 'setup'">
+                    <a href="{{ route('tutors.index') }}" class="text-xs font-semibold text-[#6e6e73] hover:text-[#1d1d1f] px-3.5 py-1.5 rounded-full border border-[#d2d2d7] hover:bg-white transition-all shadow-xs">
+                        Каталог репетиторов
+                    </a>
+                </template>
+            </div>
+        </div>
+    </header>
+
+    {{-- Main Container --}}
+    <main class="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-14">
+
+        {{-- ========================================================
+             PHASE 1: SETUP & CONFIGURATION
+             ======================================================== --}}
+        <div x-show="phase === 'setup'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-10">
+            
+            {{-- Hero Title --}}
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Спецификация РИКЗ 2026</span>
+                    <span class="text-slate-400">·</span>
+                    <span>Бесплатно</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl lg:text-[42px] font-extrabold tracking-tight text-[#1d1d1f] leading-tight">
+                    Оцените готовность к экзамену
+                </h1>
+                <p class="text-base sm:text-lg text-[#6e6e73] leading-relaxed font-normal">
+                    6 калиброванных заданий с ключевыми ловушками составителей. Точный расчет текущего балла и персональная карта пробелов за 4 минуты.
+                </p>
+            </div>
+
+            {{-- Main Config Card --}}
+            <div class="bg-white rounded-3xl border border-[#e5e5ea] shadow-xs p-6 sm:p-10 space-y-8">
+                
+                {{-- 1. Subject Selector --}}
+                <div class="space-y-3">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-[#86868b]">
+                        1. Выберите предмет для диагностики
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
+                        <template x-for="sub in subjectsList" :key="sub.name">
+                            <button type="button" @click="selectSubject(sub.name)"
+                                    :class="selectedSubject === sub.name 
+                                        ? 'border-[#7D39EB] bg-[#f8f7ff] text-[#1d1d1f] shadow-xs ring-1 ring-[#7D39EB]' 
+                                        : 'border-[#e5e5ea] bg-white text-[#6e6e73] hover:border-[#b0b0b8] hover:text-[#1d1d1f]'"
+                                    class="p-3.5 sm:p-4 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer min-h-[90px]">
+                                <span class="text-2xl mb-2" x-text="sub.icon"></span>
+                                <div>
+                                    <span class="block text-xs sm:text-[13px] font-bold leading-tight" x-text="sub.name"></span>
+                                    <span class="block text-[11px] text-[#86868b] mt-0.5" x-text="sub.tasksCount + ' заданий'"></span>
+                                </div>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- 2. Exam Type & Benchmark --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-[#f0f0f4]">
+                    
+                    {{-- Exam Type Segmented Control --}}
+                    <div class="space-y-3">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-[#86868b]">
+                            2. Формат экзамена
+                        </label>
+                        <div class="bg-[#f0f0f4] p-1 rounded-2xl flex items-center gap-1">
+                            <button type="button" @click="selectedExam = 'ЦТ 2026'"
+                                    :class="selectedExam === 'ЦТ 2026' ? 'bg-white text-[#1d1d1f] shadow-xs font-bold' : 'text-[#6e6e73] font-semibold hover:text-[#1d1d1f]'"
+                                    class="flex-1 py-2.5 rounded-xl text-xs sm:text-sm text-center transition-all cursor-pointer">
+                                ЦТ 2026
+                            </button>
+                            <button type="button" @click="selectedExam = 'ЦЭ 2026'"
+                                    :class="selectedExam === 'ЦЭ 2026' ? 'bg-white text-[#1d1d1f] shadow-xs font-bold' : 'text-[#6e6e73] font-semibold hover:text-[#1d1d1f]'"
+                                    class="flex-1 py-2.5 rounded-xl text-xs sm:text-sm text-center transition-all cursor-pointer">
+                                ЦЭ 2026
+                            </button>
+                        </div>
+                        <p class="text-xs text-[#86868b]">
+                            Шкала первичных и тестовых баллов полностью идентична для ЦТ и ЦЭ.
+                        </p>
+                    </div>
+
+                    {{-- Target Score Slider --}}
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-[#86868b]">
+                                3. Желаемый результат
+                            </label>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-2xl font-extrabold text-[#1d1d1f]" x-text="targetScore"></span>
+                                <span class="text-xs font-bold text-[#86868b]">баллов</span>
+                            </div>
+                        </div>
+
+                        <input type="range" min="60" max="100" step="1" x-model.number="targetScore" class="apple-slider">
+
+                        <div class="flex items-center justify-between text-[11px] text-[#86868b]">
+                            <span>60</span>
+                            <span :class="targetScoreBenchmark.color" class="font-semibold px-2 py-0.5 rounded-full bg-slate-100" x-text="targetScoreBenchmark.label"></span>
+                            <span>100</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- Feature Summary Cards --}}
+                <div class="pt-6 border-t border-[#f0f0f4] grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-2xl bg-[#fbfbfd] border border-[#e5e5ea] space-y-1">
+                        <div class="text-xs font-bold text-[#1d1d1f]">Спецификация 2026</div>
+                        <div class="text-[12px] text-[#6e6e73] leading-relaxed">Задания части А и Б, составленные по структуре актуального РТ и РИКЗ.</div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-[#fbfbfd] border border-[#e5e5ea] space-y-1">
+                        <div class="text-xs font-bold text-[#1d1d1f]">Анализ ловушек</div>
+                        <div class="text-[12px] text-[#6e6e73] leading-relaxed">Разбор типовых ошибок, на которых срезаются до 70% абитуриентов.</div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-[#fbfbfd] border border-[#e5e5ea] space-y-1">
+                        <div class="text-xs font-bold text-[#1d1d1f]">Мгновенный план</div>
+                        <div class="text-[12px] text-[#6e6e73] leading-relaxed">Список тем первой необходимости для гарантированного роста балла.</div>
+                    </div>
+                </div>
+
+                {{-- Action Button --}}
+                <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="text-xs text-[#86868b]">
+                        Время прохождения: ~4 минуты · Регистрация не требуется
+                    </div>
+                    <button type="button" @click="startDiagnostic()"
+                            class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-[#1d1d1f] hover:bg-[#000000] text-white font-bold text-sm tracking-tight transition-all shadow-sm hover:scale-[1.02] cursor-pointer flex items-center justify-center gap-2">
+                        <span>Начать диагностику</span>
+                        <span>→</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+        {{-- ========================================================
+             PHASE 2: INTERACTIVE ASSESSMENT (Testing)
+             ======================================================== --}}
+        <div x-show="phase === 'testing'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-6">
+            
+            {{-- Test Header & Progress Bar --}}
+            <div class="space-y-3">
+                <div class="flex items-center justify-between text-xs font-semibold text-[#86868b]">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[#1d1d1f] font-bold" x-text="selectedSubject"></span>
+                        <span>·</span>
+                        <span x-text="selectedExam"></span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span>Задание</span>
+                        <span class="text-[#1d1d1f] font-bold text-sm" x-text="(currentIndex + 1)"></span>
+                        <span>из</span>
+                        <span x-text="currentQuestions.length"></span>
+                    </div>
+                </div>
+
+                {{-- Slim Progress Bar --}}
+                <div class="w-full h-1.5 bg-[#e5e5ea] rounded-full overflow-hidden">
+                    <div class="h-full bg-[#7D39EB] transition-all duration-300 ease-out rounded-full"
+                         :style="'width: ' + (((currentIndex + 1) / currentQuestions.length) * 100) + '%'"></div>
+                </div>
+            </div>
+
+            {{-- Question Card --}}
+            <div class="bg-white rounded-3xl border border-[#e5e5ea] shadow-xs p-6 sm:p-10 space-y-6">
+                
+                {{-- Badges --}}
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold"
+                          x-text="currentQuestion.code"></span>
+                    <span class="px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200/60 text-xs font-semibold"
+                          x-text="currentQuestion.theme"></span>
+                </div>
+
+                {{-- Question Text --}}
+                <div class="space-y-4">
+                    <h2 class="text-lg sm:text-xl font-bold text-[#1d1d1f] leading-snug" x-text="currentQuestion.text"></h2>
+
+                    {{-- Formula / Math Block (Clean Apple styling, no dark terminal) --}}
+                    <template x-if="currentQuestion.codeBlock">
+                        <div class="p-4 sm:p-5 rounded-2xl bg-[#f8f9fc] border border-[#e5e5ea] font-mono text-sm sm:text-base text-[#1d1d1f] leading-relaxed">
+                            <span x-text="currentQuestion.codeBlock"></span>
+                        </div>
+                    </template>
+                </div>
+
+                {{-- Options Stack (Part A) --}}
+                <template x-if="currentQuestion.options && currentQuestion.options.length > 0">
+                    <div class="space-y-2.5 pt-2">
+                        <template x-for="(opt, oIdx) in currentQuestion.options" :key="oIdx">
+                            <div @click="selectOption(oIdx)"
+                                 :class="answers[currentIndex] === oIdx 
+                                     ? 'border-[#7D39EB] bg-[#f8f7ff] text-[#1d1d1f] shadow-xs ring-1 ring-[#7D39EB]' 
+                                     : 'border-[#e5e5ea] bg-white text-[#424245] hover:border-[#b0b0b8] hover:bg-[#fafafc]'"
+                                 class="p-4 rounded-2xl border flex items-center justify-between transition-all cursor-pointer group">
+                                
+                                <div class="flex items-center gap-3.5 min-w-0">
+                                    <div :class="answers[currentIndex] === oIdx 
+                                            ? 'bg-[#7D39EB] text-white' 
+                                            : 'bg-[#f0f0f4] text-[#6e6e73] group-hover:bg-[#e5e5ea]'"
+                                         class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors"
+                                         x-text="['A', 'B', 'C', 'D', 'E'][oIdx] || (oIdx + 1)"></div>
+                                    <span class="text-sm sm:text-base font-medium leading-normal" x-text="opt"></span>
+                                </div>
+
+                                <div class="shrink-0 pl-3">
+                                    <div :class="answers[currentIndex] === oIdx ? 'border-[#7D39EB] bg-[#7D39EB]' : 'border-[#d2d2d7] bg-white'"
+                                         class="w-5 h-5 rounded-full border flex items-center justify-center transition-colors">
+                                        <template x-if="answers[currentIndex] === oIdx">
+                                            <svg class="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                                                <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            </svg>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                {{-- Navigation Actions --}}
+                <div class="pt-6 border-t border-[#f0f0f4] flex items-center justify-between gap-4">
+                    <button type="button" @click="prevQuestion()" :disabled="currentIndex === 0"
+                            :class="currentIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-slate-100 cursor-pointer'"
+                            class="px-5 py-2.5 rounded-xl border border-[#d2d2d7] text-xs font-bold text-[#6e6e73] hover:text-[#1d1d1f] transition-all">
+                        ← Назад
+                    </button>
+
+                    <div class="flex items-center gap-3">
+                        <span class="hidden sm:inline text-[11px] text-[#86868b]">Клавиши 1–4 и Enter</span>
+
+                        <template x-if="currentIndex < currentQuestions.length - 1">
+                            <button type="button" @click="nextQuestion()"
+                                    class="px-6 py-2.5 rounded-xl bg-[#1d1d1f] hover:bg-[#000000] text-white text-xs font-bold transition-all shadow-xs cursor-pointer">
+                                Следующее задание →
+                            </button>
+                        </template>
+
+                        <template x-if="currentIndex === currentQuestions.length - 1">
+                            <button type="button" @click="finishAndAnalyze()"
+                                    class="px-6 py-2.5 rounded-xl bg-[#7D39EB] hover:bg-[#6827d6] text-white text-xs font-bold transition-all shadow-xs cursor-pointer">
+                                Рассчитать результат →
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        {{-- ========================================================
+             PHASE 3: CALM EVALUATION (Analyzing)
+             ======================================================== --}}
+        <div x-show="phase === 'analyzing'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="max-w-md mx-auto py-16 text-center space-y-6">
+            
+            <div class="bg-white rounded-3xl border border-[#e5e5ea] shadow-xs p-8 sm:p-10 space-y-6">
+                
+                {{-- Clean Circular Progress Indicator --}}
+                <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" stroke="#f0f0f4" stroke-width="7" fill="none"/>
+                        <circle cx="50" cy="50" r="42" stroke="#7D39EB" stroke-width="7" fill="none"
+                                stroke-dasharray="263.89"
+                                :stroke-dashoffset="263.89 * (1 - (analysisPercent / 100))"
+                                stroke-linecap="round"
+                                class="transition-all duration-100 ease-out"/>
+                    </svg>
+                    <span class="absolute text-xl font-extrabold text-[#1d1d1f]" x-text="analysisPercent + '%'"></span>
+                </div>
+
+                <div class="space-y-2">
+                    <h3 class="text-base font-bold text-[#1d1d1f]">Обработка результатов</h3>
+                    <p class="text-xs text-[#6e6e73] leading-relaxed min-h-[36px]" x-text="currentStatusText"></p>
+                </div>
+
+                <div class="w-full h-1 bg-[#f0f0f4] rounded-full overflow-hidden">
+                    <div class="h-full bg-[#7D39EB] transition-all duration-100 ease-out rounded-full"
+                         :style="'width: ' + analysisPercent + '%'"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    {{-- Universal Minimalist Apple Footer --}}
+    @include('partials.site-footer')
+
     <script>
-        function diagnosticTrainer() {
+        function diagnosticApp() {
             return {
                 phase: 'setup', // 'setup' | 'testing' | 'analyzing'
                 selectedSubject: @json($subject ?? 'Математика'),
@@ -104,76 +460,84 @@
                 currentIndex: 0,
                 answers: [],
                 analysisPercent: 0,
-                currentStatusText: 'Инициализация нейросетевого анализатора...',
+                currentStatusText: 'Проверка ответов по ключам спецификации РИКЗ 2026...',
 
-                // Curated RIKZ tasks per subject
+                subjectsList: [
+                    { name: 'Математика', icon: '📐', tasksCount: 6 },
+                    { name: 'Русский язык', icon: '✍️', tasksCount: 6 },
+                    { name: 'Физика', icon: '⚡', tasksCount: 6 },
+                    { name: 'Английский язык', icon: '🇬🇧', tasksCount: 6 },
+                    { name: 'Белорусский язык', icon: '🇧🇾', tasksCount: 6 },
+                ],
+
+                // Curated RIKZ 2026 specification questions bank
                 questionsDb: {
                     'Математика': [
                         {
-                            code: 'РИКЗ А3',
+                            code: 'РИКЗ А3 · Алгебра',
                             theme: 'Свойства корней и степеней',
-                            text: 'Вычислите точное значение выражения:',
-                            codeBlock: '√[3](54) · √[3](4)  -  √50 / √2',
+                            text: 'Вычислите точное значение числового выражения:',
+                            codeBlock: '√[3](54) · √[3](4)  −  √50 / √2',
                             options: ['1', '6', '4', '2'],
                             correct: 0,
                             gapLoss: 4,
                             mistake: 'Ошибка в свойствах корней одинаковой степени или извлечении корня из частного.'
                         },
                         {
-                            code: 'РИКЗ А7',
+                            code: 'РИКЗ А7 · Алгебра',
                             theme: 'Логарифмические уравнения (ловушка ОДЗ)',
-                            text: 'Укажите все действительные корни уравнения:',
-                            codeBlock: 'log₂(x² - 3x) = 2',
-                            options: ['x = 4 и x = -1', 'x = 4', 'x = -1', 'x = 2'],
+                            text: 'Укажите сумму всех действительных корней уравнения:',
+                            codeBlock: 'log₂(x² − 3x) = 2',
+                            options: ['3', '4', '−1', '5'],
                             correct: 0,
                             gapLoss: 5,
-                            mistake: 'Потеря отрицательного корня из-за ложного предположения, что аргумент логарифма не может содержать отрицательный x.'
+                            mistake: 'Потеря отрицательного корня (−1) из-за ложной уверенности, что аргумент логарифма не может содержать отрицательный x.'
                         },
                         {
-                            code: 'РИКЗ А12',
-                            theme: 'Планиметрия: прямоугольный треугольник',
+                            code: 'РИКЗ А12 · Планиметрия',
+                            theme: 'Прямоугольный треугольник и тригонометрия',
                             text: 'В прямоугольном треугольнике гипотенуза равна 20, а sin α = 0.6. Найдите длину катета, прилежащего к углу α.',
-                            codeBlock: 'c = 20, sin α = 0.6  →  Найти: прилежащий катет b',
+                            codeBlock: 'c = 20,  sin α = 0.6  →  Найти: прилежащий катет b',
                             options: ['12', '16', '14', '8'],
                             correct: 1,
                             gapLoss: 4,
                             mistake: 'Путаница между синусом (противолежащий катет) и косинусом (прилежащий катет = 20 · 0.8 = 16).'
                         },
                         {
-                            code: 'РИКЗ Б2',
+                            code: 'РИКЗ Б2 · Тригонометрия',
                             theme: 'Тригонометрические уравнения (отбор корней)',
-                            text: 'Сколько корней уравнения cos(2x) - sin(x) = 0 принадлежит отрезку [0; π]?',
-                            codeBlock: 'cos(2x) - sin(x) = 0,  x ∈ [0; π]',
+                            text: 'Сколько корней уравнения cos(2x) − sin(x) = 0 принадлежит отрезку [0; π]?',
+                            codeBlock: 'cos(2x) − sin(x) = 0,  x ∈ [0; π]',
                             options: ['1 корень', '2 корня', '3 корня', '4 корня'],
                             correct: 1,
                             gapLoss: 6,
-                            mistake: 'Неверное разложение cos(2x) = 1 - 2sin²(x) или включение постороннего корня 3π/2, лежащего вне отрезка [0; π].'
+                            mistake: 'Неверное разложение cos(2x) = 1 − 2sin²(x) или включение постороннего корня 3π/2.'
                         },
                         {
-                            code: 'РИКЗ Б5',
+                            code: 'РИКЗ Б5 · Неравенства',
                             theme: 'Показательные и логарифмические неравенства',
                             text: 'Решите неравенство со сменой знака основания:',
-                            codeBlock: 'log₀.₅(2x - 6) ≥ -2',
-                            options: ['(3; 5]', '[3; 5]', '(-∞; 5]', '(3; +∞)'],
+                            codeBlock: 'log₀.₅(2x − 6) ≥ −2',
+                            options: ['(3; 5]', '[3; 5]', '(−∞; 5]', '(3; +∞)'],
                             correct: 0,
                             gapLoss: 7,
-                            mistake: 'Забыта проверка ОДЗ (2x - 6 > 0 => x > 3), что приводит к грубейшей потере баллов на ЦТ/ЦЭ.'
+                            mistake: 'Забыта проверка ОДЗ (2x − 6 > 0 => x > 3), что приводит к грубейшей потере баллов на ЦТ/ЦЭ.'
                         },
                         {
-                            code: 'РИКЗ Б10',
-                            theme: 'Стереометрия: расстояния в пространстве',
+                            code: 'РИКЗ Б10 · Стереометрия',
+                            theme: 'Расстояния и сечения в пространстве',
                             text: 'В правильной четырехугольной призме со стороной основания 4 и высотой 6 найдите расстояние от вершины основания до плоскости диагонального сечения.',
-                            codeBlock: 'a = 4, h = 6  →  d(A, BDD₁B₁) = ?',
+                            codeBlock: 'a = 4,  h = 6  →  Найти: d(A, BDD₁B₁)',
                             options: ['2√2', '4√2', '4', '2√3'],
                             correct: 0,
                             gapLoss: 7,
-                            mistake: 'Неверное построение перпендикуляра из вершины квадрата к его диагонали (половина диагонали квадрата: 4√2 / 2 = 2√2).'
+                            mistake: 'Неверное построение перпендикуляра из вершины квадрата к его диагонали (половина диагонали: 4√2 / 2 = 2√2).'
                         }
                     ],
                     'Русский язык': [
                         {
-                            code: 'РИКЗ А2',
-                            theme: 'Орфография: Слитное и раздельное написание НЕ',
+                            code: 'РИКЗ А2 · Орфография',
+                            theme: 'Слитное и раздельное написание НЕ',
                             text: 'В каком варианте НЕ пишется раздельно со словом?',
                             codeBlock: '1) (не)прочитанная вовремя книга\n2) (не)годующий взгляд\n3) (не)высокий, но крутой холм\n4) крайне (не)осмотрительно',
                             options: ['(не)прочитанная вовремя книга', '(не)годующий взгляд', '(не)высокий, но крутой холм', 'крайне (не)осмотрительно'],
@@ -182,8 +546,8 @@
                             mistake: 'Невнимательность к зависимому слову «вовремя» при полном причастии, требующему раздельного написания.'
                         },
                         {
-                            code: 'РИКЗ А5',
-                            theme: 'Пунктуация в сложносочиненном предложении',
+                            code: 'РИКЗ А5 · Пунктуация',
+                            theme: 'Сложносочиненное предложение с общим членом',
                             text: 'Укажите предложение, в котором запятая перед союзом И НЕ ставится:',
                             codeBlock: '1) В саду пахло яблоками и тихо шумел ветер.\n2) Пошел дождь и мы побежали домой.\n3) Солнце село и на небе зажглись звезды.\n4) Урок окончился и дети выбежали в коридор.',
                             options: ['В саду пахло яблоками и тихо шумел ветер.', 'Пошел дождь и мы побежали домой.', 'Солнце село и на небе зажглись звезды.', 'Урок окончился и дети выбежали в коридор.'],
@@ -192,27 +556,27 @@
                             mistake: 'Пропуск общего второстепенного члена («В саду»), отменяющего запятую перед И в ССП.'
                         },
                         {
-                            code: 'РИКЗ А10',
+                            code: 'РИКЗ А10 · Орфография',
                             theme: 'Правописание корней с чередованием',
                             text: 'В каком слове на месте пропуска пишется буква А?',
-                            codeBlock: '1) зам..реть\n2) прик..саться\n3) непром..каемый\n4) расст..лать',
+                            codeBlock: '1) прик..саться\n2) зам..реть\n3) непром..каемый\n4) расст..лать',
                             options: ['прик..саться', 'зам..реть', 'непром..каемый', 'расст..лать'],
                             correct: 0,
                             gapLoss: 4,
                             mistake: 'Путаница между правилом суффикса -А- (кас/кос) и смысловыми корнями (мак/мок).'
                         },
                         {
-                            code: 'РИКЗ Б1',
+                            code: 'РИКЗ Б1 · Нормы языка',
                             theme: 'Орфоэпические нормы (ударение)',
                             text: 'Укажите слово с верным ударением по нормам РИКЗ 2026:',
-                            codeBlock: '1) блеклО\n2) жалюзИ\n3) включИт\n4) слИвовый',
+                            codeBlock: '1) жалюзИ\n2) блеклО\n3) включИт\n4) слИвовый',
                             options: ['жалюзИ', 'блеклО', 'включИт', 'слИвовый'],
                             correct: 0,
                             gapLoss: 5,
                             mistake: 'Французское происхождение слова жалюзи фиксирует ударение исключительно на последний слог.'
                         },
                         {
-                            code: 'РИКЗ Б4',
+                            code: 'РИКЗ Б4 · Синтаксис',
                             theme: 'Синтаксические нормы (деепричастный оборот)',
                             text: 'Укажите грамматически правильное продолжение предложения:',
                             codeBlock: 'Возвращаясь вечером домой, ...',
@@ -222,104 +586,82 @@
                             mistake: 'Субъект действия деепричастия обязан совпадать с подлежащим предложения.'
                         },
                         {
-                            code: 'РИКЗ Б8',
+                            code: 'РИКЗ Б8 · Орфография',
                             theme: 'Сложные случаи Н и НН в суффиксах',
                             text: 'В каком слове пишется удвоенная НН?',
-                            codeBlock: '1) плете..ая корзина\n2) кова..ый сундук\n3) ране..ый в плечо боец\n4) сви..ой окорок',
+                            codeBlock: '1) ране..ый в плечо боец\n2) плете..ая корзина\n3) кова..ый сундук\n4) сви..ой окорок',
                             options: ['ране..ый в плечо боец', 'плете..ая корзина', 'кова..ый сундук', 'сви..ой окорок'],
                             correct: 0,
                             gapLoss: 7,
                             mistake: 'Наличие зависимого слова («в плечо») превращает отглагольное прилагательное в причастие с НН.'
                         }
                     ],
-                    'Белорусский язык': [
-                        {
-                            code: 'РИКЗ А1',
-                            theme: 'Правапіс галосных О, Э, А',
-                            text: 'Адзначце слова, у якім на месцы пропуску пішацца літара А:',
-                            codeBlock: '1) ш..калад\n2) р..монт\n3) кр..вавы\n4) б..тон',
-                            options: ['кр..вавы', 'ш..калад', 'р..монт', 'б..тон'],
-                            correct: 0,
-                            gapLoss: 4,
-                            mistake: 'Памылка ў правіле акання: пад уплывам націску ў корані (кроў -> крывавы/крававы).'
-                        },
-                        {
-                            code: 'РИКЗ А4',
-                            theme: 'Правапіс падоўжаных зычных',
-                            text: 'У якім слове пішацца падаўжэнне зычных?',
-                            codeBlock: '1) мыш..у\n2) насен..е\n3) ліс..е\n4) суц..е',
-                            options: ['насен..е', 'мыш..у', 'ліс..е', 'суц..е'],
-                            correct: 0,
-                            gapLoss: 4,
-                            mistake: 'Блытаніна паміж падоўжанымі зычнымі і апострафам/раздзяляльным знакам.'
-                        },
-                        {
-                            code: 'РИКЗ Б2',
-                            theme: 'Правапіс прыназоўнікаў і злучнікаў',
-                            text: 'Адзначце правільны варыянт напісання згодна з новай рэдакцыяй правіл:',
-                            codeBlock: '1) на працягу дня\n2) на працязе дня\n3) цягам дня\n4) у працягу дня',
-                            options: ['цягам дня', 'на працягу дня', 'на працязе дня', 'у працягу дня'],
-                            correct: 0,
-                            gapLoss: 5,
-                            mistake: 'Калька з рускай мовы («на протяжении дня» -> літаратурна «цягам дня»).'
-                        },
-                        {
-                            code: 'РИКЗ Б5',
-                            theme: 'Сінтаксіс: аднародныя члены сказа',
-                            text: 'Адзначце сказ з правільнай пастаноўкай знакаў прыпынку:',
-                            codeBlock: '1) I лес, і луг, і рэчка — усё дыхала спакоем.\n2) I лес і луг і рэчка ўсё дыхала спакоем.\n3) Усё лес, луг і рэчка дыхалі спакоем.\n4) Лес, луг, рэчка, усё дыхала спакоем.',
-                            options: ['I лес, і луг, і рэчка — усё дыхала спакоем.', 'I лес і луг і рэчка ўсё дыхала спакоем.', 'Усё лес, луг і рэчка дыхалі спакоем.', 'Лес, луг, рэчка, усё дыхала спакоем.'],
-                            correct: 0,
-                            gapLoss: 6,
-                            mistake: 'Правіла абагульняльнага слова пасля аднародных членаў сказа (патрабуецца працяжнік).'
-                        }
-                    ],
                     'Физика': [
                         {
-                            code: 'РИКЗ А2',
-                            theme: 'Кинематика: равноускоренное движение',
-                            text: 'Автомобиль, двигаясь равноускоренно из состояния покоя, проходит путь 50 м за 5 с. Какова скорость автомобиля в конце этого пути?',
-                            codeBlock: 'v₀ = 0, S = 50 м, t = 5 с  →  Найти: v',
-                            options: ['20 м/с', '10 м/с', '25 м/с', '15 м/с'],
+                            code: 'РИКЗ А2 · Кинематика',
+                            theme: 'Равноускоренное движение и графики',
+                            text: 'По графику зависимости скорости v(t) определите путь, пройденный телом за первые 4 секунды:',
+                            codeBlock: 'v₀ = 0,  v(4) = 12 м/с (линейный рост)',
+                            options: ['24 м', '48 м', '12 м', '36 м'],
                             correct: 0,
                             gapLoss: 4,
-                            mistake: 'Забыто ускорение: a = 2S/t² = 100/25 = 4 м/с², тогда v = at = 4·5 = 20 м/с.'
+                            mistake: 'Путь при равноускоренном движении численно равен площади треугольника под графиком: (12 · 4) / 2 = 24 м.'
                         },
                         {
-                            code: 'РИКЗ А6',
-                            theme: 'Законы сохранения в механике',
-                            text: 'Тело массой 2 кг падает с высоты 10 м без начальной скорости. Чему равна кинетическая энергия тела в момент удара о землю? (g = 10 м/с²)',
-                            codeBlock: 'm = 2 кг, h = 10 м  →  Найти: E_k',
-                            options: ['200 Дж', '100 Дж', '400 Дж', '50 Дж'],
+                            code: 'РИКЗ А6 · Динамика',
+                            theme: 'Закон сохранения импульса',
+                            text: 'Тележка массой 2 кг, движущаяся со скоростью 3 м/с, сцепляется с неподвижной тележкой массой 4 кг. Какова скорость после сцепки?',
+                            codeBlock: 'm₁ = 2 кг,  v₁ = 3 м/с,  m₂ = 4 кг,  v₂ = 0',
+                            options: ['1 м/с', '1.5 м/с', '2 м/с', '0.5 м/с'],
                             correct: 0,
                             gapLoss: 5,
-                            mistake: 'По закону сохранения энергии: E_k = mgh = 2 · 10 · 10 = 200 Дж.'
+                            mistake: 'Абсолютно неупругий удар: v = (m₁v₁) / (m₁ + m₂) = 6 / 6 = 1 м/с.'
                         },
                         {
-                            code: 'РИКЗ Б1',
-                            theme: 'Термодинамика: уравнение Менделеева-Клапейрона',
-                            text: 'При изохорном нагревании идеального газа его абсолютная температура увеличилась в 1.5 раза. Начальное давление было 120 кПа. Каково конечное давление?',
-                            codeBlock: 'V = const, T₂ = 1.5 T₁, p₁ = 120 кПа  →  Найти: p₂',
+                            code: 'РИКЗ А11 · МКТ',
+                            theme: 'Изопроцессы идеального газа',
+                            text: 'При изохорном нагревании температура газа увеличилась в 1.5 раза. Начальное давление было 120 кПа. Каково конечное давление?',
+                            codeBlock: 'V = const,  T₂ = 1.5 T₁,  p₁ = 120 кПа',
                             options: ['180 кПа', '160 кПа', '240 кПа', '80 кПа'],
                             correct: 0,
-                            gapLoss: 6,
+                            gapLoss: 5,
                             mistake: 'При изохорном процессе p/T = const, следовательно p₂ = 1.5 · 120 = 180 кПа.'
                         },
                         {
-                            code: 'РИКЗ Б4',
-                            theme: 'Электродинамика: закон Ома для полной цепи',
+                            code: 'РИКЗ Б1 · Электродинамика',
+                            theme: 'Закон Ома для полной цепи',
                             text: 'Источник тока с ЭДС 12 В и внутренним сопротивлением 1 Ом подключен к резистору 5 Ом. Какова сила тока в цепи?',
-                            codeBlock: 'E = 12 В, r = 1 Ом, R = 5 Ом  →  Найти: I',
+                            codeBlock: 'E = 12 В,  r = 1 Ом,  R = 5 Ом',
                             options: ['2 А', '2.4 А', '1.2 А', '3 А'],
                             correct: 0,
                             gapLoss: 6,
                             mistake: 'Закон Ома для полной цепи: I = E / (R + r) = 12 / (5 + 1) = 2 А.'
+                        },
+                        {
+                            code: 'РИКЗ Б3 · Оптика',
+                            theme: 'Закон преломления света и полное отражение',
+                            text: 'Предельный угол полного внутреннего отражения на границе стекло-воздух равен 30°. Чему равен показатель преломления стекла?',
+                            codeBlock: 'sin α_пред = 1 / n  (α_пред = 30°)',
+                            options: ['2', '1.5', '1.73', '1.33'],
+                            correct: 0,
+                            gapLoss: 6,
+                            mistake: 'Показатель преломления n = 1 / sin(30°) = 1 / 0.5 = 2.'
+                        },
+                        {
+                            code: 'РИКЗ Б6 · Колебания',
+                            theme: 'Период колебаний пружинного и математического маятника',
+                            text: 'Во сколько раз изменится период колебаний математического маятника при увеличении длины нити в 4 раза?',
+                            codeBlock: 'T = 2π √(L / g),  L₂ = 4 L₁',
+                            options: ['увеличится в 2 раза', 'увеличится в 4 раза', 'уменьшится в 2 раза', 'не изменится'],
+                            correct: 0,
+                            gapLoss: 7,
+                            mistake: 'Период пропорционален корню из длины: √4 = 2.'
                         }
                     ],
                     'Английский язык': [
                         {
-                            code: 'РИКЗ А3',
-                            theme: 'Conditionals & Mixed Conditionals',
+                            code: 'РИКЗ А3 · Grammar',
+                            theme: 'Conditionals (Mixed Conditionals)',
                             text: 'Choose the correct form to complete the sentence:',
                             codeBlock: 'If he _____ the train yesterday, he would be in Minsk right now.',
                             options: ['had not missed', 'did not miss', 'would not miss', 'has not missed'],
@@ -328,27 +670,27 @@
                             mistake: 'Смешанный тип условных предложений: условие в прошлом (Past Perfect) и следствие в настоящем.'
                         },
                         {
-                            code: 'РИКЗ А8',
-                            theme: 'Prepositions after Adjectives',
+                            code: 'РИКЗ А8 · Vocabulary',
+                            theme: 'Dependent Prepositions',
                             text: 'Fill in the correct preposition according to formal academic norms:',
                             codeBlock: "The entire staff is highly dedicated _____ improving students' test results.",
                             options: ['to', 'with', 'for', 'at'],
                             correct: 0,
                             gapLoss: 5,
-                            mistake: 'Путаница в зависимых предлогах: прилагательное dedicated всегда требует предлога to.'
+                            mistake: 'Прилагательное dedicated всегда требует предлога to.'
                         },
                         {
-                            code: 'РИКЗ Б1',
-                            theme: 'Word Formation (Prefixes & Suffixes)',
+                            code: 'РИКЗ Б1 · Word Formation',
+                            theme: 'Prefixes and Suffixes',
                             text: 'Form the correct antonym of the word in capitals:',
                             codeBlock: 'The unexpected results proved to be completely _____ (EXPECTED).',
                             options: ['unexpected', 'unexpecting', 'non-expected', 'inexpected'],
                             correct: 0,
                             gapLoss: 6,
-                            mistake: 'Ошибочный выбор префикса (non-/in-) вместо нормативного un- для причастия expected.'
+                            mistake: 'Ошибочный выбор префикса (non-/in-) вместо нормативного un- для expected.'
                         },
                         {
-                            code: 'РИКЗ Б4',
+                            code: 'РИКЗ Б4 · Agreement',
                             theme: 'Subject-Verb Agreement (Proximity Rule)',
                             text: 'Identify the grammatically correct sentence according to RIKZ specification:',
                             codeBlock: 'Neither the head tutor nor the high school students _____ present at the conference.',
@@ -356,6 +698,88 @@
                             correct: 0,
                             gapLoss: 6,
                             mistake: 'Правило близости при neither... nor: глагол согласуется с ближайшим подлежащим (students were).'
+                        },
+                        {
+                            code: 'РИКЗ Б7 · Passive Voice',
+                            theme: 'Passive Infinitive and Reporting Verbs',
+                            text: 'Choose the correct form to complete the sentence:',
+                            codeBlock: 'The new scientific library is reported _____ opened next September.',
+                            options: ['to be', 'being', 'having been', 'to have'],
+                            correct: 0,
+                            gapLoss: 6,
+                            mistake: 'Конструкция Complex Subject требует инфинитива: reported to be opened.'
+                        },
+                        {
+                            code: 'РИКЗ Б9 · Articles',
+                            theme: 'Definite and Zero Articles with Geographic Names',
+                            text: 'Choose the correct articles in order of appearance:',
+                            codeBlock: '_____ lake Baikal is deeper than _____ Baltic Sea.',
+                            options: ['— / the', 'the / the', 'the / —', '— / —'],
+                            correct: 0,
+                            gapLoss: 7,
+                            mistake: 'Со словом Lake артикль отсутствует (Lake Baikal), а с названиями морей обязателен the (the Baltic Sea).'
+                        }
+                    ],
+                    'Белорусский язык': [
+                        {
+                            code: 'РИКЗ А1 · Арфаграфія',
+                            theme: 'Правапіс галосных О, Э, А (аканне)',
+                            text: 'Адзначце слова, у якім на месцы пропуску пішацца літара А:',
+                            codeBlock: '1) кр..вавы\n2) ш..калад\n3) р..монт\n4) б..тон',
+                            options: ['кр..вавы', 'ш..калад', 'р..монт', 'б..тон'],
+                            correct: 0,
+                            gapLoss: 4,
+                            mistake: 'Памылка ў правіле акання: пад уплывам націску ў корані (кроў -> крывавы/крававы).'
+                        },
+                        {
+                            code: 'РИКЗ А4 · Арфаграфія',
+                            theme: 'Правапіс падоўжаных зычных',
+                            text: 'У якім слове пішацца падаўжэнне зычных?',
+                            codeBlock: '1) насен..е\n2) мыш..у\n3) ліс..е\n4) суц..е',
+                            options: ['насен..е', 'мыш..у', 'ліс..е', 'суц..е'],
+                            correct: 0,
+                            gapLoss: 5,
+                            mistake: 'Падаўжэнне зычных паміж двума голосными ў назоўніках ніякага роду: насенне.'
+                        },
+                        {
+                            code: 'РИКЗ А8 · Фанетыка',
+                            theme: 'Правапіс у нескладовага (Ў)',
+                            text: 'У якім выпадку пішацца Ў (у нескладовае)?',
+                            codeBlock: '1) жанчына-..рач\n2) ва ..ніверсітэце\n3) ток-..оў\n4) ва ..се часы',
+                            options: ['жанчына-..рач', 'ва ..ніверсітэце', 'ток-..оў', 'ва ..се часы'],
+                            correct: 0,
+                            gapLoss: 5,
+                            mistake: 'Пасля злучка пішацца ў нескладовае, калі папярэдняе слова заканчваецца на галосны.'
+                        },
+                        {
+                            code: 'РИКЗ Б2 · Лексікалогія',
+                            theme: 'Фразеалагізмы і іх значэнне',
+                            text: 'Адзначце значэнне фразеалагізма «біць лынды»:',
+                            codeBlock: 'Фразеалагізм: біць лынды',
+                            options: ['гультаяваць, марнаваць час', 'вельмі хутка бегчы', 'шчыра радавацца', 'цяжка працаваць'],
+                            correct: 0,
+                            gapLoss: 6,
+                            mistake: '«Біць лынды» азначае гультаяваць (дармаеднічаць).'
+                        },
+                        {
+                            code: 'РИКЗ Б5 · Марфалогія',
+                            theme: 'Клічная форма назоўнікаў і канчаткі роднага склону',
+                            text: 'Адзначце словазлучэнне з правільным канчаткам роднага склону:',
+                            codeBlock: '1) кілаграм цукру\n2) кілаграм цукра\n3) шклянка чая\n4) кавалак пірога',
+                            options: ['кілаграм цукру', 'кілаграм цукра', 'шклянка чая', 'кавалак пірога'],
+                            correct: 0,
+                            gapLoss: 6,
+                            mistake: 'Рэчыўныя назоўнікі ў родным склоне адзіночнага ліку маюць канчатак -у/-ю (цукру, чаю).'
+                        },
+                        {
+                            code: 'РИКЗ Б7 · Сінтаксіс',
+                            theme: 'Знакі прыпынку ў сказах з пабочнымі канструкцыямі',
+                            text: 'У якім сказе выдзеленае слова З’ЯЎЛЯЕЦЦА пабочным і выдзяляецца коскамі?',
+                            codeBlock: '1) На шчасце, цягнік прыбыў своечасова.\n2) Ён спадзяваўся на шчасце.\n3) Усё гэта здавалася праўдай.\n4) Пагода была на рэдкасць добрай.',
+                            options: ['На шчасце, цягнік прыбыў своечасова.', 'Ён спадзяваўся на шчасце.', 'Усё гэта здавалася праўдай.', 'Пагода была на рэдкасць добрай.'],
+                            correct: 0,
+                            gapLoss: 7,
+                            mistake: '«На шчасце» выражае эмацыйную ацэнку аўтара і выдзяляецца коскамі як пабочнае слова.'
                         }
                     ]
                 },
@@ -372,12 +796,12 @@
                     return this.currentQuestions[this.currentIndex] || this.currentQuestions[0];
                 },
 
-                get targetScoreStatus() {
+                get targetScoreBenchmark() {
                     const s = this.targetScore;
-                    if (s >= 95) return { label: 'Топ вузов (95-100)', color: 'border-[#C6FF33] text-[#C6FF33] bg-[#C6FF33]/15' };
-                    if (s >= 85) return { label: 'Бюджет БГУ / БГУИР (85-94)', color: 'border-emerald-400/40 text-emerald-400 bg-emerald-500/10' };
-                    if (s >= 75) return { label: 'Уверенный результат (75-84)', color: 'border-cyan-400/40 text-cyan-400 bg-cyan-500/10' };
-                    return { label: 'Базовый порог (60-74)', color: 'border-amber-400/40 text-amber-400 bg-amber-500/10' };
+                    if (s >= 95) return { label: 'Топ-1% абитуриентов', color: 'text-emerald-700' };
+                    if (s >= 85) return { label: 'Бюджет ведущих вузов', color: 'text-violet-700' };
+                    if (s >= 75) return { label: 'Популярные специальности', color: 'text-blue-700' };
+                    return { label: 'Базовый порог', color: 'text-slate-600' };
                 },
 
                 selectSubject(sub) {
@@ -420,7 +844,7 @@
 
                 handleKey(e) {
                     if (this.phase !== 'testing') return;
-                    if (['1', '2', '3', '4'].includes(e.key)) {
+                    if (['1', '2', '3', '4', '5'].includes(e.key)) {
                         const optIndex = parseInt(e.key, 10) - 1;
                         if (optIndex < this.currentQuestion.options.length) {
                             this.selectOption(optIndex);
@@ -442,13 +866,13 @@
                     window.scrollTo({ top: 0, behavior: 'smooth' });
 
                     const statuses = [
-                        { at: 10, text: 'Проверка ловушек РИКЗ и спецификации 2026...' },
-                        { at: 35, text: 'Анализ вычислительных паттернов и типовых ошибок...' },
-                        { at: 65, text: 'Сравнение с базой 10 000+ сдавших ЦЭ/ЦТ...' },
-                        { at: 88, text: 'Построение индивидуального трека подготовки...' }
+                        { at: 10, text: 'Сверка ответов со спецификацией РИКЗ 2026...' },
+                        { at: 40, text: 'Выявление расчетных и смысловых ловушек...' },
+                        { at: 70, text: 'Калибровка первичного балла по шкале ЦТ/ЦЭ...' },
+                        { at: 90, text: 'Формирование персональной карты тем...' }
                     ];
 
-                    const duration = 2600;
+                    const duration = 2200;
                     const interval = 40;
                     const step = 100 / (duration / interval);
 
@@ -486,7 +910,7 @@
                                 topic: q.theme,
                                 loss: q.gapLoss,
                                 mistake: q.mistake,
-                                criticality: q.gapLoss >= 6 ? 'Критический пробел' : 'Требует закрепления'
+                                criticality: q.gapLoss >= 6 ? 'Высокий приоритет' : 'Умеренный приоритет'
                             });
                         }
                     });
@@ -532,529 +956,6 @@
                 }
             };
         }
-
-        window.diagnosticTrainer = diagnosticTrainer;
-        document.addEventListener('alpine:init', () => {
-            if (window.Alpine) {
-                window.Alpine.data('diagnosticTrainer', diagnosticTrainer);
-            }
-        });
     </script>
-</head>
-<body class="nexum-body min-h-screen bg-[#010101] text-white selection:bg-[#C6FF33] selection:text-black overflow-x-hidden antialiased flex flex-col justify-between">
-
-    {{-- Subtle Ambient Glows & Grid (Edusfera Platform Aesthetics) --}}
-    <div class="fixed top-0 left-1/4 -translate-x-1/2 -top-40 w-[600px] h-[600px] bg-[#7D39EB]/12 rounded-full blur-[140px] pointer-events-none z-0"></div>
-    <div class="fixed top-28 right-1/4 translate-x-1/3 w-[550px] h-[550px] bg-[#C6FF33]/08 rounded-full blur-[150px] pointer-events-none z-0"></div>
-    <div class="fixed inset-0 bg-[radial-gradient(rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:32px_32px] pointer-events-none z-0"></div>
-
-    <div x-data="diagnosticTrainer()" x-init="init()" class="relative z-10 min-h-screen flex flex-col justify-between" @keydown.window="handleKey($event)">
-
-        {{-- ─── CANONICAL HEADER (Liquid Glass Island) ─── --}}
-        <header class="sticky top-0 w-full z-40 bg-gradient-to-b from-[#010101]/90 via-[#010101]/75 to-[#010101]/30 backdrop-blur-2xl border-b border-white/[0.08] py-3.5 sm:py-4">
-            <div class="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 flex items-center justify-between">
-                
-                {{-- Brand Mark --}}
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('home') }}" class="flex items-center gap-2.5 text-white transition-colors group">
-                        <svg width="28" height="28" viewBox="0 0 64 64" class="w-7 h-7 rounded-lg shadow-sm group-hover:scale-105 transition-transform">
-                            <rect width="64" height="64" rx="14" fill="#7D39EB" />
-                            <path d="M32 10L54 32L32 54L10 32L32 10Z" fill="none" stroke="#C6FF33" stroke-width="6" stroke-linejoin="round" />
-                            <path d="M32 22L42 32L32 42L22 32L32 22Z" fill="#C6FF33" />
-                        </svg>
-                        <span class="text-xl font-bold tracking-tight text-white uppercase font-rimma">edusfera</span>
-                    </a>
-
-                    {{-- Liquid Glass Badge: ИИ-Диагностика --}}
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-violet-500/20 via-white/[0.08] to-[#C6FF33]/15 border border-white/15 text-[#C6FF33] font-bold text-[11px] uppercase tracking-wider backdrop-blur-xl shadow-inner">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#C6FF33] animate-pulse"></span>
-                        ИИ-Диагностика
-                    </span>
-                </div>
-
-                {{-- Center Live Mode Indicator --}}
-                <div class="hidden md:flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/[0.05] border border-white/10 text-xs font-semibold text-neutral-300 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
-                    <span class="w-2 h-2 rounded-full bg-[#C6FF33] shadow-[0_0_8px_#C6FF33]"></span>
-                    <span>Спецификация РИКЗ 2026</span>
-                    <span class="text-neutral-500">•</span>
-                    <span class="text-[#C6FF33] font-black uppercase text-[11px] tracking-wider">0 BYN Бесплатно</span>
-                </div>
-
-                {{-- Right Profile Link / Exit --}}
-                <div class="flex items-center gap-3">
-                    <template x-if="phase === 'testing'">
-                        <button @click="confirmExit()" class="text-xs font-bold text-neutral-400 hover:text-white px-3.5 py-1.5 rounded-full border border-white/10 hover:bg-white/10 transition cursor-pointer">
-                            Сбросить
-                        </button>
-                    </template>
-                    @auth
-                        <a href="/admin" class="flex items-center gap-2.5 bg-gradient-to-b from-white/[0.15] to-white/[0.05] border border-white/20 pl-2.5 pr-4 py-1.5 rounded-full hover:border-white/30 transition-all text-white backdrop-blur-xl">
-                            <span class="w-6 h-6 rounded-full bg-[#C6FF33] text-black font-black flex items-center justify-center text-[10px]">
-                                {{ mb_substr(auth()->user()->name, 0, 1) }}
-                            </span>
-                            <span class="text-xs font-bold text-white">{{ auth()->user()->name }}</span>
-                        </a>
-                    @else
-                        <a href="/login" class="rounded-full bg-gradient-to-b from-white/[0.15] to-white/[0.05] hover:from-white/[0.22] hover:to-white/[0.1] text-white font-medium text-xs sm:text-sm px-4 sm:px-5 py-2 border border-white/20 backdrop-blur-xl transition-all flex items-center gap-2">
-                            <span>Войти</span>
-                            <span class="text-neutral-400">→</span>
-                        </a>
-                    @endauth
-                </div>
-            </div>
-        </header>
-
-        {{-- ─── MAIN VIEWPORT ─── --}}
-        <main class="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-5xl mx-auto w-full">
-
-            {{-- ========================================================== --}}
-            {{-- PHASE 1: SETUP (Выбор предмета, экзамена, целевого балла) --}}
-            {{-- ========================================================== --}}
-            <div x-show="phase === 'setup'" class="space-y-8 sm:space-y-10 transition-opacity duration-300">
-                
-                {{-- Hero Section (Breathing Room & Scale Contrast) --}}
-                <div class="text-center space-y-4 max-w-2xl mx-auto">
-                    <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#C6FF33]/10 border border-[#C6FF33]/25 text-[#C6FF33] text-[11px] font-black uppercase tracking-widest">
-                        <span class="w-1.5 h-1.5 rounded-full bg-[#C6FF33] animate-ping"></span>
-                        <span>Спецификация РИКЗ 2026 · Нейросетевой скан</span>
-                    </div>
-
-                    <h1 class="text-3xl sm:text-5xl lg:text-[3.2rem] font-black tracking-tight text-white leading-[1.08]">
-                        Нейросетевая диагностика <br class="hidden sm:inline">
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-100 to-[#C6FF33]">
-                            готовности к ЦЭ и ЦТ
-                        </span>
-                    </h1>
-
-                    <p class="text-neutral-400 text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
-                        Выявите скрытые ловушки РИКЗ, узнайте свой реальный прогнозный балл и получите персональную стратегию за 4 минуты.
-                    </p>
-                </div>
-
-                {{-- Interactive Master Card (Liquid Glass Surface) --}}
-                <div class="bg-[#0b0c10]/80 backdrop-blur-2xl border border-white/[0.1] rounded-[32px] p-6 sm:p-10 space-y-8 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)]">
-                    
-                    {{-- 1. Предмет подготовки --}}
-                    <div class="space-y-3.5">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-neutral-400">
-                                    01. Выберите предмет подготовки
-                                </span>
-                            </div>
-                            <span class="text-xs text-[#C6FF33] font-bold" x-text="selectedSubject">{{ $subject ?? 'Математика' }}</span>
-                        </div>
-
-                        {{-- Subject Items Grid --}}
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                            
-                            {{-- 1. Математика --}}
-                            <button type="button"
-                                    @click="selectSubject('Математика')"
-                                    :class="selectedSubject === 'Математика'
-                                        ? 'border-[#C6FF33] bg-[#C6FF33]/10 text-white shadow-[0_0_25px_rgba(198,255,51,0.18)] ring-1 ring-[#C6FF33]'
-                                        : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 hover:text-white hover:bg-white/[0.04]'"
-                                    class="flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl border text-center transition-all duration-200 group relative cursor-pointer">
-                                
-                                <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110"
-                                     :class="selectedSubject === 'Математика' ? 'bg-[#C6FF33]/20 text-[#C6FF33]' : 'bg-white/5 text-neutral-300'">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                        <polygon points="3 3 21 21 3 21 3 3"/>
-                                        <line x1="9" y1="21" x2="9" y2="17"/>
-                                        <line x1="13" y1="21" x2="13" y2="15"/>
-                                        <line x1="17" y1="21" x2="17" y2="19"/>
-                                    </svg>
-                                </div>
-                                <span class="text-sm font-bold text-white tracking-tight">Математика</span>
-                                <span class="text-[11px] text-neutral-400 mt-1 font-mono">38 заданий РИКЗ</span>
-                                <span x-show="selectedSubject === 'Математика'" class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#C6FF33] shadow-[0_0_8px_#C6FF33]"></span>
-                            </button>
-
-                            {{-- 2. Русский язык --}}
-                            <button type="button"
-                                    @click="selectSubject('Русский язык')"
-                                    :class="selectedSubject === 'Русский язык'
-                                        ? 'border-[#C6FF33] bg-[#C6FF33]/10 text-white shadow-[0_0_25px_rgba(198,255,51,0.18)] ring-1 ring-[#C6FF33]'
-                                        : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 hover:text-white hover:bg-white/[0.04]'"
-                                    class="flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl border text-center transition-all duration-200 group relative cursor-pointer">
-                                
-                                <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110"
-                                     :class="selectedSubject === 'Русский язык' ? 'bg-[#C6FF33]/20 text-[#C6FF33]' : 'bg-white/5 text-neutral-300'">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                                        <path d="M6 6h10"/>
-                                        <path d="M6 10h10"/>
-                                        <path d="M6 14h6"/>
-                                    </svg>
-                                </div>
-                                <span class="text-sm font-bold text-white tracking-tight">Русский язык</span>
-                                <span class="text-[11px] text-neutral-400 mt-1 font-mono">40 заданий РИКЗ</span>
-                                <span x-show="selectedSubject === 'Русский язык'" class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#C6FF33] shadow-[0_0_8px_#C6FF33]"></span>
-                            </button>
-
-                            {{-- 3. Белорусский язык --}}
-                            <button type="button"
-                                    @click="selectSubject('Белорусский язык')"
-                                    :class="selectedSubject === 'Белорусский язык'
-                                        ? 'border-[#C6FF33] bg-[#C6FF33]/10 text-white shadow-[0_0_25px_rgba(198,255,51,0.18)] ring-1 ring-[#C6FF33]'
-                                        : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 hover:text-white hover:bg-white/[0.04]'"
-                                    class="flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl border text-center transition-all duration-200 group relative cursor-pointer">
-                                
-                                <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110"
-                                     :class="selectedSubject === 'Белорусский язык' ? 'bg-[#C6FF33]/20 text-[#C6FF33]' : 'bg-white/5 text-neutral-300'">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
-                                        <line x1="12" y1="7" x2="12" y2="13"/>
-                                        <line x1="9" y1="10" x2="15" y2="10"/>
-                                    </svg>
-                                </div>
-                                <span class="text-sm font-bold text-white tracking-tight">Белорусский</span>
-                                <span class="text-[11px] text-neutral-400 mt-1 font-mono">40 заданий РИКЗ</span>
-                                <span x-show="selectedSubject === 'Белорусский язык'" class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#C6FF33] shadow-[0_0_8px_#C6FF33]"></span>
-                            </button>
-
-                            {{-- 4. Физика --}}
-                            <button type="button"
-                                    @click="selectSubject('Физика')"
-                                    :class="selectedSubject === 'Физика'
-                                        ? 'border-[#C6FF33] bg-[#C6FF33]/10 text-white shadow-[0_0_25px_rgba(198,255,51,0.18)] ring-1 ring-[#C6FF33]'
-                                        : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 hover:text-white hover:bg-white/[0.04]'"
-                                    class="flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl border text-center transition-all duration-200 group relative cursor-pointer">
-                                
-                                <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110"
-                                     :class="selectedSubject === 'Физика' ? 'bg-[#C6FF33]/20 text-[#C6FF33]' : 'bg-white/5 text-neutral-300'">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                        <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)"/>
-                                        <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"/>
-                                        <circle cx="12" cy="12" r="2" fill="currentColor"/>
-                                    </svg>
-                                </div>
-                                <span class="text-sm font-bold text-white tracking-tight">Физика</span>
-                                <span class="text-[11px] text-neutral-400 mt-1 font-mono">38 заданий РИКЗ</span>
-                                <span x-show="selectedSubject === 'Физика'" class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#C6FF33] shadow-[0_0_8px_#C6FF33]"></span>
-                            </button>
-
-                            {{-- 5. Английский язык --}}
-                            <button type="button"
-                                    @click="selectSubject('Английский язык')"
-                                    :class="selectedSubject === 'Английский язык'
-                                        ? 'border-[#C6FF33] bg-[#C6FF33]/10 text-white shadow-[0_0_25px_rgba(198,255,51,0.18)] ring-1 ring-[#C6FF33]'
-                                        : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 hover:text-white hover:bg-white/[0.04]'"
-                                    class="flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl border text-center transition-all duration-200 group relative cursor-pointer">
-                                
-                                <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110"
-                                     :class="selectedSubject === 'Английский язык' ? 'bg-[#C6FF33]/20 text-[#C6FF33]' : 'bg-white/5 text-neutral-300'">
-                                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <line x1="2" y1="12" x2="22" y2="12"/>
-                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                                    </svg>
-                                </div>
-                                <span class="text-sm font-bold text-white tracking-tight">Английский</span>
-                                <span class="text-[11px] text-neutral-400 mt-1 font-mono">40 заданий РИКЗ</span>
-                                <span x-show="selectedSubject === 'Английский язык'" class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#C6FF33] shadow-[0_0_8px_#C6FF33]"></span>
-                            </button>
-
-                        </div>
-                    </div>
-
-                    {{-- 2. Тип экзамена (ЦЭ 2026 / ЦТ 2026) --}}
-                    <div class="space-y-3.5 pt-4 border-t border-white/[0.08]">
-                        <label class="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-neutral-400">
-                            02. Тип экзамена
-                        </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            
-                            {{-- ЦЭ 2026 --}}
-                            <button type="button"
-                                    @click="selectedExam = 'ЦЭ 2026'"
-                                    :class="selectedExam === 'ЦЭ 2026'
-                                        ? 'border-[#C6FF33] bg-[#C6FF33]/10 text-white shadow-[0_0_20px_rgba(198,255,51,0.12)] ring-1 ring-[#C6FF33]'
-                                        : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 hover:text-white'"
-                                    class="p-4 sm:p-5 rounded-2xl border text-left transition-all duration-200 flex items-center justify-between group cursor-pointer">
-                                <div>
-                                    <div class="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                                        <span>ЦЭ 2026</span>
-                                        <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/10 text-neutral-300 font-semibold">11 КЛАСС</span>
-                                    </div>
-                                    <div class="text-xs text-neutral-400 mt-1">Централизованный экзамен (выпускной в школе)</div>
-                                </div>
-                                <div class="w-6 h-6 rounded-full border flex items-center justify-center text-xs shrink-0 transition-all"
-                                     :class="selectedExam === 'ЦЭ 2026' ? 'border-[#C6FF33] bg-[#C6FF33] text-black font-black' : 'border-neutral-700 text-transparent'">
-                                    ✓
-                                </div>
-                            </button>
-
-                            {{-- ЦТ 2026 --}}
-                            <button type="button"
-                                    @click="selectedExam = 'ЦТ 2026'"
-                                    :class="selectedExam === 'ЦТ 2026'
-                                        ? 'border-[#C6FF33] bg-[#C6FF33]/10 text-white shadow-[0_0_20px_rgba(198,255,51,0.12)] ring-1 ring-[#C6FF33]'
-                                        : 'border-white/10 bg-white/[0.02] text-neutral-400 hover:border-white/20 hover:text-white'"
-                                    class="p-4 sm:p-5 rounded-2xl border text-left transition-all duration-200 flex items-center justify-between group cursor-pointer">
-                                <div>
-                                    <div class="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                                        <span>ЦТ 2026</span>
-                                        <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/10 text-neutral-300 font-semibold">ПОСТУПЛЕНИЕ</span>
-                                    </div>
-                                    <div class="text-xs text-neutral-400 mt-1">Централизованное тестирование (вступительное)</div>
-                                </div>
-                                <div class="w-6 h-6 rounded-full border flex items-center justify-center text-xs shrink-0 transition-all"
-                                     :class="selectedExam === 'ЦТ 2026' ? 'border-[#C6FF33] bg-[#C6FF33] text-black font-black' : 'border-neutral-700 text-transparent'">
-                                    ✓
-                                </div>
-                            </button>
-
-                        </div>
-                    </div>
-
-                    {{-- 3. Интерактивный тактильный слайдер целевого балла --}}
-                    <div class="space-y-4 pt-4 border-t border-white/[0.08]">
-                        <div class="flex items-center justify-between flex-wrap gap-3">
-                            <div>
-                                <label class="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-neutral-400">
-                                    03. Ваш целевой балл
-                                </label>
-                                <p class="text-xs text-neutral-400 mt-0.5">Укажите желаемую цель для точной калибровки заданий</p>
-                            </div>
-
-                            <div class="flex items-center gap-3">
-                                <span class="px-3.5 py-1 rounded-full text-xs font-bold border transition-colors backdrop-blur-md"
-                                      :class="targetScoreStatus.color"
-                                      x-text="targetScoreStatus.label">
-                                </span>
-                                <div class="flex items-baseline gap-1">
-                                    <span class="text-3xl sm:text-4xl font-black text-[#C6FF33] tracking-tight font-mono" x-text="targetScore"></span>
-                                    <span class="text-xs font-bold text-neutral-500 font-mono">/ 100</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2.5 pt-2">
-                            <input type="range" min="60" max="100" step="1"
-                                   x-model.number="targetScore"
-                                   class="ed-slider">
-                            
-                            <div class="flex justify-between text-[11px] font-mono text-neutral-400 px-1">
-                                <span>60 (Порог)</span>
-                                <span>75 (Уверенный)</span>
-                                <span>85 (Бюджет БГУ/БГУИР)</span>
-                                <span>100 (Топ вузов)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Action Button & Stats Ribbon --}}
-                    <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-5 border-t border-white/[0.08]">
-                        <div class="flex items-center gap-3 text-xs text-neutral-400">
-                            <div class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#C6FF33] shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <span class="text-white font-bold">6 диагностических заданий</span> РИКЗ<br>
-                                <span class="text-neutral-400">Оценочное время прохождения: ~4 минуты</span>
-                            </div>
-                        </div>
-
-                        <button type="button"
-                                @click="startDiagnostic()"
-                                class="w-full sm:w-auto px-9 py-4 rounded-full bg-[#C6FF33] hover:bg-[#d4ff59] text-black font-black text-sm uppercase tracking-wider shadow-[0_0_30px_rgba(198,255,51,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer">
-                            <span>Начать ИИ-диагностику (0 BYN)</span>
-                            <svg class="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-
-            {{-- ========================================================== --}}
-            {{-- PHASE 2: TESTING (Интерактивный адаптивный тренажер РИКЗ)  --}}
-            {{-- ========================================================== --}}
-            <div x-show="phase === 'testing'" x-cloak class="space-y-6 max-w-3xl mx-auto w-full transition-opacity duration-300">
-                
-                {{-- Step Header & Progress Bar --}}
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold">
-                        <div class="flex items-center gap-2">
-                            <span class="px-3 py-1 rounded-full bg-[#C6FF33]/15 text-[#C6FF33] font-black border border-[#C6FF33]/30 font-mono">
-                                Задание <span x-text="currentIndex + 1"></span> из <span x-text="currentQuestions.length"></span>
-                            </span>
-                            <span class="text-neutral-400 hidden sm:inline" x-text="selectedSubject"></span>
-                            <span class="text-neutral-600 hidden sm:inline">•</span>
-                            <span class="text-neutral-400 hidden sm:inline" x-text="selectedExam"></span>
-                        </div>
-                        <div class="text-neutral-400 font-mono text-xs">
-                            Прогресс: <span class="text-white font-black" x-text="Math.round(((currentIndex) / currentQuestions.length) * 100) + '%'"></span>
-                        </div>
-                    </div>
-
-                    {{-- Progress Track --}}
-                    <div class="w-full h-2 rounded-full bg-white/5 overflow-hidden border border-white/10">
-                        <div class="h-full bg-gradient-to-r from-[#7D39EB] to-[#C6FF33] transition-all duration-300 ease-out shadow-[0_0_15px_#C6FF33]"
-                             :style="'width: ' + (((currentIndex + 1) / currentQuestions.length) * 100) + '%'"></div>
-                    </div>
-                </div>
-
-                {{-- Question Card --}}
-                <div class="bg-[#0b0c10]/85 backdrop-blur-2xl border border-white/[0.1] rounded-[32px] p-6 sm:p-9 space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.1)] relative">
-                    
-                    {{-- Spec Badge & Topic --}}
-                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.08] pb-4">
-                        <div class="flex items-center gap-2.5">
-                            <span class="px-3 py-1 rounded-full bg-violet-500/20 border border-violet-400/30 text-violet-300 text-xs font-mono font-bold"
-                                  x-text="currentQuestion.code">
-                            </span>
-                            <span class="text-xs font-semibold text-neutral-300" x-text="currentQuestion.theme"></span>
-                        </div>
-                        <div class="text-[11px] font-bold text-amber-400 flex items-center gap-1.5 font-mono">
-                            <span>⚡ Ловушка РИКЗ</span>
-                            <span class="text-neutral-600">•</span>
-                            <span class="text-neutral-400">Потеря до <span x-text="currentQuestion.gapLoss"></span> баллов</span>
-                        </div>
-                    </div>
-
-                    {{-- Question Text --}}
-                    <div class="space-y-3.5">
-                        <h2 class="text-lg sm:text-xl font-bold text-white leading-relaxed" x-text="currentQuestion.text"></h2>
-                        
-                        <template x-if="currentQuestion.codeBlock">
-                            <div class="bg-black/60 border border-white/10 rounded-2xl p-4 sm:p-5 font-mono text-sm text-[#C6FF33] whitespace-pre-wrap leading-relaxed shadow-inner"
-                                 x-text="currentQuestion.codeBlock">
-                            </div>
-                        </template>
-                    </div>
-
-                    {{-- Options List --}}
-                    <div class="space-y-3 pt-2">
-                        <template x-for="(opt, oIndex) in currentQuestion.options" :key="oIndex">
-                            <div @click="selectOption(oIndex)"
-                                 :class="answers[currentIndex] === oIndex 
-                                    ? 'border-[#C6FF33] bg-[#C6FF33]/10 text-white ring-1 ring-[#C6FF33] shadow-[0_0_20px_rgba(198,255,51,0.15)]' 
-                                    : 'border-white/10 bg-white/[0.02] text-neutral-300 hover:border-white/25 hover:bg-white/[0.04]'"
-                                 class="p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all duration-150 flex items-center justify-between group">
-                                
-                                <div class="flex items-center gap-3.5 pr-4">
-                                    <span class="w-7 h-7 rounded-xl border flex items-center justify-center text-xs font-mono font-bold shrink-0 transition-colors"
-                                          :class="answers[currentIndex] === oIndex 
-                                            ? 'bg-[#C6FF33] border-[#C6FF33] text-black font-black' 
-                                            : 'border-neutral-700 bg-neutral-800 text-neutral-400 group-hover:border-neutral-500 group-hover:text-white'">
-                                        <span x-text="oIndex + 1"></span>
-                                    </span>
-                                    <span class="text-sm sm:text-base font-medium leading-relaxed" x-text="opt"></span>
-                                </div>
-
-                                <div class="w-6 h-6 rounded-full border flex items-center justify-center text-xs shrink-0 transition-all"
-                                     :class="answers[currentIndex] === oIndex 
-                                        ? 'bg-[#C6FF33] border-[#C6FF33] text-black font-black shadow-[0_0_10px_#C6FF33]' 
-                                        : 'border-neutral-700 text-transparent'">
-                                    ✓
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-
-                    {{-- Navigation Buttons --}}
-                    <div class="flex items-center justify-between pt-5 border-t border-white/[0.08] gap-3">
-                        <button type="button"
-                                @click="prevQuestion()"
-                                :disabled="currentIndex === 0"
-                                class="px-5 py-3 rounded-full border border-white/10 text-xs font-bold text-neutral-400 hover:text-white hover:border-white/25 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer">
-                            ← Назад
-                        </button>
-
-                        <div class="flex items-center gap-3">
-                            <span class="hidden sm:inline text-xs text-neutral-500 font-mono">Клавиши 1-4, Enter</span>
-                            
-                            <template x-if="currentIndex < currentQuestions.length - 1">
-                                <button type="button"
-                                        @click="nextQuestion()"
-                                        :disabled="answers[currentIndex] === undefined"
-                                        class="px-7 py-3 rounded-full bg-[#C6FF33] hover:bg-[#d4ff59] text-black font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(198,255,51,0.25)] disabled:opacity-30 disabled:pointer-events-none transition flex items-center gap-2 cursor-pointer">
-                                    <span>Далее</span>
-                                    <span>→</span>
-                                </button>
-                            </template>
-
-                            <template x-if="currentIndex === currentQuestions.length - 1">
-                                <button type="button"
-                                        @click="finishAndAnalyze()"
-                                        :disabled="answers[currentIndex] === undefined"
-                                        class="px-8 py-3.5 rounded-full bg-[#C6FF33] hover:bg-[#d4ff59] text-black font-black text-xs uppercase tracking-wider shadow-[0_0_25px_rgba(198,255,51,0.35)] disabled:opacity-30 disabled:pointer-events-none transition flex items-center gap-2 cursor-pointer">
-                                    <span>Завершить и рассчитать балл</span>
-                                    <span>🚀</span>
-                                </button>
-                            </template>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            {{-- ========================================================== --}}
-            {{-- PHASE 3: ANALYZING (Кинематографичный радар & нейро-скан)  --}}
-            {{-- ========================================================== --}}
-            <div x-show="phase === 'analyzing'" x-cloak class="max-w-xl mx-auto w-full text-center space-y-8 py-8 transition-opacity duration-300">
-                
-                {{-- Radar Container --}}
-                <div class="relative w-64 h-64 mx-auto flex items-center justify-center">
-                    
-                    {{-- Outer Glowing Concentric Rings --}}
-                    <div class="absolute inset-0 rounded-full border border-violet-500/25 pulse-ambient"></div>
-                    <div class="absolute -inset-4 rounded-full border border-[#C6FF33]/20 animate-pulse"></div>
-                    <div class="absolute -inset-10 rounded-full border border-dashed border-white/10"></div>
-                    
-                    {{-- Rotating Radar Line --}}
-                    <div class="absolute inset-0 rounded-full radar-spinner pointer-events-none">
-                        <div class="w-1/2 h-1/2 bg-gradient-to-br from-[#C6FF33]/35 via-transparent to-transparent rounded-tl-full"></div>
-                    </div>
-
-                    {{-- Neural Core --}}
-                    <div class="w-36 h-36 rounded-full bg-[#0b0c10] border-2 border-[#C6FF33] shadow-[0_0_50px_rgba(198,255,51,0.45)] flex flex-col items-center justify-center z-10 relative">
-                        <div class="text-3xl font-black text-white tracking-tight font-mono" x-text="analysisPercent + '%'"></div>
-                        <div class="text-[10px] font-black uppercase tracking-widest text-[#C6FF33] mt-1 font-mono">EDUSFERA AI</div>
-                    </div>
-
-                </div>
-
-                {{-- Dynamic Status Messaging --}}
-                <div class="space-y-3">
-                    <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-neutral-300">
-                        <span class="w-2 h-2 rounded-full bg-[#C6FF33] animate-ping"></span>
-                        <span>Модель РИКЗ-Скан v2.6</span>
-                    </div>
-
-                    <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight min-h-12 flex items-center justify-center"
-                        x-text="currentStatusText">
-                    </h2>
-
-                    <p class="text-xs text-neutral-400 font-mono">
-                        Сопоставление ответов со спецификацией ЦЭ/ЦТ 2026 и базой 10 000+ абитуриентов...
-                    </p>
-                </div>
-
-                {{-- Linear Progress Bar --}}
-                <div class="max-w-md mx-auto space-y-1.5">
-                    <div class="w-full h-1.5 rounded-full bg-white/5 overflow-hidden border border-white/10">
-                        <div class="h-full bg-gradient-to-r from-violet-500 via-[#C6FF33] to-[#C6FF33] transition-all duration-150 shadow-[0_0_10px_#C6FF33]"
-                             :style="'width: ' + analysisPercent + '%'"></div>
-                    </div>
-                    <div class="flex justify-between text-[10px] text-neutral-500 font-mono">
-                        <span>0% ЗАПУСК</span>
-                        <span>СИНТЕЗ КАРТЫ ЗНАНИЙ</span>
-                        <span>100% ФИНИШ</span>
-                    </div>
-                </div>
-
-            </div>
-
-        </main>
-
-        {{-- ─── FOOTER ─── --}}
-        @include('partials.site-footer')
-
-    </div>
-
 </body>
 </html>

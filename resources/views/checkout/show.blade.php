@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Оплата урока — Edusfera</title>
     <meta name="description" content="Безопасная оплата урока через платформу Edusfera. Гарантия возврата и защита сделки.">
+    @include('partials.analytics')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -144,7 +145,7 @@
 <body>
     @php
         $tutorProfile = $lesson->tutor?->tutorProfile;
-        $avatarPath = $tutorProfile?->avatar_path ? asset('storage/' . $tutorProfile->avatar_path) : null;
+        $avatarPath = $tutorProfile?->avatar_url ?? $lesson->tutor?->avatar_url;
         $displayName = $lesson->tutor?->name ?? 'Репетитор';
         $packageCode = old('package_code', $lesson->package_code ?: 'single');
         $selectedDate = $lesson->start_time->setTimezone(config('booking.display_timezone'));
@@ -292,6 +293,14 @@ SVG;
                                     <strong id="checkout-timer" class="co-timer-value">{{ gmdate('i:s', (int)$expiresInSeconds) }}</strong>
                                 </div>
                             </div>
+                            <div id="checkout-promo-summary-row" style="display:none; margin-top:0.75rem; padding-top:0.75rem; border-top:1px dashed rgba(255,255,255,0.2); font-size:0.88rem;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="color:rgba(255,255,255,0.75); display:flex; align-items:center; gap:0.35rem;">
+                                        🏷️ Скидка по промокоду:
+                                    </span>
+                                    <strong id="checkout-promo-discount-amount" style="color:#86efac; font-size:1.05rem; font-family:var(--font-display);">-0.00 BYN</strong>
+                                </div>
+                            </div>
                         </div>
 
                         @error('payment')
@@ -360,6 +369,28 @@ SVG;
                             @enderror
 
 
+                        </div>
+
+                        <!-- PROMO CODE BOX -->
+                        <div class="co-promo-container" style="background:#fff; border:1px dashed var(--border); border-radius:var(--radius); padding:1.1rem; margin-top:0.75rem;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.6rem;">
+                                <div style="display:flex; align-items:center; gap:0.5rem;">
+                                    <span style="display:inline-flex; align-items:center; justify-content:center; width:1.85rem; height:1.85rem; border-radius:0.5rem; background:rgba(125,57,235,0.08); color:var(--violet);">
+                                        <svg style="width:1.1rem; height:1.1rem;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                                    </span>
+                                    <span style="font-weight:700; font-size:0.9rem;">Промокод на скидку</span>
+                                </div>
+                                <span id="promo-badge" style="display:none; font-size:0.75rem; font-weight:700; padding:0.2rem 0.6rem; border-radius:999px; background:#dcfce7; color:#15803d;">Активирован</span>
+                            </div>
+
+                            <div style="display:flex; gap:0.5rem; align-items:center;">
+                                <input type="text" id="promo-input" placeholder="Введите код (например, EDU2026)" style="flex:1; height:44px; padding:0 0.85rem; border:1px solid var(--border); border-radius:0.65rem; font-size:0.92rem; font-family:monospace; font-weight:700; text-transform:uppercase; background:#f8f9fc; outline:none; transition:border-color .2s;" autocomplete="off">
+                                <input type="hidden" name="promo_code" id="checkout-promo-hidden" value="">
+                                <button type="button" id="promo-apply-btn" style="height:44px; padding:0 1.25rem; border:none; border-radius:0.65rem; background:var(--dark); color:#fff; font-size:0.88rem; font-weight:700; cursor:pointer; transition:all .2s; white-space:nowrap;">Применить</button>
+                                <button type="button" id="promo-remove-btn" style="display:none; height:44px; padding:0 0.9rem; border:1px solid var(--border); border-radius:0.65rem; background:#fff; color:#ef4444; font-size:0.85rem; font-weight:700; cursor:pointer;">Отменить</button>
+                            </div>
+
+                            <div id="promo-feedback" style="display:none; margin-top:0.6rem; font-size:0.85rem; line-height:1.4;"></div>
                         </div>
 
                         <div id="alfa-sdk-card-panel" style="display: none;" class="mt-4 p-4 border border-slate-200 rounded-2xl bg-white shadow-sm space-y-3">
@@ -560,6 +591,139 @@ SVG;
                 }
             };
 
+            // Promo Code State
+            let activePromo = null;
+
+            const promoInput = document.getElementById('promo-input');
+            const promoHidden = document.getElementById('checkout-promo-hidden');
+            const promoApplyBtn = document.getElementById('promo-apply-btn');
+            const promoRemoveBtn = document.getElementById('promo-remove-btn');
+            const promoBadge = document.getElementById('promo-badge');
+            const promoFeedback = document.getElementById('promo-feedback');
+            const promoSummaryRow = document.getElementById('checkout-promo-summary-row');
+            const promoDiscountDisplay = document.getElementById('checkout-promo-discount-amount');
+
+            const calculatePromoDiscountForAmount = (amount) => {
+                if (!activePromo) return 0;
+                if (activePromo.discount_type === 'percent') {
+                    let disc = amount * (activePromo.discount_value / 100);
+                    return Math.min(disc, amount);
+                }
+                return Math.min(activePromo.discount_value, amount);
+            };
+
+            const showPromoFeedback = (msg, type) => {
+                if (!promoFeedback) return;
+                promoFeedback.style.display = 'block';
+                if (type === 'success') {
+                    promoFeedback.style.color = '#15803d';
+                    promoFeedback.innerHTML = `✓ ${msg}`;
+                } else {
+                    promoFeedback.style.color = '#dc2626';
+                    promoFeedback.innerHTML = `✕ ${msg}`;
+                }
+            };
+
+            const applyPromoCode = async (codeToApply) => {
+                const code = (codeToApply || promoInput?.value || '').trim();
+                if (!code) {
+                    showPromoFeedback('Введите промокод', 'error');
+                    return;
+                }
+
+                if (promoApplyBtn) {
+                    promoApplyBtn.disabled = true;
+                    promoApplyBtn.textContent = '...';
+                }
+
+                try {
+                    const selectedPkg = document.querySelector('input[name="package_code"]:checked')?.value || 'single';
+                    const res = await fetch('{{ route("checkout.promo.apply", $lesson) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            promo_code: code,
+                            package_code: selectedPkg
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok || !data.valid) {
+                        throw new Error(data.message || 'Недействительный промокод');
+                    }
+
+                    activePromo = data;
+                    if (promoHidden) promoHidden.value = data.code;
+                    if (promoInput) {
+                        promoInput.value = data.code;
+                        promoInput.disabled = true;
+                    }
+                    if (promoBadge) promoBadge.style.display = 'inline-block';
+                    if (promoApplyBtn) promoApplyBtn.style.display = 'none';
+                    if (promoRemoveBtn) promoRemoveBtn.style.display = 'block';
+
+                    const discText = data.discount_type === 'percent'
+                        ? `${data.discount_value}% (-${data.discount_amount} BYN)`
+                        : `-${data.discount_amount} BYN`;
+
+                    showPromoFeedback(`Промокод <strong>${data.code}</strong> активирован! Скидка: ${discText}.`, 'success');
+                    syncPackageSummary();
+                } catch (err) {
+                    showPromoFeedback(err.message || 'Ошибка применения промокода', 'error');
+                    activePromo = null;
+                    if (promoHidden) promoHidden.value = '';
+                } finally {
+                    if (promoApplyBtn) {
+                        promoApplyBtn.disabled = false;
+                        promoApplyBtn.textContent = 'Применить';
+                    }
+                }
+            };
+
+            const removePromoCode = () => {
+                activePromo = null;
+                if (promoHidden) promoHidden.value = '';
+                if (promoInput) {
+                    promoInput.value = '';
+                    promoInput.disabled = false;
+                }
+                if (promoBadge) promoBadge.style.display = 'none';
+                if (promoApplyBtn) promoApplyBtn.style.display = 'block';
+                if (promoRemoveBtn) promoRemoveBtn.style.display = 'none';
+                if (promoFeedback) {
+                    promoFeedback.style.display = 'none';
+                    promoFeedback.innerHTML = '';
+                }
+                syncPackageSummary();
+            };
+
+            if (promoApplyBtn) {
+                promoApplyBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    applyPromoCode();
+                });
+            }
+
+            if (promoInput) {
+                promoInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        applyPromoCode();
+                    }
+                });
+            }
+
+            if (promoRemoveBtn) {
+                promoRemoveBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    removePromoCode();
+                });
+            }
+
             const updateRememberCardVisibility = () => {
                 const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
                 rememberCardBox.style.display = selectedMethod === 'wallet' ? 'none' : 'flex';
@@ -570,29 +734,48 @@ SVG;
                 if (!selectedNode) return;
 
                 const selectedPackageCode = selectedNode.value;
-                const selectedAmount = Number.parseFloat(selectedNode.dataset.totalAmount || '0');
+                const baseAmount = Number.parseFloat(selectedNode.dataset.totalAmount || '0');
                 const buttonLabel = selectedNode.dataset.buttonLabel ?? defaultButtonLabel;
 
-                disableWalletForPackage(selectedAmount);
-                totalNode.innerHTML = buttonLabel;
+                let effectiveAmount = baseAmount;
+                let promoDiscount = 0;
+
+                if (activePromo) {
+                    promoDiscount = calculatePromoDiscountForAmount(baseAmount);
+                    effectiveAmount = Math.max(0, baseAmount - promoDiscount);
+
+                    if (promoSummaryRow && promoDiscountDisplay) {
+                        promoSummaryRow.style.display = 'block';
+                        promoDiscountDisplay.innerHTML = `-${formatMoneyHtml(promoDiscount)}`;
+                    }
+
+                    totalNode.innerHTML = `<del style="opacity:0.45; font-size:0.88em; margin-right:0.4rem;">${formatMoneyHtml(baseAmount)}</del><span>${formatMoneyHtml(effectiveAmount)}</span>`;
+                } else {
+                    if (promoSummaryRow) {
+                        promoSummaryRow.style.display = 'none';
+                    }
+                    totalNode.innerHTML = buttonLabel;
+                }
+
+                disableWalletForPackage(effectiveAmount);
 
                 const selectedMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
                 const isWalletSelected = selectedMethod === 'wallet';
 
-                const canUsePartialWallet = walletBalance > 0 && walletBalance < selectedAmount;
+                const canUsePartialWallet = walletBalance > 0 && walletBalance < effectiveAmount;
                 const usePartialWallet = canUsePartialWallet && Boolean(useWalletCheckbox?.checked);
-                const topUpAmount = Math.max(selectedAmount - walletBalance, 0);
+                const topUpAmount = Math.max(effectiveAmount - walletBalance, 0);
 
                 paymentMethodsBox.style.display = 'block';
 
                 if (isWalletSelected) {
                     if (oneClickCopyNode) {
-                        oneClickCopyNode.innerHTML = `К оплате: ${buttonLabel}. На вашем балансе: ${walletBalanceLabel}.`;
+                        oneClickCopyNode.innerHTML = `К оплате: ${formatMoneyHtml(effectiveAmount)}. На вашем балансе: ${walletBalanceLabel}.`;
                     }
                     oneClickBox.style.display = 'flex';
                     partialBox.style.display = 'none';
                     rememberCardBox.style.display = 'none';
-                    submitNode.innerHTML = `Подтвердить запись за ${buttonLabel}`;
+                    submitNode.innerHTML = `Подтвердить запись за ${formatMoneyHtml(effectiveAmount)}`;
                 } else {
                     oneClickBox.style.display = 'none';
 
@@ -611,7 +794,7 @@ SVG;
                     if (usePartialWallet) {
                         submitNode.innerHTML = `Доплатить ${formatMoneyHtml(topUpAmount)}`;
                     } else {
-                        submitNode.innerHTML = `Оплатить ${buttonLabel}`;
+                        submitNode.innerHTML = `Оплатить ${formatMoneyHtml(effectiveAmount)}`;
                     }
 
                     updateRememberCardVisibility();
@@ -653,7 +836,8 @@ SVG;
                         },
                         body: JSON.stringify({
                             package_code: selectedPkg,
-                            use_wallet_balance: useWalletCheckbox?.checked ? 1 : 0
+                            use_wallet_balance: useWalletCheckbox?.checked ? 1 : 0,
+                            promo_code: activePromo ? activePromo.code : null
                         })
                     });
 
@@ -773,9 +957,14 @@ SVG;
 
                             window.location.href = '{{ route("checkout.success", $lesson) }}';
                         } catch (err) {
-                            console.warn('[AlfaBankWebSdk] doPayment error, falling back to form submit:', err);
-                            // Fallback to standard form submission so payment always completes cleanly
-                            checkoutForm.submit();
+                            console.warn('[AlfaBankWebSdk] doPayment error:', err);
+                            const errBox = document.getElementById('alfa-sdk-error-box');
+                            if (errBox) {
+                                errBox.textContent = err?.message || 'Ошибка обработки карты. Проверьте введённые реквизиты.';
+                                errBox.style.display = 'block';
+                            }
+                            submitNode.disabled = false;
+                            submitNode.innerHTML = originalBtnHtml;
                         }
                     }
                 });
@@ -805,6 +994,14 @@ SVG;
                     popupOpened = true;
                 }
             });
+
+            if (typeof window.trackEdusferaEvent === 'function') {
+                window.trackEdusferaEvent('checkout_start', {
+                    lesson_id: {{ $lesson->id }},
+                    amount: {{ (float) ($lesson->price ?? 0) }},
+                    currency: 'BYN'
+                });
+            }
 
         })();
     </script>

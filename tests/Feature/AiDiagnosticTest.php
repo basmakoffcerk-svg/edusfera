@@ -21,7 +21,7 @@ class AiDiagnosticTest extends TestCase
 
     public function test_question_bank_supports_all_five_subjects(): void
     {
-        $bank = new RikzQuestionBank();
+        $bank = new RikzQuestionBank;
         $expectedSubjects = [
             'Математика',
             'Русский язык',
@@ -56,7 +56,7 @@ class AiDiagnosticTest extends TestCase
 
     public function test_evaluator_calculates_scores_gaps_cognitive_profile_and_plans(): void
     {
-        $bank = new RikzQuestionBank();
+        $bank = new RikzQuestionBank;
         $evaluator = new AiDiagnosticEvaluator($bank);
 
         // In Math: math_01 ans=2, math_02 ans=1, math_03 ans=1, math_04 ans=2, math_b01 ans=384, math_b02 ans=20
@@ -130,7 +130,7 @@ class AiDiagnosticTest extends TestCase
             'status' => 'active',
         ]);
 
-        $bank = new RikzQuestionBank();
+        $bank = new RikzQuestionBank;
         $evaluator = new AiDiagnosticEvaluator($bank);
         $answers = [
             'rus_01' => '1',
@@ -187,7 +187,7 @@ class AiDiagnosticTest extends TestCase
         $response->assertSee('Английский язык');
 
         // Test JSON request
-        $jsonResponse = $this->getJson('/diagnostic?subject=' . urlencode('Физика') . '&exam_type=' . urlencode('ЦТ 2026'));
+        $jsonResponse = $this->getJson('/diagnostic?subject='.urlencode('Физика').'&exam_type='.urlencode('ЦТ 2026'));
         $jsonResponse->assertOk();
         $jsonResponse->assertJsonStructure([
             'subjects',
@@ -203,7 +203,7 @@ class AiDiagnosticTest extends TestCase
 
     public function test_controller_questions_endpoint(): void
     {
-        $response = $this->getJson('/diagnostic/questions?subject=' . urlencode('Белорусский язык') . '&exam_type=' . urlencode('ЦТ 2026'));
+        $response = $this->getJson('/diagnostic/questions?subject='.urlencode('Белорусский язык').'&exam_type='.urlencode('ЦТ 2026'));
         $response->assertOk();
         $response->assertJsonStructure([
             'subject',

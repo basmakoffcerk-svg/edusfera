@@ -13,12 +13,14 @@
                 @endif
             </div>
 
-            <div class="tutor-comm-rate" style="gap: 8px;">
-                <span class="tutor-comm-rate-value">{{ $planTitle }}</span>
-                <span class="tutor-comm-rate-unit" style="font-size: 0.95rem; font-weight: 700; color: #6B7280;">
-                    ({{ $monthlyPrice }} BYN/мес)
-                </span>
-                <span class="tutor-chip {{ $statusBadge['color'] === 'active' || $statusBadge['color'] === 'trial' ? 'tutor-chip--active' : '' }}" style="font-size: 11px; padding: 4px 8px;">
+            <div class="tutor-comm-rate">
+                <div class="tutor-comm-plan-price">
+                    <span class="tutor-comm-rate-value">{{ $planTitle }}</span>
+                    <span class="tutor-comm-rate-unit">
+                        ({{ $monthlyPrice }} BYN/мес)
+                    </span>
+                </div>
+                <span class="tutor-chip tutor-comm-status-chip {{ $statusBadge['color'] === 'active' || $statusBadge['color'] === 'trial' ? 'tutor-chip--active' : '' }}">
                     {{ $statusBadge['label'] }} · {{ $statusBadge['hint'] }}
                 </span>
             </div>
@@ -69,7 +71,7 @@
 
     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 20px;">
         <a href="/admin/tutor-subscription-page" class="tutor-link" style="margin-top: 0;">
-            Управление тарифом и счетами ЕРИП
+            Управление тарифом и подпиской
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
         </a>
 

@@ -18,6 +18,8 @@ class TutorAvailabilityPage extends Page
 
     protected static ?string $navigationLabel = 'Рабочие часы';
 
+    protected static ?string $title = 'Рабочие часы и слоты для записи';
+
     protected static ?int $navigationSort = 3;
 
     public array $availability = [];
@@ -178,10 +180,13 @@ class TutorAvailabilityPage extends Page
                 $row = collect($this->availability)->firstWhere('day_of_week', $weekday);
 
                 $slots = collect();
+                $isActive = (bool) ($row['is_active'] ?? false);
+                $startTime = substr((string) ($row['start_time'] ?? '10:00'), 0, 5);
+                $endTime = substr((string) ($row['end_time'] ?? '18:00'), 0, 5);
 
-                if (($row['is_active'] ?? false) === true) {
-                    $cursor = CarbonImmutable::parse($date->format('Y-m-d').' '.$row['start_time'], config('booking.display_timezone'));
-                    $end = CarbonImmutable::parse($date->format('Y-m-d').' '.$row['end_time'], config('booking.display_timezone'));
+                if ($isActive) {
+                    $cursor = CarbonImmutable::parse($date->format('Y-m-d').' '.$startTime, config('booking.display_timezone'));
+                    $end = CarbonImmutable::parse($date->format('Y-m-d').' '.$endTime, config('booking.display_timezone'));
 
                     while ($cursor->lt($end)) {
                         $slots->push($cursor->format('H:i'));
@@ -191,10 +196,15 @@ class TutorAvailabilityPage extends Page
 
                 return [
                     'label' => $date->translatedFormat('D, d M'),
+                    'day_name' => $date->translatedFormat('l'),
+                    'date_formatted' => $date->translatedFormat('d F'),
                     'full_label' => $date->translatedFormat('l, d F'),
-                    'is_active' => (bool) ($row['is_active'] ?? false),
-                    'slots' => $slots->take(6)->all(),
-                    'extra_slots' => max($slots->count() - 6, 0),
+                    'is_today' => $offset === 0,
+                    'is_active' => $isActive,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
+                    'slots' => $slots->all(),
+                    'slots_count' => $slots->count(),
                 ];
             })
             ->all();

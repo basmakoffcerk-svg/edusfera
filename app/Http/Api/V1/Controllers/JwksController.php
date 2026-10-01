@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Api\V1\Controllers;
 
+use App\Domain\Classroom\RsaClassroomTokenIssuer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use phpseclib3\Crypt\PublicKeyLoader;
@@ -63,7 +64,7 @@ final class JwksController extends Controller
     /**
      * Строит JWK для classroom-публичного ключа (требование 11.7).
      *
-     * KID вычисляется ИМЕННО так же, как в {@see \App\Domain\Classroom\RsaClassroomTokenIssuer}:
+     * KID вычисляется ИМЕННО так же, как в {@see RsaClassroomTokenIssuer}:
      * `'classroom-'.substr(sha256(publicKeyPem), 0, 16)`. Это критично — иначе
      * classroom-сервис не сопоставит ключ из JWKS с `kid` в header выпущенного
      * токена и не сможет проверить подпись.

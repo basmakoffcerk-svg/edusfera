@@ -6,6 +6,7 @@ namespace App\Filament\Pages;
 
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Support\Enums\MaxWidth;
+use Illuminate\Contracts\Support\Htmlable;
 
 class Dashboard extends BaseDashboard
 {
@@ -29,21 +30,23 @@ class Dashboard extends BaseDashboard
         return 'heroicon-o-home';
     }
 
-    public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
+    public function getHeading(): string|Htmlable
     {
-        // У репетитора заголовок страницы («Главная») дублирует приветствие
-        // hero-виджета — прячем штатный заголовок (пустая строка = falsy,
-        // Filament пропускает блок заголовка), остаётся один герой.
-        if (auth()->user()?->isTutor()) {
+        // У репетитора и ученика заголовок страницы («Главная» / «Инфопанель»)
+        // дублирует приветствие hero-виджета — прячем штатный заголовок,
+        // оставляя один сильный визуальный герой экрана.
+        $user = auth()->user();
+        if ($user && ($user->isTutor() || $user->isStudent() || $user->isParent())) {
             return '';
         }
 
         return parent::getHeading();
     }
 
-    public function getSubheading(): string|\Illuminate\Contracts\Support\Htmlable|null
+    public function getSubheading(): string|Htmlable|null
     {
-        if (auth()->user()?->isTutor()) {
+        $user = auth()->user();
+        if ($user && ($user->isTutor() || $user->isStudent() || $user->isParent())) {
             return null;
         }
 

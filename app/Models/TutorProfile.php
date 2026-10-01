@@ -12,10 +12,22 @@ class TutorProfile extends Model
 {
     /**
      * SECURITY (M1): is_verified, verification_status, rating_avg are mass-assignable
-     * because they are managed by admin approval flows in Filament. Access control
-     * is enforced at the Filament resource level (admin-only actions), NOT at the
-     * model level. Never expose these fields in tutor-facing forms.
+     * because they are managed by admin approval flows in Filament.
      */
+    protected static function booted(): void
+    {
+        static::saved(function (TutorProfile $profile): void {
+            if ($profile->wasChanged('avatar_path') && ! empty($profile->avatar_path)) {
+                $user = $profile->user;
+                if ($user && $user->avatar !== $profile->avatar_path) {
+                    $user->updateQuietly([
+                        'avatar' => $profile->avatar_path,
+                    ]);
+                }
+            }
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'subjects',
@@ -25,8 +37,6 @@ class TutorProfile extends Model
         'legal_status',
         'unp',
         'payout_account',
-        'webpay_billing_id',
-        'webpay_account_id',
         'bio',
         'education_summary',
         'teaching_methodology',
@@ -89,5 +99,93 @@ class TutorProfile extends Model
     public function examTracks(): HasMany
     {
         return $this->hasMany(ExamTrack::class, 'tutor_id', 'user_id');
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->getAvatarUrl();
+    }
+
+    public function getAvatarUrl(): ?string
+    {
+        $path = $this->avatar_path ?: $this->user?->avatar;
+        if (! $path) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        $clean = ltrim(str_replace('storage/', '', $path), '/');
+
+        // Self-healing: if file exists in private storage, sync to public and public/storage
+        $publicFile = storage_path('app/public/'.$clean);
+        $privateFile = storage_path('app/private/'.$clean);
+        $appFile = storage_path('app/'.$clean);
+        $publicDirFile = public_path('storage/'.$clean);
+
+        if (! file_exists($publicFile)) {
+            @mkdir(dirname($publicFile), 0775, true);
+            if (file_exists($privateFile) && is_file($privateFile)) {
+                @copy($privateFile, $publicFile);
+            } elseif (file_exists($appFile) && is_file($appFile)) {
+                @copy($appFile, $publicFile);
+            }
+        }
+
+        if (! is_link(public_path('storage')) && ! file_exists($publicDirFile)) {
+            @mkdir(dirname($publicDirFile), 0775, true);
+            $src = file_exists($publicFile) ? $publicFile : (file_exists($privateFile) ? $privateFile : $appFile);
+            if (file_exists($src) && is_file($src)) {
+                @copy($src, $publicDirFile);
+            }
+        }
+
+        return asset('storage/'.$clean);
+    }
+
+    public function getDiplomaUrlAttribute(): ?string
+    {
+        return $this->getDiplomaUrl();
+    }
+
+    public function getDiplomaUrl(): ?string
+    {
+        $path = $this->diploma_path;
+        if (! $path) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        $clean = ltrim(str_replace('storage/', '', $path), '/');
+
+        // Self-healing: if file exists in private storage, sync to public and public/storage
+        $publicFile = storage_path('app/public/'.$clean);
+        $privateFile = storage_path('app/private/'.$clean);
+        $appFile = storage_path('app/'.$clean);
+        $publicDirFile = public_path('storage/'.$clean);
+
+        if (! file_exists($publicFile)) {
+            @mkdir(dirname($publicFile), 0775, true);
+            if (file_exists($privateFile) && is_file($privateFile)) {
+                @copy($privateFile, $publicFile);
+            } elseif (file_exists($appFile) && is_file($appFile)) {
+                @copy($appFile, $publicFile);
+            }
+        }
+
+        if (! is_link(public_path('storage')) && ! file_exists($publicDirFile)) {
+            @mkdir(dirname($publicDirFile), 0775, true);
+            $src = file_exists($publicFile) ? $publicFile : (file_exists($privateFile) ? $privateFile : $appFile);
+            if (file_exists($src) && is_file($src)) {
+                @copy($src, $publicDirFile);
+            }
+        }
+
+        return asset('storage/'.$clean);
     }
 }

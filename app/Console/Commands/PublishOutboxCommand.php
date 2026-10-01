@@ -41,59 +41,59 @@ class PublishOutboxCommand extends Command
     public function handle(): int
     {
         $now = Carbon::now('UTC');
-
-        // Выбираем пачку 100 неопубликованных строк, доступных для обработки.
-        // FOR UPDATE SKIP LOCKED — PostgreSQL-совместимый способ избежать
-        // конкурентной обработки одних и тех же строк несколькими воркерами.
-        $rows = DB::table('integration_outbox')
-            ->whereNull('published_at')
-            ->where('available_at', '<=', $now)
-            ->orderBy('available_at')
-            ->limit(100)
-            ->lockForUpdate()
-            ->get();
-
         $published = 0;
         $failed = 0;
 
-        foreach ($rows as $row) {
-            try {
-                $envelope = $this->buildEnvelope($row);
-                $this->eventBus->publish($envelope);
+        DB::transaction(function () use ($now, &$published, &$failed) {
+            // Выбираем пачку 100 неопубликованных строк, доступных для обработки.
+            // FOR UPDATE — способ избежать конкурентной обработки одних и тех же строк несколькими воркерами.
+            $rows = DB::table('integration_outbox')
+                ->whereNull('published_at')
+                ->where('available_at', '<=', $now)
+                ->orderBy('available_at')
+                ->limit(100)
+                ->lockForUpdate()
+                ->get();
 
-                DB::table('integration_outbox')
-                    ->where('id', $row->id)
-                    ->update([
-                        'published_at' => Carbon::now('UTC')->format('Y-m-d H:i:s'),
-                        'last_error' => null,
+            foreach ($rows as $row) {
+                try {
+                    $envelope = $this->buildEnvelope($row);
+                    $this->eventBus->publish($envelope);
+
+                    DB::table('integration_outbox')
+                        ->where('id', $row->id)
+                        ->update([
+                            'published_at' => Carbon::now('UTC')->format('Y-m-d H:i:s'),
+                            'last_error' => null,
+                            'updated_at' => Carbon::now('UTC')->format('Y-m-d H:i:s'),
+                        ]);
+
+                    $published++;
+                } catch (Throwable $e) {
+                    $newAttempts = (int) $row->attempts + 1;
+                    $update = [
+                        'attempts' => $newAttempts,
+                        'last_error' => mb_substr($e->getMessage(), 0, 65535),
                         'updated_at' => Carbon::now('UTC')->format('Y-m-d H:i:s'),
-                    ]);
+                    ];
 
-                $published++;
-            } catch (Throwable $e) {
-                $newAttempts = (int) $row->attempts + 1;
-                $update = [
-                    'attempts' => $newAttempts,
-                    'last_error' => mb_substr($e->getMessage(), 0, 65535),
-                    'updated_at' => Carbon::now('UTC')->format('Y-m-d H:i:s'),
-                ];
+                    // Exponential backoff применяется только при attempts >= 10
+                    // (до этого — стандартный retry на следующем тике).
+                    if ($newAttempts >= 10) {
+                        $backoffSeconds = min(2 ** $newAttempts, 3600);
+                        $update['available_at'] = Carbon::now('UTC')
+                            ->addSeconds($backoffSeconds)
+                            ->format('Y-m-d H:i:s');
+                    }
 
-                // Exponential backoff применяется только при attempts >= 10
-                // (до этого — стандартный retry на следующем тике).
-                if ($newAttempts >= 10) {
-                    $backoffSeconds = min(2 ** $newAttempts, 3600);
-                    $update['available_at'] = Carbon::now('UTC')
-                        ->addSeconds($backoffSeconds)
-                        ->format('Y-m-d H:i:s');
+                    DB::table('integration_outbox')
+                        ->where('id', $row->id)
+                        ->update($update);
+
+                    $failed++;
                 }
-
-                DB::table('integration_outbox')
-                    ->where('id', $row->id)
-                    ->update($update);
-
-                $failed++;
             }
-        }
+        });
 
         Log::channel('api')->info('integration:publish-outbox completed', [
             'published' => $published,

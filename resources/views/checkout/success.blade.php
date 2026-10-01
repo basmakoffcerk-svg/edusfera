@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Урок оплачен — Edusfera</title>
+    @include('partials.analytics')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,9 +130,17 @@
 
     @include('partials.site-footer')
 
-    <!-- Confetti effect -->
+    <!-- Confetti effect & Analytics -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.trackEdusferaEvent === 'function') {
+                window.trackEdusferaEvent('payment_success', {
+                    lesson_id: {{ $lesson->id }},
+                    amount: {{ (float) ($lesson->price ?? 0) }},
+                    currency: 'BYN'
+                });
+            }
+
             const colors = ['#C6FF33', '#7D39EB', '#facc15', '#38bdf8', '#f87171'];
             for (let i = 0; i < 30; i++) {
                 const el = document.createElement('div');

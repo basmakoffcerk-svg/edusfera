@@ -27,9 +27,16 @@
             </a>
             <details class="ed-nav__dropdown">
                 <summary class="ed-nav__link ed-nav__user" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.5rem;">
-                    <span class="ed-nav__avatar" style="width:30px; height:30px; border-radius:999px; background:#C6FF33; color:#111; font-weight:800; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem;">
-                        {{ mb_substr((string)$user->name, 0, 1) }}
-                    </span>
+                    @php
+                        $avatarUrl = $user->getFilamentAvatarUrl();
+                    @endphp
+                    @if($avatarUrl)
+                        <img src="{{ $avatarUrl }}" alt="{{ $user->name }}" style="width:30px; height:30px; border-radius:999px; object-fit:cover; border:1.5px solid #7D39EB;">
+                    @else
+                        <span class="ed-nav__avatar" style="width:30px; height:30px; border-radius:999px; background:#C6FF33; color:#111; font-weight:800; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem;">
+                            {{ mb_substr((string)$user->name, 0, 1) }}
+                        </span>
+                    @endif
                     <span style="font-weight:600;">{{ $user->name }}</span>
                     <span style="font-size:0.7rem; font-weight:700; padding:2px 7px; border-radius:999px; background:rgba(125,57,235,0.12); color:#7D39EB;">
                         {{ $roleLabel }}

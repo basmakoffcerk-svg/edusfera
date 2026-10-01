@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\JsonFormatterTap;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -134,7 +135,7 @@ return [
             'path' => storage_path('logs/api.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
-            'tap' => [App\Logging\JsonFormatterTap::class],
+            'tap' => [JsonFormatterTap::class],
             'replace_placeholders' => true,
         ],
 

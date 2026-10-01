@@ -7,6 +7,7 @@ namespace App\Notifications;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
@@ -35,7 +36,7 @@ class ChatBypassAttemptNotification extends Notification
             ->icon('heroicon-o-shield-exclamation')
             ->iconColor('danger')
             ->actions([
-                \Filament\Notifications\Actions\Action::make('open_chat')
+                Action::make('open_chat')
                     ->label('Открыть чат')
                     ->url("/admin/messages?conversation={$this->conversation->id}"),
             ])

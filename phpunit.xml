@@ -40,5 +40,6 @@
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="WORKSPACE_INTERNAL_SECRET" value="workspace_internal_secret_key"/>
         <env name="PAYMENT_GATEWAY" value="mock"/>
+        <ini name="memory_limit" value="512M"/>
     </php>
 </phpunit>

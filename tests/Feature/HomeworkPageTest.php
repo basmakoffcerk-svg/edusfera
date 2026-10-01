@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\HomeworkService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -98,7 +99,7 @@ class HomeworkPageTest extends TestCase
             'assigned_at' => CarbonImmutable::now('UTC'),
         ]);
 
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
 
         app(HomeworkService::class)->markCompleted($assignment, $otherStudent->id);
     }

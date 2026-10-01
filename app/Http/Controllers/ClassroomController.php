@@ -15,6 +15,7 @@ use App\Models\ProgressSnapshot;
 use App\Models\SkillGap;
 use App\Models\StudentGoal;
 use App\Services\Classroom\AiService;
+use App\Services\Classroom\LiveKitService;
 use App\Services\ClassroomService;
 use App\Services\Payment\PaymentService;
 use App\Support\Formatters;
@@ -22,8 +23,11 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -36,8 +40,21 @@ class ClassroomController extends Controller
     {
         $user = $request->user();
 
+        if ($lesson->status === Lesson::STATUS_PENDING) {
+            abort(403, 'Занятие ожидает подтверждения репетитором. Сначала подтвердите заявку в панели управления.');
+        }
+
         if (! $this->classroomService->canAccess($lesson, $user)) {
             abort(403, 'У вас нет доступа к этому виртуальному классу.');
+        }
+
+        if (! config('classroom.enabled', false)) {
+            $lesson->loadMissing('tutor', 'student');
+
+            return view('classroom.maintenance', [
+                'lesson' => $lesson,
+                'user' => $user,
+            ]);
         }
 
         $session = $this->classroomService->openClassroom($lesson, $user);
@@ -74,17 +91,70 @@ class ClassroomController extends Controller
             ->latest('id')
             ->get();
 
+        $liveKitService = app(LiveKitService::class);
+        $liveKitConfigured = $liveKitService->isConfigured();
+        $liveKitToken = $liveKitConfigured ? $liveKitService->generateToken($lesson, $user) : null;
+        $liveKitWsUrl = $liveKitConfigured ? $liveKitService->getWsUrl() : null;
+
+        $joinToken = substr(hash_hmac('sha256', 'classroom_join_'.$lesson->id, (string) config('app.key')), 0, 16);
+        $studentInviteUrl = route('classroom.join', ['lesson' => $lesson->id, 'token' => $joinToken]);
+
+        $requestedRole = (string) $request->query('role');
+        $isTutor = ($user->id === $lesson->tutor_id || $user->isAdmin()) && ($requestedRole !== 'student');
+        $userRole = $isTutor ? 'tutor' : 'student';
+
+        $jitsiSecret = substr(hash_hmac('sha256', 'jitsi_room_'.$lesson->id.'_'.$session->room_id, (string) config('app.key')), 0, 12);
+        $jitsiRoomName = 'edusfera_'.$lesson->id.'_'.$jitsiSecret;
+        $jitsiDomain = (string) config('classroom.jitsi_domain', 'meet.jit.si');
+
         return view('classroom.show', [
             'lesson' => $lesson,
             'session' => $session,
             'token' => $token,
             'mediaServerUrl' => $this->classroomService->getMediaServerUrl(),
             'iceServers' => $this->classroomService->getIceServers(),
+            'liveKitConfigured' => $liveKitConfigured,
+            'liveKitToken' => $liveKitToken,
+            'liveKitWsUrl' => $liveKitWsUrl,
+            'jitsiDomain' => $jitsiDomain,
+            'jitsiRoomName' => $jitsiRoomName,
+            'studentInviteUrl' => $studentInviteUrl,
+            'userRole' => $userRole,
             'goals' => $goals,
             'progress' => $progress,
             'homework' => $homework,
             'skillGaps' => $skillGaps,
+            'aiChatHistory' => $session->meta['ai_chat_history'] ?? [],
         ]);
+    }
+
+    public function join(Lesson $lesson, Request $request): RedirectResponse
+    {
+        $expectedToken = substr(hash_hmac('sha256', 'classroom_join_'.$lesson->id, (string) config('app.key')), 0, 16);
+        $providedToken = (string) $request->query('token');
+
+        if (! hash_equals($expectedToken, $providedToken)) {
+            abort(403, 'Недействительная ссылка приглашения на урок.');
+        }
+
+        if ($lesson->status === Lesson::STATUS_CANCELLED) {
+            abort(403, 'Этот урок был отменен.');
+        }
+
+        $student = $lesson->student;
+        if (! $student) {
+            abort(404, 'Ученик для данного урока не найден.');
+        }
+
+        $currentUser = $request->user();
+        if ($currentUser && ($currentUser->id === $lesson->tutor_id || $currentUser->isAdmin())) {
+            return redirect()->route('classroom.show', ['lesson' => $lesson, 'role' => 'student']);
+        }
+
+        Auth::login($student, true);
+        $request->session()->regenerate();
+
+        return redirect()->route('classroom.show', $lesson);
     }
 
     public function end(Lesson $lesson, Request $request): RedirectResponse
@@ -118,7 +188,7 @@ class ClassroomController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Виртуальный класс завершён.');
+        return redirect()->route('filament.admin.resources.lessons.index')->with('success', 'Виртуальный класс завершён.');
     }
 
     public function storeNote(Lesson $lesson, Request $request): JsonResponse
@@ -525,7 +595,8 @@ class ClassroomController extends Controller
 
     public function chatAi(Lesson $lesson, Request $request, AiService $aiService): JsonResponse
     {
-        if (! $this->classroomService->canAccess($lesson, $request->user())) {
+        $user = $request->user();
+        if (! $this->classroomService->canAccess($lesson, $user)) {
             abort(403);
         }
 
@@ -535,13 +606,415 @@ class ClassroomController extends Controller
         }
 
         $validated = $request->validate([
-            'message' => ['required', 'string', 'max:1000'],
+            'message' => ['required', 'string', 'max:2000'],
+            'history' => ['nullable', 'array', 'max:30'],
+            'history.*.role' => ['nullable', 'string', 'in:user,assistant,model'],
+            'history.*.text' => ['nullable', 'string', 'max:3000'],
+            'history.*.content' => ['nullable', 'string', 'max:3000'],
         ]);
 
-        $reply = $aiService->chat($validated['message'], $session->room_id);
+        $lesson->loadMissing('tutor.tutorProfile', 'student');
+
+        $sessionHistory = is_array($session->meta['ai_chat_history'] ?? null)
+            ? $session->meta['ai_chat_history']
+            : [];
+
+        // Priority to incoming history, fallback to session meta history
+        $history = ! empty($validated['history']) ? $validated['history'] : $sessionHistory;
+
+        $result = $aiService->chat(
+            $validated['message'],
+            $session->room_id,
+            $lesson,
+            $user,
+            $history
+        );
+
+        // Update persistent conversation history in session meta
+        $userMsgId = 'msg-'.(string) Str::uuid();
+        $aiMsgId = 'msg-'.(string) Str::uuid();
+
+        $sessionHistory[] = [
+            'id' => $userMsgId,
+            'role' => 'user',
+            'text' => $validated['message'],
+            'timestamp' => now('UTC')->toIso8601String(),
+        ];
+
+        $sessionHistory[] = [
+            'id' => $aiMsgId,
+            'role' => 'assistant',
+            'text' => $result['reply'],
+            'actions' => $result['actions'] ?? [],
+            'created_entities' => $result['created_entities'] ?? [],
+            'timestamp' => now('UTC')->toIso8601String(),
+        ];
+
+        if (count($sessionHistory) > 30) {
+            $sessionHistory = array_slice($sessionHistory, -30);
+        }
+
+        $meta = $session->meta ?? [];
+        $meta['ai_chat_history'] = $sessionHistory;
+        $session->meta = $meta;
+        $session->save();
 
         return response()->json([
-            'reply' => $reply,
+            'reply' => $result['reply'],
+            'actions' => $result['actions'] ?? [],
+            'created_entities' => $result['created_entities'] ?? [],
+            'history' => $sessionHistory,
+        ]);
+    }
+
+    public function updateMeetingLink(Lesson $lesson, Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if ($user->id !== $lesson->tutor_id && ! $user->isAdmin()) {
+            abort(403, 'Только репетитор может указать ссылку на видеовстречу.');
+        }
+
+        $validated = $request->validate([
+            'meeting_link' => ['required', 'url', 'max:500'],
+        ]);
+
+        $lesson->update([
+            'meeting_link' => $validated['meeting_link'],
+        ]);
+
+        return back()->with('status', 'Ссылка на видеовстречу успешно сохранена!');
+    }
+
+    public function sendSignal(Lesson $lesson, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->classroomService->canAccess($lesson, $user)) {
+            abort(403, 'У вас нет доступа к этому уроку.');
+        }
+
+        $validated = $request->validate([
+            'type' => ['required', 'string', 'in:offer,answer,candidate,candidates,hangup,ping,hello,ready,restart,screenshare-state,wb-action,wb_broadcast,chat-message'],
+            'payload' => ['nullable'],
+            'client_id' => ['nullable', 'string', 'max:100'],
+            'role' => ['nullable', 'string', 'in:tutor,student'],
+        ]);
+
+        $payload = $validated['payload'] ?? null;
+        if (is_array($payload) && isset($payload['sdp']) && is_string($payload['sdp'])) {
+            $lines = preg_split("/\r\n|\r|\n/", trim($payload['sdp']));
+            $filtered = array_filter(array_map('trim', $lines), fn ($l) => $l !== '');
+            $payload['sdp'] = implode("\r\n", $filtered)."\r\n";
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->save();
+        }
+
+        $nowMs = (int) (microtime(true) * 1000);
+        $clientId = $validated['client_id'] ?? $request->header('X-Client-ID') ?? ('user_'.$user->id);
+        $role = $validated['role'] ?? (($user->id === $lesson->tutor_id || $user->isAdmin()) ? 'tutor' : 'student');
+
+        $newSignal = [
+            'id' => (string) Str::uuid(),
+            'sender_id' => $user->id,
+            'client_id' => $clientId,
+            'sender_role' => $role,
+            'type' => $validated['type'],
+            'payload' => $payload,
+            'created_at_ms' => $nowMs,
+        ];
+
+        $cacheKey = 'classroom_signals_'.$lesson->id;
+        $lockKey = 'lock_classroom_signals_'.$lesson->id;
+
+        $updateSignals = static function () use ($cacheKey, &$newSignal, $nowMs): bool {
+            $signals = Cache::get($cacheKey, []);
+            if (! is_array($signals)) {
+                $signals = [];
+            }
+
+            // On ICE restart, purge stale signals so renegotiation starts clean
+            if ($newSignal['type'] === 'restart') {
+                $signals = [];
+            }
+
+            // Find current maximum seq
+            $lastSeq = 0;
+            foreach ($signals as $item) {
+                if (isset($item['seq']) && (int) $item['seq'] > $lastSeq) {
+                    $lastSeq = (int) $item['seq'];
+                }
+            }
+            $newSignal['seq'] = $lastSeq + 1;
+
+            // Retain only signals from last 2 minutes to prevent unbounded growth
+            $signals = array_values(array_filter($signals, static function (array $item) use ($nowMs): bool {
+                return ($nowMs - ((int) ($item['created_at_ms'] ?? 0))) < 120000;
+            }));
+
+            $signals[] = $newSignal;
+            Cache::put($cacheKey, $signals, now()->addHours(2));
+
+            return true;
+        };
+
+        try {
+            // Non-blocking fast lock acquisition (max 1s lock duration) to prevent PHP-FPM starvation and 503 errors
+            $acquired = Cache::lock($lockKey, 1)->get($updateSignals);
+            if (! $acquired) {
+                $updateSignals();
+            }
+        } catch (\Throwable) {
+            $updateSignals();
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'signal_id' => $newSignal['id'],
+            'seq' => $newSignal['seq'] ?? null,
+            'server_time' => $nowMs,
+        ]);
+    }
+
+    public function getSignals(Lesson $lesson, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->classroomService->canAccess($lesson, $user)) {
+            abort(403, 'У вас нет доступа к этому уроку.');
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->save();
+        }
+
+        $clientId = $request->query('client_id') ?? $request->header('X-Client-ID');
+        $sinceSeq = $request->has('since_seq') ? (int) $request->query('since_seq') : null;
+        $since = (int) $request->query('since', 0);
+        $nowMs = (int) (microtime(true) * 1000);
+
+        // Strict role resolution: tutor only listens to student, student only listens to tutor
+        // Respects role override when tutor/admin is testing student perspective via ?role=student
+        $requestedRole = (string) ($request->query('role') ?? $request->header('X-Client-Role'));
+        $isTutorRole = ($user->id === $lesson->tutor_id || $user->isAdmin()) && ($requestedRole !== 'student');
+        $userRole = $isTutorRole ? 'tutor' : 'student';
+        $expectedPeerRole = ($userRole === 'tutor') ? 'student' : 'tutor';
+
+        $cacheKey = 'classroom_signals_'.$lesson->id;
+        $signals = Cache::get($cacheKey, []);
+        if (! is_array($signals)) {
+            $signals = [];
+        }
+
+        $maxSeq = 0;
+        foreach ($signals as $s) {
+            if (isset($s['seq']) && (int) $s['seq'] > $maxSeq) {
+                $maxSeq = (int) $s['seq'];
+            }
+        }
+
+        $minTimestamp = ($since > 0) ? ($since - 1500) : ($nowMs - 60000);
+
+        // Return only signals from the counterpart participant
+        $incoming = array_values(array_filter($signals, static function (array $item) use ($user, $clientId, $userRole, $expectedPeerRole, $sinceSeq, $minTimestamp): bool {
+            // 1. NEVER receive own signals by user ID
+            if ((int) ($item['sender_id'] ?? 0) === (int) $user->id) {
+                return false;
+            }
+
+            // 2. NEVER receive own signals by client ID
+            if (! empty($clientId) && ! empty($item['client_id']) && $item['client_id'] === $clientId) {
+                return false;
+            }
+
+            // 3. STRICT 1-on-1 counterpart role filtering:
+            // Tutor MUST ONLY receive signals from student.
+            // Student MUST ONLY receive signals from tutor.
+            if (! empty($item['sender_role'])) {
+                if ($item['sender_role'] === $userRole) {
+                    return false;
+                }
+                if ($item['sender_role'] !== $expectedPeerRole) {
+                    return false;
+                }
+            }
+
+            // 4. Sequence filtering (strictly monotonic)
+            if ($sinceSeq !== null && $sinceSeq >= 0) {
+                return (int) ($item['seq'] ?? 0) > $sinceSeq;
+            }
+
+            // 5. Fallback to timestamp filtering with grace window
+            return (int) ($item['created_at_ms'] ?? 0) > $minTimestamp;
+        }));
+
+        return response()->json([
+            'signals' => $incoming,
+            'server_time' => $nowMs,
+            'max_seq' => $maxSeq,
+        ]);
+    }
+
+    public function getWhiteboardState(Lesson $lesson, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->classroomService->canAccess($lesson, $user)) {
+            abort(403, 'У вас нет доступа к этому уроку.');
+        }
+
+        $session = $lesson->activeClassroom ?? ClassroomSession::query()
+            ->where('lesson_id', $lesson->id)
+            ->latest('id')
+            ->first();
+
+        return response()->json([
+            'state' => $session?->whiteboard_state ?? [],
+        ]);
+    }
+
+    public function saveWhiteboardStateHttp(Lesson $lesson, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->classroomService->canAccess($lesson, $user)) {
+            abort(403, 'У вас нет доступа к этому уроку.');
+        }
+
+        $session = $lesson->activeClassroom ?? ClassroomSession::query()
+            ->where('lesson_id', $lesson->id)
+            ->latest('id')
+            ->first();
+
+        if ($session) {
+            $state = $request->input('state', []);
+            if (is_array($state)) {
+                $this->classroomService->saveWhiteboardState($session, $state);
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function syncWhiteboard(Lesson $lesson, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->classroomService->canAccess($lesson, $user)) {
+            abort(403, 'У вас нет доступа к этому уроку.');
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->save();
+        }
+
+        $elements = $request->input('elements', []);
+        $version = (int) $request->input('version', (int) (microtime(true) * 1000));
+        $clientId = (string) $request->input('client_id', '');
+        $isLocked = $request->has('is_locked') ? (bool) $request->input('is_locked') : null;
+
+        $cacheKey = 'classroom_wb_'.$lesson->id;
+        $prev = Cache::get($cacheKey, []);
+
+        $state = [
+            'elements' => is_array($elements) ? $elements : [],
+            'version' => $version,
+            'sender_id' => $user->id,
+            'client_id' => $clientId,
+            'is_locked' => $isLocked !== null ? $isLocked : ($prev['is_locked'] ?? false),
+            'updated_at_ms' => (int) (microtime(true) * 1000),
+        ];
+
+        Cache::put($cacheKey, $state, now()->addHours(6));
+
+        // Periodic database persistence (debounced to avoid thrashing MySQL)
+        $dbCacheKey = 'classroom_wb_dbsave_'.$lesson->id;
+        if (! Cache::has($dbCacheKey)) {
+            Cache::put($dbCacheKey, true, 5);
+            $session = $lesson->activeClassroom ?? ClassroomSession::query()
+                ->where('lesson_id', $lesson->id)
+                ->latest('id')
+                ->first();
+            if ($session && is_array($elements)) {
+                $session->update(['whiteboard_state' => $elements]);
+            }
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'version' => $version,
+            'server_time' => $state['updated_at_ms'],
+        ]);
+    }
+
+    public function pollWhiteboard(Lesson $lesson, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->classroomService->canAccess($lesson, $user)) {
+            abort(403, 'У вас нет доступа к этому уроку.');
+        }
+
+        if ($request->hasSession()) {
+            $request->session()->save();
+        }
+
+        $sinceVersion = (int) $request->query('since_version', 0);
+        $clientId = (string) $request->query('client_id', '');
+        $cacheKey = 'classroom_wb_'.$lesson->id;
+
+        // 1. Initial check (fast-path)
+        $current = Cache::get($cacheKey);
+        if ($current && isset($current['version'])) {
+            if ($sinceVersion === 0 || ($current['version'] > $sinceVersion && ($current['client_id'] ?? '') !== $clientId)) {
+                return response()->json([
+                    'has_update' => true,
+                    'state' => $current,
+                ]);
+            }
+        } elseif ($sinceVersion === 0) {
+            // Fallback to database for initial load if cache is empty
+            $session = $lesson->activeClassroom ?? ClassroomSession::query()
+                ->where('lesson_id', $lesson->id)
+                ->latest('id')
+                ->first();
+            $dbElements = $session?->whiteboard_state ?? [];
+            if (! empty($dbElements)) {
+                $state = [
+                    'elements' => $dbElements,
+                    'version' => (int) (microtime(true) * 1000),
+                    'sender_id' => null,
+                    'client_id' => 'db_init',
+                    'is_locked' => false,
+                    'updated_at_ms' => (int) (microtime(true) * 1000),
+                ];
+                Cache::put($cacheKey, $state, now()->addHours(6));
+
+                return response()->json([
+                    'has_update' => true,
+                    'state' => $state,
+                ]);
+            }
+        }
+
+        // 2. Long-poll: hold up to 2 seconds checking every 100ms (prevents PHP-FPM worker starvation)
+        $startTime = microtime(true);
+        while ((microtime(true) - $startTime) < 2.0) {
+            usleep(100000); // 100ms
+            $current = Cache::get($cacheKey);
+            if ($current && isset($current['version']) && $current['version'] > $sinceVersion && ($current['client_id'] ?? '') !== $clientId) {
+                return response()->json([
+                    'has_update' => true,
+                    'state' => $current,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'has_update' => false,
+            'version' => $sinceVersion,
         ]);
     }
 }

@@ -39,6 +39,16 @@ return [
         // Per-client секрет для HMAC-SHA256 проверки входящих webhook'ов
         // AI-сервиса на POST /webhooks/ai/recommendations (требование 10).
         'webhook_secret' => env('AI_WEBHOOK_SECRET'),
+        'default_provider' => env('AI_DEFAULT_PROVIDER', 'google'),
+    ],
+
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY', ''),
+        'model' => env('GEMINI_MODEL', 'gemini-3.5-flash-lite'),
+        'lite_model' => env('GEMINI_LITE_MODEL', 'gemini-flash-latest'),
+        'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
+        'proxy' => env('GEMINI_PROXY'),
+        'use_xbox_dns' => env('GEMINI_USE_XBOX_DNS', true),
     ],
 
     'ledger' => [
@@ -49,13 +59,12 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL') . '/auth/google/callback'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
     ],
 
-    'yandex' => [
-        'client_id' => env('YANDEX_CLIENT_ID'),
-        'client_secret' => env('YANDEX_CLIENT_SECRET'),
-        'redirect' => env('YANDEX_REDIRECT_URI', env('APP_URL') . '/auth/yandex/callback'),
+    'analytics' => [
+        'yandex_metrika_id' => env('YANDEX_METRIKA_ID', ''),
+        'google_tag_id' => env('GOOGLE_TAG_ID', ''),
     ],
 
 ];

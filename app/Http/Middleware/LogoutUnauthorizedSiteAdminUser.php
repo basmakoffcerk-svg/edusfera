@@ -20,9 +20,7 @@ class LogoutUnauthorizedSiteAdminUser
             $panel = Filament::getPanel('site-admin');
 
             if ($panel && ! $user->canAccessPanel($panel)) {
-                $guard->logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+                return redirect('/admin');
             }
         }
 

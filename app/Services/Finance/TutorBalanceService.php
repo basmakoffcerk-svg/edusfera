@@ -52,7 +52,7 @@ class TutorBalanceService
      */
     public function syncBalance(TutorBalance $balance): void
     {
-        if (!$this->ledgerClient->isEnabled() || empty($balance->ledger_wallet_id)) {
+        if (! $this->ledgerClient->isEnabled() || empty($balance->ledger_wallet_id)) {
             return;
         }
 

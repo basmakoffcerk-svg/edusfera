@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use App\Domain\Subscription\Enums\SubscriptionPlan;
-use App\Domain\Subscription\Models\TutorSubscription;
 use App\Enums\UserRole;
-use App\Models\TutorProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Contracts\Provider;
@@ -38,7 +35,7 @@ class SocialAuthTest extends TestCase
     public function test_google_redirect_saves_role_and_plan_in_session(): void
     {
         $response = $this->get('/auth/google/redirect?role=tutor&plan=premium');
-        
+
         $response->assertRedirect();
         $this->assertEquals('tutor', session('oauth_role'));
         $this->assertEquals('premium', session('oauth_plan'));
@@ -102,7 +99,7 @@ class SocialAuthTest extends TestCase
             'oauth_plan' => 'pro',
         ])->get('/auth/google/callback');
 
-        $response->assertRedirect('/admin');
+        $response->assertRedirect('/admin/tutor-subscription-page?onboarding=1');
         $this->assertAuthenticated();
 
         $user = User::where('email', 'tutor.pro@gmail.com')->first();

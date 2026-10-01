@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Widgets;
 
+use App\Enums\UserRole;
 use App\Models\Lesson;
 use App\Models\User;
 use Filament\Widgets\Widget;
@@ -26,14 +27,14 @@ class StudentTutorsWidget extends Widget
 
     protected function getViewData(): array
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         // Find unique tutors this student has booked or completed lessons with
-        $studentConditionColumn = $user->role === 'parent' ? 'parent_id' : 'student_id';
+        $studentConditionColumn = $user->isParent() ? 'parent_id' : 'student_id';
 
         $tutors = User::query()
-            ->where('role', 'tutor')
+            ->where('role', UserRole::Tutor)
             ->whereHas('tutorLessons', function ($query) use ($studentConditionColumn, $user) {
                 $query->where($studentConditionColumn, $user->id)
                     ->whereIn('status', [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED]);

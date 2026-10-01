@@ -15,6 +15,7 @@ class LessonOverviewWidget extends StatsOverviewWidget
     {
         $query = LessonResource::getEloquentQuery();
         $now = now('UTC');
+        $user = auth()->user();
 
         $activeQuery = (clone $query)
             ->whereIn('status', [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED])
@@ -25,78 +26,63 @@ class LessonOverviewWidget extends StatsOverviewWidget
             ->orderBy('start_time')
             ->first();
 
-        $unpaidCount = (clone $query)
-            ->where('payment_status', Lesson::PAYMENT_UNPAID)
-            ->where('status', '!=', Lesson::STATUS_CANCELLED)
-            ->count();
-
-        $pendingConfirmations = (clone $query)
-            ->where('status', Lesson::STATUS_PENDING)
-            ->where('payment_status', Lesson::PAYMENT_PAID)
-            ->count();
+        $upcomingCount = (clone $activeQuery)->count();
 
         $completedThisMonth = (clone $query)
             ->where('status', Lesson::STATUS_COMPLETED)
             ->whereBetween('start_time', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])
             ->count();
 
-        $paidPlannedTotal = (clone $query)
+        $totalCompleted = (clone $query)
+            ->where('status', Lesson::STATUS_COMPLETED)
+            ->count();
+
+        $monthlyNpdIncome = (clone $query)
             ->where('payment_status', Lesson::PAYMENT_PAID)
-            ->whereIn('status', [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED])
-            ->sum(auth()->user()?->role === 'tutor' ? 'net_amount' : 'price');
+            ->whereMonth('start_time', $now->month)
+            ->whereYear('start_time', $now->year)
+            ->sum('price');
+
+        $isTutor = $user?->isTutor() ?? false;
 
         return [
             Stat::make('Ближайший урок', $nextLesson ? $nextLesson->start_time->setTimezone(config('booking.display_timezone'))->format('d.m, H:i') : 'Не запланирован')
                 ->description($this->nextLessonDescription($nextLesson))
                 ->descriptionIcon($nextLesson ? 'heroicon-m-clock' : 'heroicon-m-calendar')
                 ->color($nextLesson ? 'primary' : 'gray'),
-            Stat::make('Требуют действия', (string) ($unpaidCount + $pendingConfirmations))
-                ->description($this->actionDescription($unpaidCount, $pendingConfirmations))
-                ->descriptionIcon(($unpaidCount + $pendingConfirmations) > 0 ? 'heroicon-m-bolt' : 'heroicon-m-check-circle')
-                ->color(($unpaidCount + $pendingConfirmations) > 0 ? 'warning' : 'success'),
+            Stat::make('Предстоящие уроки', (string) $upcomingCount)
+                ->description($upcomingCount > 0 ? 'Запланировано в расписании' : 'Нет активных уроков')
+                ->descriptionIcon('heroicon-m-calendar-days')
+                ->color($upcomingCount > 0 ? 'primary' : 'gray'),
             Stat::make('Завершено в месяце', (string) $completedThisMonth)
                 ->description('Уроки со статусом «Завершён»')
-                ->descriptionIcon('heroicon-m-chart-bar')
+                ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
-            Stat::make(auth()->user()?->role === 'tutor' ? 'К выплате в плане' : 'Оплачено в плане', $this->money((float) $paidPlannedTotal))
-                ->description('Оплаченные будущие уроки')
-                ->descriptionIcon('heroicon-m-banknotes')
-                ->color('primary'),
+            $isTutor
+                ? Stat::make('Прямой доход (для НПД)', $this->money((float) $monthlyNpdIncome))
+                    ->description('Оплаты от учеников за месяц')
+                    ->descriptionIcon('heroicon-m-document-text')
+                    ->color('primary')
+                : Stat::make('Пройдено уроков', (string) $totalCompleted)
+                    ->description('Всего проведенных занятий')
+                    ->descriptionIcon('heroicon-m-academic-cap')
+                    ->color('primary'),
         ];
     }
 
     private function nextLessonDescription(?Lesson $lesson): string
     {
         if (! $lesson) {
-            return auth()->user()?->role === 'tutor'
+            return auth()->user()?->isTutor()
                 ? 'Откройте расписание, чтобы принимать новые записи'
                 : 'Выберите преподавателя и забронируйте время';
         }
 
-        $participant = auth()->user()?->role === 'tutor'
+        $participant = auth()->user()?->isTutor()
             ? ($lesson->student?->name ?? 'Ученик')
             : ($lesson->tutor?->name ?? 'Репетитор');
 
-        return $participant.' · '.LessonResource::statusLabel($lesson->status).' · '.LessonResource::paymentLabel($lesson->payment_status);
-    }
-
-    private function actionDescription(int $unpaidCount, int $pendingConfirmations): string
-    {
-        if ($unpaidCount === 0 && $pendingConfirmations === 0) {
-            return 'На сейчас всё в порядке';
-        }
-
-        $parts = [];
-
-        if ($unpaidCount > 0) {
-            $parts[] = $unpaidCount.' к оплате';
-        }
-
-        if ($pendingConfirmations > 0) {
-            $parts[] = $pendingConfirmations.' к подтверждению';
-        }
-
-        return implode(' · ', $parts);
+        return $participant.' · '.LessonResource::statusLabel($lesson->status);
     }
 
     private function money(float $amount): string

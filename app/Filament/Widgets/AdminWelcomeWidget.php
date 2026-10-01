@@ -9,7 +9,6 @@ use App\Domain\Subscription\Enums\SubscriptionPlan;
 use App\Domain\Subscription\Enums\SubscriptionStatus;
 use App\Domain\Subscription\Models\Subscription;
 use App\Domain\Subscription\Models\SubscriptionInvoice;
-use App\Enums\UserRole;
 use App\Models\Dispute;
 use App\Models\Lesson;
 use App\Models\NewsArticle;
@@ -66,7 +65,7 @@ class AdminWelcomeWidget extends Widget
             ->sum('amount_kopecks')) / 100;
 
         // GMV: Total completed lesson volume + transactions
-        $gmvTotal = (float) Lesson::where('status', Lesson::STATUS_COMPLETED)->sum('amount');
+        $gmvTotal = (float) Lesson::where('status', Lesson::STATUS_COMPLETED)->sum('price');
         if ($gmvTotal <= 0) {
             $gmvTotal = (float) Transaction::where('status', Transaction::STATUS_SUCCESS)->sum('amount');
         }
@@ -74,7 +73,7 @@ class AdminWelcomeWidget extends Widget
         $gmvThisMonth = (float) Lesson::where('status', Lesson::STATUS_COMPLETED)
             ->whereMonth('start_time', now()->month)
             ->whereYear('start_time', now()->year)
-            ->sum('amount');
+            ->sum('price');
         if ($gmvThisMonth <= 0) {
             $gmvThisMonth = (float) Transaction::where('status', Transaction::STATUS_SUCCESS)
                 ->whereMonth('paid_at', now()->month)

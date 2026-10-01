@@ -4,7 +4,8 @@ import {
   Eye, EyeOff, Loader2, CheckCircle2, ShieldCheck, 
   ArrowRight, ArrowLeft, Lock, Sparkles, Check, 
   GraduationCap, Briefcase, AlertCircle, 
-  BookOpen, Bot, Video, FileText, CheckCircle
+  BookOpen, Bot, Video, FileText, CheckCircle,
+  KeyRound, Mail
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -26,12 +27,6 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const YandexIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" className="shrink-0">
-    <circle cx="12" cy="12" r="12" fill="#FC3F1D" />
-    <path d="M13.67 17.5H11.5v-5.22L9.2 6.5h2.15l1.42 4.14 1.38-4.14h2.09l-2.57 6.78v4.22z" fill="#FFFFFF" />
-  </svg>
-);
 
 export default function AuroraSignUp() {
   const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -59,7 +54,7 @@ export default function AuroraSignUp() {
     phone: '',
     password: '',
     role: initialRole === 'tutor' ? 'tutor' : 'student',
-    plan: initialPlan === 'start' ? 'start' : 'pro',
+    plan: ['start', 'premium'].includes(initialPlan) ? initialPlan : 'pro',
   });
 
   const [isYearly, setIsYearly] = useState(false);
@@ -67,6 +62,24 @@ export default function AuroraSignUp() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Forgot Password State
+  const [forgotStep, setForgotStep] = useState(1); // 1 = email, 2 = 6-digit code, 3 = new password
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resetSuccessMessage, setResetSuccessMessage] = useState('');
+
+  // Resend code cooldown countdown
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   // Auto-sync CSRF token on mount
   useEffect(() => {
@@ -83,14 +96,112 @@ export default function AuroraSignUp() {
 
   const handleTabSwitch = (tab) => {
     setActiveTab(tab);
+    setForgotStep(1);
     setErrorMessage('');
     setIsSuccess(false);
+  };
+
+  // ─── FORGOT PASSWORD HANDLERS ───
+  const handleSendResetCode = async (e) => {
+    if (e) e.preventDefault();
+    if (!resetEmail) {
+      setErrorMessage('Пожалуйста, введите ваш email.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      await axios.post('/api/auth/forgot-password', {
+        email: resetEmail.trim(),
+      });
+      setForgotStep(2);
+      setResendCooldown(60);
+    } catch (err) {
+      if (err.response?.status === 429 || err.response?.data?.message === 'Too Many Attempts.') {
+        setErrorMessage('Слишком много попыток. Пожалуйста, подождите одну минуту и попробуйте снова.');
+        return;
+      }
+      const msg = err.response?.data?.message || err.response?.data?.errors?.email?.[0] || 'Ошибка при отправке кода.';
+      setErrorMessage(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyResetCode = async (e) => {
+    if (e) e.preventDefault();
+    if (!resetCode || resetCode.length !== 6) {
+      setErrorMessage('Введите 6-значный цифровой код из письма.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      await axios.post('/api/auth/verify-reset-code', {
+        email: resetEmail.trim(),
+        code: resetCode.trim(),
+      });
+      setForgotStep(3);
+    } catch (err) {
+      if (err.response?.status === 429 || err.response?.data?.message === 'Too Many Attempts.') {
+        setErrorMessage('Слишком много попыток. Пожалуйста, подождите одну минуту и попробуйте снова.');
+        return;
+      }
+      const msg = err.response?.data?.message || 'Неверный или просроченный код подтверждения.';
+      setErrorMessage(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (newPassword.length < 8) {
+      setErrorMessage('Пароль должен содержать не менее 8 символов.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('Пароли не совпадают.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const response = await axios.post('/api/auth/reset-password', {
+        email: resetEmail.trim(),
+        code: resetCode.trim(),
+        password: newPassword,
+        password_confirmation: confirmPassword,
+      });
+      setResetSuccessMessage(response.data?.message || 'Пароль успешно изменён! Выполняем вход...');
+      handleSuccessfulAuth(response.data?.redirect || '/admin');
+    } catch (err) {
+      if (err.response?.status === 429 || err.response?.data?.message === 'Too Many Attempts.') {
+        setErrorMessage('Слишком много попыток. Пожалуйста, подождите одну минуту и попробуйте снова.');
+        return;
+      }
+      let msg = err.response?.data?.message || err.response?.data?.errors?.password?.[0] || 'Ошибка при сбросе пароля.';
+      if (msg === 'Too Many Attempts.') {
+        msg = 'Слишком много попыток. Пожалуйста, подождите одну минуту и попробуйте снова.';
+      }
+      setErrorMessage(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Helper redirect
   const handleSuccessfulAuth = (redirectUrl) => {
     setIsSuccess(true);
-    const target = queryRedirect || redirectUrl || '/admin';
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const fallbackTarget = currentPath.includes('site-admin') ? '/site-admin' : '/admin';
+    const target = queryRedirect || redirectUrl || fallbackTarget;
     setTimeout(() => {
       window.location.href = target;
     }, 500);
@@ -100,7 +211,7 @@ export default function AuroraSignUp() {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (!formData.loginIdentifier || !formData.password) {
-      setErrorMessage('Пожалуйста, заполните e-mail / телефон и пароль.');
+      setErrorMessage('Пожалуйста, заполните e-mail / логин / телефон и пароль.');
       return;
     }
 
@@ -108,9 +219,11 @@ export default function AuroraSignUp() {
     setErrorMessage('');
 
     try {
+      const isSiteAdmin = typeof window !== 'undefined' && window.location.pathname.includes('site-admin');
       const response = await axios.post('/api/auth/login', {
         email: formData.loginIdentifier.trim(),
         password: formData.password,
+        redirect: queryRedirect || (isSiteAdmin ? '/site-admin' : null),
       });
 
       if (response.data?.success) {
@@ -176,10 +289,20 @@ export default function AuroraSignUp() {
       }
     } catch (err) {
       setIsSubmitting(false);
-      const msg = err.response?.data?.message ||
+      let msg = err.response?.data?.message ||
         (err.response?.data?.errors
           ? Object.values(err.response.data.errors).flat().join(', ')
           : 'Ошибка при регистрации. Проверьте правильность введённых данных.');
+
+      if (typeof msg === 'string') {
+        if (msg.includes('validation.unique') || msg.includes('already been taken')) {
+          msg = 'Пользователь с таким e-mail уже зарегистрирован. Пожалуйста, войдите в аккаунт или укажите другой e-mail.';
+        } else if (msg.includes('validation.required')) {
+          msg = 'Пожалуйста, заполните все обязательные поля.';
+        } else if (msg.includes('validation.email')) {
+          msg = 'Пожалуйста, укажите корректный адрес электронной почты.';
+        }
+      }
       setErrorMessage(msg);
     }
   };
@@ -233,23 +356,34 @@ export default function AuroraSignUp() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5 text-[#C6FF33]" />
             <span className="text-xs font-semibold text-white/90">
-              {activeTab === 'login' ? 'Личный кабинет платформы' : 'Бесплатный старт за 1 минуту'}
+              {activeTab === 'register'
+                ? 'Бесплатный старт за 1 минуту'
+                : activeTab === 'forgot-password'
+                ? 'Безопасность аккаунта'
+                : 'Личный кабинет платформы'}
             </span>
           </div>
 
           <h1 className="text-3xl xl:text-4xl font-black tracking-tight leading-tight">
-            {activeTab === 'login' ? (
-              <>
-                Всё для уроков и роста <br />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#C6FF33] via-white to-[#7D39EB]">
-                  в едином пространстве.
-                </span>
-              </>
-            ) : (
+            {activeTab === 'register' ? (
               <>
                 Образование нового <br />
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#C6FF33] via-white to-emerald-400">
                   цифрового уровня.
+                </span>
+              </>
+            ) : activeTab === 'forgot-password' ? (
+              <>
+                Быстрое и безопасное <br />
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#C6FF33] via-white to-[#7D39EB]">
+                  восстановление доступа.
+                </span>
+              </>
+            ) : (
+              <>
+                Всё для уроков и роста <br />
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#C6FF33] via-white to-[#7D39EB]">
+                  в едином пространстве.
                 </span>
               </>
             )}
@@ -300,42 +434,69 @@ export default function AuroraSignUp() {
             <span className="text-xs text-white/50 font-mono">Беларусь 🇧🇾</span>
           </div>
 
-          {/* ─── LUXURY TABS: [ ВХОД ] / [ РЕГИСТРАЦИЯ ] ─── */}
-          <div className="p-1 bg-[#121214] border border-white/10 rounded-2xl flex items-center relative shadow-inner">
-            <button
-              type="button"
-              onClick={() => handleTabSwitch('login')}
-              className={`relative flex-1 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 cursor-pointer z-10 flex items-center justify-center gap-2 ${
-                activeTab === 'login' ? 'text-black' : 'text-white/60 hover:text-white'
-              }`}
-            >
-              {activeTab === 'login' && (
-                <motion.div
-                  layoutId="auth-tab-pill"
-                  className="absolute inset-0 bg-white rounded-xl shadow-md"
-                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                />
-              )}
-              <span className="relative z-10">Вход</span>
-            </button>
+          {/* ─── LUXURY TABS: [ ВХОД ] / [ РЕГИСТРАЦИЯ ] / [ ВОССТАНОВЛЕНИЕ ] ─── */}
+          {activeTab !== 'forgot-password' ? (
+            <div className="p-1 bg-[#121214] border border-white/10 rounded-2xl flex items-center relative shadow-inner">
+              <button
+                type="button"
+                onClick={() => handleTabSwitch('login')}
+                className={`relative flex-1 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 cursor-pointer z-10 flex items-center justify-center gap-2 ${
+                  activeTab === 'login' ? 'text-black' : 'text-white/60 hover:text-white'
+                }`}
+              >
+                {activeTab === 'login' && (
+                  <motion.div
+                    layoutId="auth-tab-pill"
+                    className="absolute inset-0 bg-white rounded-xl shadow-md"
+                    transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                  />
+                )}
+                <span className="relative z-10">Вход</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => handleTabSwitch('register')}
-              className={`relative flex-1 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 cursor-pointer z-10 flex items-center justify-center gap-2 ${
-                activeTab === 'register' ? 'text-black' : 'text-white/60 hover:text-white'
-              }`}
-            >
-              {activeTab === 'register' && (
-                <motion.div
-                  layoutId="auth-tab-pill"
-                  className="absolute inset-0 bg-[#C6FF33] rounded-xl shadow-md"
-                  transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                />
-              )}
-              <span className="relative z-10">Регистрация</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => handleTabSwitch('register')}
+                className={`relative flex-1 py-3 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 cursor-pointer z-10 flex items-center justify-center gap-2 ${
+                  activeTab === 'register' ? 'text-black' : 'text-white/60 hover:text-white'
+                }`}
+              >
+                {activeTab === 'register' && (
+                  <motion.div
+                    layoutId="auth-tab-pill"
+                    className="absolute inset-0 bg-[#C6FF33] rounded-xl shadow-md"
+                    transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                  />
+                )}
+                <span className="relative z-10">Регистрация</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between px-1 py-1">
+              <button
+                type="button"
+                onClick={() => handleTabSwitch('login')}
+                className="inline-flex items-center gap-2 text-xs font-semibold text-white/50 hover:text-white transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Назад ко входу</span>
+              </button>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3].map((step) => (
+                  <div
+                    key={step}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      forgotStep === step
+                        ? 'w-6 bg-[#C6FF33]'
+                        : forgotStep > step
+                        ? 'w-1.5 bg-[#C6FF33]/60'
+                        : 'w-1.5 bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Error Alert Banner */}
           <AnimatePresence>
@@ -347,7 +508,22 @@ export default function AuroraSignUp() {
                 className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3 text-red-400 text-xs sm:text-sm leading-relaxed"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
-                <div className="flex-1 font-medium">{errorMessage}</div>
+                <div className="flex-1 font-medium">
+                  {errorMessage}
+                  {errorMessage.includes('уже зарегистрирован') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('login');
+                        setActiveTab('login');
+                        setErrorMessage('');
+                      }}
+                      className="block mt-1.5 text-xs text-[#C6FF33] hover:underline font-semibold"
+                    >
+                      Перейти ко входу в аккаунт →
+                    </button>
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -375,21 +551,13 @@ export default function AuroraSignUp() {
                 </div>
 
                 {/* Social Auth Buttons */}
-                <div className="grid grid-cols-2 gap-2.5">
+                <div>
                   <a
                     href="/auth/google/redirect"
-                    className="flex items-center justify-center gap-2 h-11 bg-[#141416] hover:bg-[#1c1c20] border border-white/10 hover:border-white/20 rounded-xl transition-all text-xs font-semibold text-white shadow-sm cursor-pointer active:scale-98"
+                    className="flex items-center justify-center gap-2 h-11 w-full bg-[#141416] hover:bg-[#1c1c20] border border-white/10 hover:border-white/20 rounded-xl transition-all text-xs font-semibold text-white shadow-sm cursor-pointer active:scale-98"
                   >
                     <GoogleIcon />
-                    <span>Google</span>
-                  </a>
-
-                  <a
-                    href="/auth/yandex/redirect"
-                    className="flex items-center justify-center gap-2 h-11 bg-[#141416] hover:bg-[#1c1c20] border border-white/10 hover:border-white/20 rounded-xl transition-all text-xs font-semibold text-white shadow-sm cursor-pointer active:scale-98"
-                  >
-                    <YandexIcon />
-                    <span>Яндекс</span>
+                    <span>Продолжить с Google</span>
                   </a>
                 </div>
 
@@ -426,6 +594,20 @@ export default function AuroraSignUp() {
                       <label className="block text-xs font-semibold text-white/80">
                         Пароль
                       </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('forgot-password');
+                          setForgotStep(1);
+                          setErrorMessage('');
+                          if (formData.loginIdentifier && formData.loginIdentifier.includes('@')) {
+                            setResetEmail(formData.loginIdentifier);
+                          }
+                        }}
+                        className="text-[11px] font-medium text-white/40 hover:text-[#C6FF33] transition-colors cursor-pointer"
+                      >
+                        Забыли пароль?
+                      </button>
                     </div>
                     <div className="relative">
                       <input
@@ -474,7 +656,22 @@ export default function AuroraSignUp() {
                   </button>
                 </form>
 
-                <div className="text-center pt-2">
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('forgot-password');
+                      setForgotStep(1);
+                      setErrorMessage('');
+                      if (formData.loginIdentifier && formData.loginIdentifier.includes('@')) {
+                        setResetEmail(formData.loginIdentifier);
+                      }
+                    }}
+                    className="text-[11px] text-white/40 hover:text-white transition-colors cursor-pointer"
+                  >
+                    Забыли пароль?
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => handleTabSwitch('register')}
@@ -654,20 +851,13 @@ export default function AuroraSignUp() {
                           или быстрая регистрация
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div>
                         <a
                           href={`/auth/google/redirect?role=${formData.role}&plan=${formData.plan}`}
-                          className="flex items-center justify-center gap-2 h-10 bg-[#141416] hover:bg-[#1a1a1c] border border-white/10 rounded-xl text-xs font-semibold text-white/80"
+                          className="flex items-center justify-center gap-2 h-10 w-full bg-[#141416] hover:bg-[#1a1a1c] border border-white/10 rounded-xl text-xs font-semibold text-white/80"
                         >
                           <GoogleIcon />
-                          <span>Google</span>
-                        </a>
-                        <a
-                          href={`/auth/yandex/redirect?role=${formData.role}&plan=${formData.plan}`}
-                          className="flex items-center justify-center gap-2 h-10 bg-[#141416] hover:bg-[#1a1a1c] border border-white/10 rounded-xl text-xs font-semibold text-white/80"
-                        >
-                          <YandexIcon />
-                          <span>Яндекс</span>
+                          <span>Продолжить с Google</span>
                         </a>
                       </div>
                     </div>
@@ -869,19 +1059,19 @@ export default function AuroraSignUp() {
                         >
                           <span>1 год</span>
                           <span className="text-[9px] bg-black text-[#C6FF33] px-1 py-0.2 rounded font-black">
-                            -17%
+                            -20%
                           </span>
                         </button>
                       </div>
                     </div>
 
-                    {/* Tariff Cards: Старт and Про */}
-                    <div className="grid grid-cols-1 gap-3">
+                    {/* Tariff Cards: Стандарт, Про, Премиум */}
+                    <div className="grid grid-cols-1 gap-2.5">
                       
-                      {/* Plan 1: Старт (29 BYN) */}
+                      {/* Plan 1: Стандарт (20 BYN) */}
                       <div
                         onClick={() => setFormData({ ...formData, plan: 'start' })}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 relative ${
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 relative ${
                           formData.plan === 'start'
                             ? 'bg-[#18181B] border-white ring-1 ring-white'
                             : 'bg-[#121214] border-white/10 hover:border-white/20'
@@ -889,20 +1079,20 @@ export default function AuroraSignUp() {
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <span className="font-extrabold text-base text-white">«Старт»</span>
-                            <p className="text-xs text-white/50">Класс, доска, CRM, безлимит учеников</p>
+                            <span className="font-extrabold text-sm sm:text-base text-white">«Стандарт»</span>
+                            <p className="text-xs text-white/50">Класс до 60 мин, CRM, расписание, свои ученики</p>
                           </div>
                           <div className="text-right">
-                            <span className="text-base font-black text-white font-mono">
-                              {isYearly ? '24.17 BYN' : '29 BYN'}
+                            <span className="text-sm sm:text-base font-black text-white font-mono">
+                              {isYearly ? '16 BYN' : '20 BYN'}
                             </span>
                             <span className="text-[10px] text-white/40 block">/месяц</span>
                           </div>
                         </div>
 
-                        <div className="pt-2 border-t border-white/5 grid grid-cols-2 gap-1.5 text-[11px] text-white/70">
+                        <div className="pt-2 border-t border-white/5 grid grid-cols-2 gap-1 text-[11px] text-white/70">
                           <span className="flex items-center gap-1.5">
-                            <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> HD Виртуальный класс
+                            <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> HD класс (до 60 мин)
                           </span>
                           <span className="flex items-center gap-1.5">
                             <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Интерактивная доска
@@ -916,35 +1106,35 @@ export default function AuroraSignUp() {
                         </div>
                       </div>
 
-                      {/* Plan 2: Про (59 BYN) - Featured */}
+                      {/* Plan 2: Про (40 BYN) - Featured */}
                       <div
                         onClick={() => setFormData({ ...formData, plan: 'pro' })}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 relative ${
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 relative ${
                           formData.plan === 'pro'
                             ? 'bg-gradient-to-br from-[#18181B] via-[#18181B] to-[#7D39EB]/20 border-[#C6FF33] ring-1 ring-[#C6FF33]'
                             : 'bg-[#121214] border-white/10 hover:border-[#C6FF33]/40'
                         }`}
                       >
                         <div className="absolute -top-2.5 right-4 bg-[#C6FF33] text-black font-black text-[9px] uppercase px-2 py-0.5 rounded-full shadow-sm">
-                          Рекомендуем
+                          Хит продаж
                         </div>
 
                         <div className="flex items-center justify-between">
                           <div>
-                            <span className="font-extrabold text-base text-white">«Про»</span>
-                            <p className="text-xs text-white/60">Все возможности + ИИ + авто-НПД + брендинг</p>
+                            <span className="font-extrabold text-sm sm:text-base text-white">«Про»</span>
+                            <p className="text-xs text-white/60">Поток учеников + ИИ-диагностика + авто-НПД</p>
                           </div>
                           <div className="text-right">
-                            <span className="text-base font-black text-[#C6FF33] font-mono">
-                              {isYearly ? '49.17 BYN' : '59 BYN'}
+                            <span className="text-sm sm:text-base font-black text-[#C6FF33] font-mono">
+                              {isYearly ? '32 BYN' : '40 BYN'}
                             </span>
                             <span className="text-[10px] text-white/40 block">/месяц</span>
                           </div>
                         </div>
 
-                        <div className="pt-2 border-t border-white/5 grid grid-cols-2 gap-1.5 text-[11px] text-white/80">
+                        <div className="pt-2 border-t border-white/5 grid grid-cols-2 gap-1 text-[11px] text-white/80">
                           <span className="flex items-center gap-1.5 font-medium">
-                            <Check className="w-3.5 h-3.5 text-[#C6FF33] shrink-0" /> Всё из тарифа «Старт»
+                            <Check className="w-3.5 h-3.5 text-[#C6FF33] shrink-0" /> Всё из «Стандарта»
                           </span>
                           <span className="flex items-center gap-1.5 font-medium">
                             <Check className="w-3.5 h-3.5 text-[#C6FF33] shrink-0" /> ИИ-диагностика (РИКЗ)
@@ -953,7 +1143,49 @@ export default function AuroraSignUp() {
                             <Check className="w-3.5 h-3.5 text-[#C6FF33] shrink-0" /> Авто-чеки НПД (МНС)
                           </span>
                           <span className="flex items-center gap-1.5 font-medium">
-                            <Check className="w-3.5 h-3.5 text-[#C6FF33] shrink-0" /> Свой брендинг комнат
+                            <Check className="w-3.5 h-3.5 text-[#C6FF33] shrink-0" /> Приоритет в каталоге
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Plan 3: Премиум (60 BYN) - Top Expert */}
+                      <div
+                        onClick={() => setFormData({ ...formData, plan: 'premium' })}
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 relative ${
+                          formData.plan === 'premium'
+                            ? 'bg-gradient-to-br from-[#18181B] via-[#18181B] to-[#F59E0B]/20 border-amber-400 ring-1 ring-amber-400'
+                            : 'bg-[#121214] border-white/10 hover:border-amber-400/40'
+                        }`}
+                      >
+                        <div className="absolute -top-2.5 right-4 bg-gradient-to-r from-amber-400 to-amber-500 text-black font-black text-[9px] uppercase px-2 py-0.5 rounded-full shadow-sm">
+                          👑 Топ-эксперт
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="font-extrabold text-sm sm:text-base text-white">«Премиум»</span>
+                            <p className="text-xs text-white/60">ТОП-1 в поиске, видео-визитка и свой бренд</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm sm:text-base font-black text-amber-400 font-mono">
+                              {isYearly ? '48 BYN' : '60 BYN'}
+                            </span>
+                            <span className="text-[10px] text-white/40 block">/месяц</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-white/5 grid grid-cols-2 gap-1 text-[11px] text-white/80">
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Всё из тарифа «Про»
+                          </span>
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" /> 👑 ТОП-1 в каталоге
+                          </span>
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Видео-визитка в анкете
+                          </span>
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Свой брендинг комнат
                           </span>
                         </div>
                       </div>
@@ -1003,6 +1235,248 @@ export default function AuroraSignUp() {
                   </motion.div>
                 )}
 
+              </motion.div>
+            )}
+
+            {/* ═══════════════════════════════════════════════════ */}
+            {/* MODE 3: FORGOT PASSWORD                              */}
+            {/* ═══════════════════════════════════════════════════ */}
+            {activeTab === 'forgot-password' && (
+              <motion.div
+                key={`forgot-step-${forgotStep}`}
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-5"
+              >
+                {/* ─── STEP 1: ENTER EMAIL ─── */}
+                {forgotStep === 1 && (
+                  <div className="space-y-5">
+                    <div className="space-y-1">
+                      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 text-[#C6FF33]">
+                        <KeyRound className="w-5 h-5" />
+                      </div>
+                      <h2 className="text-2xl font-bold tracking-tight text-white">Восстановление пароля</h2>
+                      <p className="text-xs sm:text-sm text-white/50">
+                        Введите адрес электронной почты, к которому привязан ваш аккаунт. Мы вышлем 6-значный цифровой код.
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleSendResetCode} className="space-y-4 pt-1">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-white/80">
+                          Электронная почта
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="email"
+                            value={resetEmail}
+                            onChange={(e) => { setResetEmail(e.target.value); if (errorMessage) setErrorMessage(''); }}
+                            placeholder="name@edusfera.by"
+                            required
+                            autoFocus
+                            autoComplete="email"
+                            className="w-full h-11 pl-10 pr-3.5 bg-[#141416] border border-white/10 rounded-xl text-xs sm:text-sm text-white placeholder:text-white/25 focus:border-[#C6FF33] focus:ring-1 focus:ring-[#C6FF33] outline-none transition-all"
+                          />
+                          <Mail className="w-4 h-4 text-white/40 absolute left-3.5 top-3.5" />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || !resetEmail}
+                        className="w-full h-12 font-extrabold text-xs sm:text-sm rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 mt-2 shadow-lg bg-[#C6FF33] text-black hover:bg-[#b8f526] active:scale-[0.99] disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-black" />
+                            <span>Отправляем код...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Получить код</span>
+                            <ArrowRight className="w-4 h-4 text-black" />
+                          </>
+                        )}
+                      </button>
+
+                      <div className="text-center pt-2">
+                        <button
+                          type="button"
+                          onClick={() => handleTabSwitch('login')}
+                          className="text-xs font-semibold text-white/40 hover:text-white transition-colors cursor-pointer"
+                        >
+                          Я вспомнил пароль — вернуться ко входу
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* ─── STEP 2: ENTER 6-DIGIT CODE ─── */}
+                {forgotStep === 2 && (
+                  <div className="space-y-5">
+                    <div className="space-y-1">
+                      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 text-[#C6FF33]">
+                        <Mail className="w-5 h-5" />
+                      </div>
+                      <h2 className="text-2xl font-bold tracking-tight text-white">Введите код из письма</h2>
+                      <p className="text-xs sm:text-sm text-white/50">
+                        Мы отправили 6-значный цифровой код на <span className="text-white font-medium">{resetEmail}</span>.
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleVerifyResetCode} className="space-y-4 pt-1">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-white/80">
+                          Одноразовый код (6 цифр)
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                          value={resetCode}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                            setResetCode(val);
+                            if (errorMessage) setErrorMessage('');
+                          }}
+                          placeholder="••••••"
+                          required
+                          autoFocus
+                          className="w-full h-14 px-3.5 bg-[#141416] border border-white/10 rounded-xl text-center text-2xl tracking-[0.4em] font-mono text-[#C6FF33] placeholder:text-white/20 focus:border-[#C6FF33] focus:ring-1 focus:ring-[#C6FF33] outline-none transition-all"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || resetCode.length !== 6}
+                        className="w-full h-12 font-extrabold text-xs sm:text-sm rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 mt-2 shadow-lg bg-[#C6FF33] text-black hover:bg-[#b8f526] active:scale-[0.99] disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-black" />
+                            <span>Проверяем...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Подтвердить код</span>
+                            <ArrowRight className="w-4 h-4 text-black" />
+                          </>
+                        )}
+                      </button>
+
+                      <div className="flex items-center justify-between pt-2 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => { setForgotStep(1); setErrorMessage(''); }}
+                          className="text-white/40 hover:text-white transition-colors cursor-pointer"
+                        >
+                          Изменить email
+                        </button>
+                        <button
+                          type="button"
+                          disabled={resendCooldown > 0 || isSubmitting}
+                          onClick={handleSendResetCode}
+                          className={`font-semibold transition-colors cursor-pointer ${
+                            resendCooldown > 0 ? 'text-white/30 cursor-not-allowed' : 'text-[#C6FF33] hover:underline'
+                          }`}
+                        >
+                          {resendCooldown > 0 ? `Отправить повторно (${resendCooldown}с)` : 'Отправить код ещё раз'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* ─── STEP 3: ENTER NEW PASSWORD ─── */}
+                {forgotStep === 3 && (
+                  <div className="space-y-5">
+                    <div className="space-y-1">
+                      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 text-[#C6FF33]">
+                        <Lock className="w-5 h-5" />
+                      </div>
+                      <h2 className="text-2xl font-bold tracking-tight text-white">Новый пароль</h2>
+                      <p className="text-xs sm:text-sm text-white/50">
+                        Придумайте новый надежный пароль (минимум 8 символов, буквы и цифры).
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleResetPasswordSubmit} className="space-y-4 pt-1">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-white/80">
+                          Новый пароль
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? 'text' : 'password'}
+                            value={newPassword}
+                            onChange={(e) => { setNewPassword(e.target.value); if (errorMessage) setErrorMessage(''); }}
+                            placeholder="Минимум 8 символов"
+                            required
+                            autoFocus
+                            autoComplete="new-password"
+                            className="w-full h-11 pl-3.5 pr-10 bg-[#141416] border border-white/10 rounded-xl text-xs sm:text-sm text-white placeholder:text-white/25 focus:border-[#C6FF33] focus:ring-1 focus:ring-[#C6FF33] outline-none transition-all"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3.5 top-3 text-white/40 hover:text-white transition-colors cursor-pointer"
+                            tabIndex={-1}
+                          >
+                            {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-white/80">
+                          Повторите новый пароль
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? 'text' : 'password'}
+                            value={confirmPassword}
+                            onChange={(e) => { setConfirmPassword(e.target.value); if (errorMessage) setErrorMessage(''); }}
+                            placeholder="Повторите пароль"
+                            required
+                            autoComplete="new-password"
+                            className="w-full h-11 pl-3.5 pr-10 bg-[#141416] border border-white/10 rounded-xl text-xs sm:text-sm text-white placeholder:text-white/25 focus:border-[#C6FF33] focus:ring-1 focus:ring-[#C6FF33] outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || !newPassword || !confirmPassword}
+                        className={`w-full h-12 font-extrabold text-xs sm:text-sm rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 mt-2 shadow-lg ${
+                          isSuccess
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-[#C6FF33] text-black hover:bg-[#b8f526] active:scale-[0.99] disabled:opacity-50'
+                        }`}
+                      >
+                        {isSuccess ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 text-white" />
+                            <span>{resetSuccessMessage || 'Пароль обновлён! Входим...'}</span>
+                          </>
+                        ) : isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-black" />
+                            <span>Сохраняем...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Сохранить пароль и войти</span>
+                            <Check className="w-4 h-4 text-black" />
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </div>
+                )}
               </motion.div>
             )}
 

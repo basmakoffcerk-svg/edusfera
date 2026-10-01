@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /**
@@ -224,7 +225,7 @@ class WebhookSignatureRejectionTest extends TestCase
      *
      * @param  array<string, string>  $headers
      */
-    private function postWebhook(string $body, array $headers): \Illuminate\Testing\TestResponse
+    private function postWebhook(string $body, array $headers): TestResponse
     {
         $server = $this->transformHeadersToServerVars(array_merge([
             'Content-Type' => 'application/json',

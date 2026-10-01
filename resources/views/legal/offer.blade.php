@@ -1,294 +1,33 @@
 @extends('legal.layout')
 
-@section('title', 'Публичная оферта | Edusfera')
+@section('title', 'Публичная оферта — Edusfera')
 
 @section('heading', 'Публичная оферта')
 
-@section('updated_at', '20 июня 2026')
+@section('updated_at', '04 сентября 2026 г.')
+
+@section('subtitle', 'на предоставление права использования цифровой платформы Edusfera.by (модель SaaS-подписки) и информационно-технологических сервисов')
 
 @section('content')
 <style>
-    /* Premium legal document styling */
-    .premium-doc-wrapper {
-        background-color: #ffffff;
-        position: relative;
-    }
-    
-    .premium-doc-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-bottom: 2rem;
-        margin-bottom: 3rem;
-        border-bottom: 1px solid #f1f5f9;
-    }
-    
-    .premium-doc-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: linear-gradient(135deg, rgba(125, 57, 235, 0.08) 0%, rgba(125, 57, 235, 0.02) 100%);
-        border: 1px solid rgba(125, 57, 235, 0.1);
-        color: #7D39EB;
-        font-weight: 700;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border-radius: 100px;
-    }
-    
-    .premium-doc-actions {
-        display: flex;
-        gap: 0.75rem;
-    }
-    
-    .premium-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.6rem 1.25rem;
-        border-radius: 12px;
-        font-size: 0.875rem;
-        font-weight: 600;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        text-decoration: none;
-    }
-    
-    .premium-btn-secondary {
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        color: #475569;
-    }
-    
-    .premium-btn-secondary:hover {
-        background-color: #f1f5f9;
-        border-color: #cbd5e1;
-        color: #0f172a;
-        transform: translateY(-1px);
-    }
-    
-    .premium-btn-primary {
-        background: linear-gradient(135deg, #7D39EB 0%, #5b21b6 100%);
-        border: 1px solid transparent;
-        color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(125, 57, 235, 0.2);
-    }
-    
-    .premium-btn-primary:hover {
-        box-shadow: 0 6px 16px rgba(125, 57, 235, 0.3);
-        transform: translateY(-1px);
-    }
-    
-    /* Typography for the document */
-    .premium-prose {
-        color: #334155;
-        font-size: 1.05rem;
-        line-height: 1.8;
-        max-width: 850px;
-        margin: 0 auto;
-    }
-    
-    .premium-prose h2 {
-        font-family: 'Inter', system-ui, sans-serif;
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin-top: 3.5rem;
-        margin-bottom: 1.5rem;
-        letter-spacing: -0.01em;
-        position: relative;
-        padding-left: 1.5rem;
-    }
-    
-    .premium-prose h2::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 0.2rem;
-        bottom: 0.2rem;
-        width: 4px;
-        background: linear-gradient(to bottom, #7D39EB, #c6ff33);
-        border-radius: 4px;
-    }
-    
-    .premium-prose h3 {
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-top: 2.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .premium-prose p {
-        margin-bottom: 1.25rem;
-        text-align: justify;
-    }
-    
-    .premium-prose p.text-center {
-        text-align: center;
-    }
-    
-    .premium-prose p strong {
-        color: #0f172a;
-        font-weight: 600;
-    }
-    
-    .premium-prose ul {
-        list-style: none;
-        padding-left: 0;
-        margin-top: 1.25rem;
-        margin-bottom: 2rem;
-        background-color: #f8fafc;
-        border-radius: 16px;
-        padding: 1.5rem 2rem;
-        border: 1px solid #f1f5f9;
-    }
-    
-    .premium-prose ul li {
-        position: relative;
-        padding-left: 1.75rem;
-        margin-bottom: 0.75rem;
-        color: #475569;
-    }
-    
-    .premium-prose ul li:last-child {
-        margin-bottom: 0;
-    }
-    
-    .premium-prose ul li::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 0.6rem;
-        width: 6px;
-        height: 6px;
-        background-color: #7D39EB;
-        border-radius: 50%;
-        box-shadow: 0 0 0 3px rgba(125, 57, 235, 0.1);
-    }
-    
-    /* Document header styling */
-    .premium-doc-title {
-        font-size: 2rem;
-        font-weight: 900;
-        text-align: center;
-        letter-spacing: -0.02em;
-        color: #0f172a;
-        margin-bottom: 1rem;
-        background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    .premium-doc-subtitle {
-        text-align: center;
-        font-size: 1.1rem;
-        color: #64748b;
-        font-weight: 500;
-        max-width: 600px;
-        margin: 0 auto 2rem;
-        line-height: 1.6;
-    }
-    
-    /* Custom Table Styling */
-    .premium-table-wrapper {
-        margin: 2.5rem 0;
-        border-radius: 16px;
-        overflow: hidden;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    }
-    
-    .premium-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: left;
-    }
-    
-    .premium-table th {
-        background-color: #f8fafc;
-        padding: 1rem 1.5rem;
-        font-weight: 600;
-        color: #0f172a;
-        border-bottom: 1px solid #e2e8f0;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-    }
-    
-    .premium-table td {
-        padding: 1.25rem 1.5rem;
-        border-bottom: 1px solid #f1f5f9;
-        color: #334155;
-        background-color: #ffffff;
-    }
-    
-    .premium-table tr:last-child td {
-        border-bottom: none;
-    }
-    
-    .premium-table tr:hover td {
-        background-color: #f8fafc;
-    }
-    
-    /* Signatures Section */
-    .premium-signatures {
-        margin-top: 4rem;
-        padding-top: 3rem;
-        border-top: 2px dashed #e2e8f0;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        background-color: #f8fafc;
-        border-radius: 16px;
-        padding: 2.5rem;
-    }
-    
-    .premium-signatures .org-details {
-        font-size: 0.95rem;
-        color: #475569;
-        line-height: 1.7;
-    }
-    
-    .premium-signatures .org-name {
-        font-weight: 800;
-        font-size: 1.1rem;
-        color: #0f172a;
-        margin-bottom: 0.5rem;
-    }
-    
-    .premium-signatures .signature-line {
-        margin-top: 2rem;
-        display: flex;
-        align-items: flex-end;
-        gap: 1rem;
-    }
-    
-    /* Print styles */
-    @media print {
-        .premium-doc-header { display: none !important; }
-        .premium-prose { max-width: 100%; }
-        .premium-doc-wrapper { padding: 0 !important; border: none !important; box-shadow: none !important; }
-        .premium-prose h2::before { display: none; }
-        body { background: white !important; }
-    }
-
     .notice-box {
         background-color: #f8fafc;
-        border: 1px solid #cbd5e1;
-        border-left: 4px solid #7D39EB;
-        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        border-left: 3px solid #7D39EB;
+        border-radius: 12px;
         padding: 20px 24px;
         margin: 24px 0;
     }
+    .notice-box p:last-child {
+        margin-bottom: 0;
+    }
     .terms-list {
         list-style: none !important;
-        padding: 16px 24px !important;
+        padding: 16px 20px !important;
         background-color: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
+        border-radius: 12px;
+        margin: 20px 0;
     }
     .terms-list li {
         position: relative;
@@ -307,25 +46,25 @@
     }
     .tariff-table-wrap {
         overflow-x: auto;
-        margin: 20px 0;
+        margin: 24px 0;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        border-radius: 14px;
         background: #fff;
     }
     .tariff-table {
         width: 100%;
         border-collapse: collapse;
         text-align: left;
-        font-size: 0.9rem;
+        font-size: 0.875rem;
     }
     .tariff-table th {
-        background-color: #f1f5f9;
+        background-color: #f8fafc;
         color: #0f172a;
         font-weight: 700;
         padding: 12px 16px;
         border-bottom: 1px solid #e2e8f0;
+        font-size: 0.75rem;
         text-transform: uppercase;
-        font-size: 0.78rem;
         letter-spacing: 0.05em;
     }
     .tariff-table td {
@@ -336,48 +75,59 @@
     .tariff-table tr:last-child td {
         border-bottom: none;
     }
+    .tariff-table tr:hover td {
+        background-color: #fcfdfe;
+    }
     .operator-card {
-        margin-top: 20px;
+        margin-top: 24px;
         padding: 24px;
         background-color: #f8fafc;
-        border: 1px solid #cbd5e1;
-        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
     }
     .operator-card .org-title {
-        font-size: 1.1rem;
-        font-weight: 800;
+        font-size: 1.05rem;
+        font-weight: 700;
         color: #0f172a;
         margin-bottom: 12px;
     }
 
+    .doc-btn-download {
+        color: #ffffff !important;
+        text-decoration: none !important;
+    }
+    .doc-btn-download:hover {
+        color: #ffffff !important;
+    }
+
+    @media print {
+        header, footer, .no-print { display: none !important; }
+        body { background: white !important; }
+        .prose-edusfera { max-width: 100% !important; font-size: 11pt !important; }
+    }
 </style>
 
-<div class="premium-doc-wrapper">
-    <div class="premium-doc-header">
-        <div class="premium-doc-badge">
-            <span class="relative flex h-2 w-2">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
-            </span>
-            Действующая редакция
-        </div>
-        
-        <div class="premium-doc-actions">
-            <button onclick="window.print()" class="premium-btn premium-btn-secondary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                <span class="hidden sm:inline">Печать</span>
-            </button>
-            <a href="/docs/offer.docx" download class="premium-btn premium-btn-primary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                <span class="hidden sm:inline">Скачать PDF</span>
-            </a>
-        </div>
+{{-- Action Toolbar (Apple Document Bar) --}}
+<div class="no-print flex flex-wrap items-center justify-between gap-4 pb-6 mb-8 border-b border-slate-100">
+    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/70 text-emerald-800 text-xs font-semibold">
+        <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+        </span>
+        Действующая редакция · Республика Беларусь
     </div>
 
-    <div class="premium-prose">
-<h1 class="premium-doc-title">Публичная оферта</h1>
-<p class="premium-doc-subtitle">на предоставление права использования цифровой платформы Edusfera.by (модель SaaS-подписки) и информационно-технологических сервисов</p>
-<div class="premium-doc-meta" style="margin-bottom: 2rem; color: #64748b; font-size: 0.875rem;">Редакция от 04 сентября 2026 г. · Действует на территории Республики Беларусь</div>
+    <div class="flex items-center gap-2">
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs shadow-xs transition-all cursor-pointer">
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <span>Печать</span>
+        </button>
+        <a href="/docs/offer.docx" download class="doc-btn-download inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 font-medium text-xs shadow-xs transition-all">
+            <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>Скачать DOCX</span>
+        </a>
+    </div>
+</div>
 
 <h2>1. ОБЩИЕ ПОЛОЖЕНИЯ И ЮРИДИЧЕСКАЯ КВАЛИФИКАЦИЯ ДОГОВОРА</h2>
             <p><strong>1.1.</strong> Настоящая Публичная оферта (далее — «Оферта») представляет собой официальное предложение <strong>Общества с ограниченной ответственностью «Эдусфера»</strong> (зарегистрировано Минским горисполкомом 04.05.2026 г., УНП 192854899, адрес места нахождения: 220100, Республика Беларусь, г. Минск, ул. Веры Хоружей, д. 6А, пом. 29), именуемого в дальнейшем <strong>«Оператор»</strong>, адресованное дееспособным физическим лицам, плательщикам налога на профессиональный доход (НПД), индивидуальным предпринимателям и юридическим лицам (далее совместно — <strong>«Пользователи»</strong>, а по отдельности — <strong>«Репетитор»</strong> или <strong>«Заказчик»</strong>), заключить договор на предоставление права использования цифровой платформы Edusfera.by и сопутствующих информационно-технологических сервисов на изложенных ниже условиях.</p>
@@ -445,7 +195,7 @@
                 <li>размещение, модерацию и публичную демонстрацию профиля преподавателя в каталоге;</li>
                 <li>использование интерактивного виртуального класса с защищенным WebRTC-соединением, интерактивной доской и обменом файлами;</li>
                 <li>систему автоматизированного бронирования и управления расписанием уроков (Smart Scheduling);</li>
-                <li>программную интеграцию со шлюзом интернет-эквайринга ЗАО «Альфа-Банк» и АИС ЕРИП для оплаты подписки Платформы;</li>
+                <li>программную интеграцию со шлюзом интернет-эквайринга ЗАО «Альфа-Банк» для оплаты подписки Платформы;</li>
                 <li>автоматизированный сервис формирования электронных чеков и фискальной отчетности для плательщиков НПД;</li>
                 <li>интеллектуальные ассистенты (ИИ-модули) подготовки к централизованному экзамену (ЦЭ) и централизованному тестированию (ЦТ).</li>
             </ul>
@@ -477,7 +227,7 @@
             <p><strong>4.3.3.</strong> Заказчик обязуется своевременно производить прямую оплату за проведенные уроки Репетитору на его банковскую карту или иным согласованным с Репетитором способом.</p>
 
             <h2>5. ФИНАНСОВАЯ МОДЕЛЬ, ТАРИФЫ ПОДПИСКИ И ПОРЯДОК РАСЧЕТОВ</h2>
-            <p><strong>5.1. Валюта расчетов:</strong> Все расчеты на Платформе производятся исключительно в <strong>белорусских рублях (BYN)</strong>. Прием безналичных платежей осуществляется через интернет-эквайринг <strong>ЗАО «Альфа-Банк»</strong> с использованием платежных карт международных систем <strong>VISA (включая Visa Secure), MasterCard (включая Mastercard Identity Check), национальной платежной системы БЕЛКАРТ (включая Белкарт ИнтернетПароль)</strong>, бесконтактных сервисов <strong>Apple Pay, Samsung Pay</strong>, а также через Автоматизированную информационную систему единого расчетного и информационного пространства <strong>(АИС ЕРИП «Расчет»)</strong>.</p>
+            <p><strong>5.1. Валюта расчетов:</strong> Все расчеты на Платформе производятся исключительно в <strong>белорусских рублях (BYN)</strong>. Прием безналичных платежей осуществляется через интернет-эквайринг <strong>ЗАО «Альфа-Банк»</strong> с использованием платежных карт международных систем <strong>VISA (включая Visa Secure), MasterCard (включая Mastercard Identity Check), национальной платежной системы БЕЛКАРТ (включая Белкарт ИнтернетПароль)</strong> и бесконтактных сервисов <strong>Apple Pay, Samsung Pay</strong>.</p>
 
             <h3>5.2. Тарифная сетка SaaS-подписки для Репетиторов:</h3>
             <div class="tariff-table-wrap">
@@ -577,7 +327,7 @@
                 <li>Платформа выступает исключительно в качестве цифровой телекоммуникационной площадки и облачного инструментария для независимых преподавателей.</li>
             </ul>
 
-            <p><strong>7.3. Отсутствие денег репетиторов на Платформе и статуса платежного агента:</strong> Денежных средств репетиторов внутри Платформы нет. Ученик оплачивает занятия напрямую Репетитору на карту. В соответствии с нормами Закона Республики Беларусь от 19.04.2022 № 164-З «О платежных системах и платежных услугах» Оператор не открывает счетов пользователям, не аккумулирует средства за уроки, не выпускает электронных денег и не является платежным агентом по расчетам за занятия. Интернет-эквайринг ЗАО «Альфа-Банк» и АИС ЕРИП на сайте используются исключительно для оплаты SaaS-подписки Репетиторов в пользу ООО «Эдусфера».</p>
+            <p><strong>7.3. Отсутствие денег репетиторов на Платформе и статуса платежного агента:</strong> Денежных средств репетиторов внутри Платформы нет. Ученик оплачивает занятия напрямую Репетитору на карту. В соответствии с нормами Закона Республики Беларусь от 19.04.2022 № 164-З «О платежных системах и платежных услугах» Оператор не открывает счетов пользователям, не аккумулирует средства за уроки, не выпускает электронных денег и не является платежным агентом по расчетам за занятия. Интернет-эквайринг ЗАО «Альфа-Банк» на сайте используется исключительно для оплаты SaaS-подписки Репетиторов в пользу ООО «Эдусфера».</p>
 
             <h2>8. ЗАЩИТА ПЕРСОНАЛЬНЫХ ДАННЫХ</h2>
             <p><strong>8.1.</strong> Обработка персональных данных Пользователей осуществляется Оператором в строгом соответствии с <strong>Законом Республики Беларусь от 07.05.2021 № 99-З «О защите персональных данных»</strong> и локальной Политикой конфиденциальности, опубликованной по адресу https://edusfera.by/privacy-policy.</p>
@@ -641,6 +391,4 @@
                     Деятельность по разработке программного обеспечения, предоставлению облачного сервиса по модели SaaS и оказанию информационно-технологических услуг не подлежит лицензированию в соответствии с законодательством Республики Беларусь.
                 </p>
             </div>
-</div>
-</div>
 @endsection

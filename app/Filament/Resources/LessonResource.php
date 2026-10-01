@@ -6,6 +6,7 @@ namespace App\Filament\Resources;
 
 use App\Contracts\Lesson\LessonBooker;
 use App\Domain\Lesson\CancelReason;
+use App\Enums\UserRole;
 use App\Filament\Resources\LessonResource\Pages;
 use App\Models\Lesson;
 use App\Models\LessonReview;
@@ -157,7 +158,7 @@ class LessonResource extends Resource
                                     Infolists\Components\TextEntry::make('net_amount')
                                         ->label('К зачислению репетитору')
                                         ->formatStateUsing(fn ($state) => BynMoneyFormatter::format((string) $state))
-                                        ->visible(fn () => auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isTutor())),
+                                        ->visible(fn () => auth()->user()?->isAdmin() ?? false),
                                 ]),
 
                             Infolists\Components\Section::make('Отзыв')
@@ -191,7 +192,7 @@ class LessonResource extends Resource
                     ->label('Ученик')
                     ->searchable()
                     ->description(fn (Lesson $record): string => $record->parent?->name ? 'Родитель: '.$record->parent->name : 'Самостоятельная запись')
-                    ->toggleable(isToggledHiddenByDefault: auth()->user()?->role !== 'tutor'),
+                    ->toggleable(isToggledHiddenByDefault: auth()->user()?->isStudent() ?? false),
                 Tables\Columns\TextColumn::make('start_time')
                     ->label('Начало')
                     ->formatStateUsing(fn ($state): string => $state->setTimezone(config('booking.display_timezone'))->format('d.m.Y H:i'))
@@ -219,6 +220,7 @@ class LessonResource extends Resource
                     ->label('К выплате')
                     ->formatStateUsing(fn (mixed $state) => $state === null ? null : BynMoneyFormatter::format((string) $state))
                     ->placeholder('0.00')
+                    ->visible(fn (): bool => auth()->user()?->isAdmin() ?? false)
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Статус')
@@ -269,7 +271,6 @@ class LessonResource extends Resource
                     ->visible(fn (): bool => auth()->user()?->isTutor() ?? false)
                     ->query(fn (Builder $query): Builder => $query
                         ->whereIn('status', [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED])
-                        ->where('payment_status', Lesson::PAYMENT_PAID)
                         ->whereNull('tutor_reported_at')),
                 Filter::make('date_range')
                     ->label('Период')
@@ -289,17 +290,46 @@ class LessonResource extends Resource
                     ->button()
                     ->color('gray'),
                 Tables\Actions\Action::make('open_classroom')
-                    ->label('Войти в класс')
+                    ->label(fn (Lesson $record): string => (! config('classroom.enabled', false) && ! empty($record->meeting_link)) ? 'Подключиться к уроку' : 'Войти в класс')
                     ->icon('heroicon-o-video-camera')
-                    ->color('primary')
-                    ->url(fn (Lesson $record): string => route('classroom.show', $record))
-                    ->visible(fn (Lesson $record): bool => $record->payment_status === Lesson::PAYMENT_PAID
-                        && in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true)),
+                    ->color('success')
+                    ->button()
+                    ->url(function (Lesson $record): string {
+                        if (! config('classroom.enabled', false) && ! empty($record->meeting_link) && str_starts_with($record->meeting_link, 'http')) {
+                            return $record->meeting_link;
+                        }
+
+                        return route('classroom.show', $record);
+                    })
+                    ->openUrlInNewTab()
+                    ->visible(fn (Lesson $record): bool => in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true)),
+                Tables\Actions\Action::make('set_meeting_link')
+                    ->label('Ссылка Zoom/Meet')
+                    ->icon('heroicon-o-link')
+                    ->color('gray')
+                    ->visible(fn (Lesson $record): bool => auth()->user() && (auth()->user()->isAdmin() || auth()->id() === $record->tutor_id) && in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_PENDING], true))
+                    ->modalHeading('Указать внешнюю ссылку на видеовстречу')
+                    ->modalDescription('На время обновления виртуального класса занятия проводятся через Zoom, Google Meet, Яндекс Телемост или Telegram.')
+                    ->form([
+                        Forms\Components\TextInput::make('meeting_link')
+                            ->label('Ссылка на видеовстречу')
+                            ->url()
+                            ->placeholder('https://meet.google.com/xyz-abcd-efg или Zoom')
+                            ->default(fn (Lesson $record): ?string => $record->meeting_link)
+                            ->required(),
+                    ])
+                    ->action(function (Lesson $record, array $data): void {
+                        $record->update(['meeting_link' => $data['meeting_link']]);
+                        Notification::make()
+                            ->title('Ссылка на видеовстречу сохранена')
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('confirm')
                     ->label('Подтвердить')
                     ->color('success')
                     ->icon('heroicon-o-check-circle')
-                    ->visible(fn (Lesson $record): bool => auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isTutor()) && $record->status === Lesson::STATUS_PENDING && $record->payment_status === Lesson::PAYMENT_PAID)
+                    ->visible(fn (Lesson $record): bool => auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isTutor()) && $record->status === Lesson::STATUS_PENDING)
                     ->requiresConfirmation()
                     ->action(function (Lesson $record): void {
                         $record->update(['status' => Lesson::STATUS_CONFIRMED]);
@@ -311,25 +341,58 @@ class LessonResource extends Resource
                     ->icon('heroicon-o-flag')
                     ->visible(fn (Lesson $record): bool => auth()->user() && (auth()->user()->isAdmin() || auth()->user()->isTutor())
                         && $record->status === Lesson::STATUS_CONFIRMED
-                        && $record->payment_status === Lesson::PAYMENT_PAID
                         && $record->end_time->isPast())
                     ->requiresConfirmation()
                     ->action(function (Lesson $record): void {
                         $record->update(['status' => Lesson::STATUS_COMPLETED]);
-                        app(PaymentService::class)->settleCompletedLesson($record->fresh());
+                        try {
+                            app(PaymentService::class)->settleCompletedLesson($record->fresh());
+                        } catch (\Throwable $e) {
+                            // Прямая оплата от ученика
+                        }
 
                         Notification::make()
                             ->title('Урок завершён')
-                            ->body('Оплата переведена в расчёты по завершённому уроку.')
+                            ->body('Занятие успешно отмечено как завершённое.')
                             ->success()
                             ->send();
                     }),
-                Tables\Actions\Action::make('pay')
-                    ->label('Оплатить урок')
-                    ->icon('heroicon-o-credit-card')
-                    ->color('success')
-                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true) && $record->payment_status === Lesson::PAYMENT_UNPAID)
-                    ->url(fn (Lesson $record): string => route('checkout.show', $record)),
+                Tables\Actions\Action::make('record_payment')
+                    ->label(fn (Lesson $record): string => $record->payment_status === Lesson::PAYMENT_PAID ? 'Оплачено (НПД)' : 'Учесть оплату')
+                    ->icon(fn (Lesson $record): string => $record->payment_status === Lesson::PAYMENT_PAID ? 'heroicon-s-check-badge' : 'heroicon-o-banknotes')
+                    ->color(fn (Lesson $record): string => $record->payment_status === Lesson::PAYMENT_PAID ? 'success' : 'gray')
+                    ->visible(fn (Lesson $record): bool => (auth()->user()?->isTutor() || auth()->user()?->isAdmin()))
+                    ->fillForm(fn (Lesson $record): array => [
+                        'price' => (string) ($record->price ?: ($record->tutor?->tutorProfile?->price_per_hour ?: 35)),
+                        'npd_receipt_number' => $record->npd_receipt_number,
+                    ])
+                    ->form([
+                        Forms\Components\TextInput::make('price')
+                            ->label('Сумма прямой оплаты от ученика (BYN)')
+                            ->numeric()
+                            ->required()
+                            ->helperText('Сумма, полученная от ученика на карту или наличными для расчёта налога НПД.'),
+                        Forms\Components\TextInput::make('npd_receipt_number')
+                            ->label('Номер чека приложения «Профдоход» МНС (необязательно)')
+                            ->placeholder('Например: МНС-2026-1029'),
+                    ])
+                    ->action(function (Lesson $record, array $data): void {
+                        $price = number_format((float) $data['price'], 2, '.', '');
+                        $receiptNum = ! empty($data['npd_receipt_number']) ? trim((string) $data['npd_receipt_number']) : $record->npd_receipt_number;
+                        $record->update([
+                            'price' => $price,
+                            'net_amount' => $price,
+                            'payment_status' => Lesson::PAYMENT_PAID,
+                            'npd_receipt_number' => $receiptNum,
+                            'npd_receipt_issued_at' => $receiptNum ? now() : $record->npd_receipt_issued_at,
+                        ]);
+
+                        Notification::make()
+                            ->title('Оплата зафиксирована')
+                            ->body("Доход {$price} BYN учтён для отчёта НПД.")
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('meeting_link')
                     ->label('Ссылка на встречу')
                     ->icon('heroicon-o-video-camera')
@@ -347,8 +410,7 @@ class LessonResource extends Resource
                     ->icon('heroicon-o-document-text')
                     ->color('primary')
                     ->visible(fn (Lesson $record): bool => (auth()->user()?->isTutor() ?? false)
-                        && in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true)
-                        && $record->payment_status === Lesson::PAYMENT_PAID)
+                        && in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true))
                     ->fillForm(fn (Lesson $record): array => [
                         'summary' => $record->tutor_report_summary,
                         'focus' => $record->tutor_report_focus,
@@ -406,9 +468,8 @@ class LessonResource extends Resource
                     ->label('Оценить')
                     ->icon('heroicon-o-star')
                     ->color('warning')
-                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true)
+                    ->visible(fn (Lesson $record): bool => in_array(auth()->user()?->role, [UserRole::Student, UserRole::Parent], true)
                         && $record->status === Lesson::STATUS_COMPLETED
-                        && $record->payment_status === Lesson::PAYMENT_PAID
                         && $record->review === null)
                     ->form([
                         Forms\Components\Select::make('rating')
@@ -452,7 +513,7 @@ class LessonResource extends Resource
                             return in_array($record->status, [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED], true);
                         }
 
-                        if ($user && ($user->isStudent() || $user->role === \App\Enums\UserRole::Parent)) {
+                        if ($user && ($user->isStudent() || $user->isParent())) {
                             return in_array($record->status, [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED], true)
                                 && $record->start_time->isAfter(now('UTC')->addDay());
                         }
@@ -478,7 +539,7 @@ class LessonResource extends Resource
                 Tables\Actions\Action::make('reschedule')
                     ->label('Перенести')
                     ->icon('heroicon-o-arrow-path')
-                    ->visible(fn (): bool => in_array(auth()->user()?->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true))
+                    ->visible(fn (): bool => in_array(auth()->user()?->role, [UserRole::Student, UserRole::Parent], true))
                     ->requiresConfirmation()
                     ->modalDescription('Функция переноса появится в следующей итерации MVP.')
                     ->action(fn (): null => null),
@@ -511,7 +572,7 @@ class LessonResource extends Resource
             return $query->where('tutor_id', $user->id);
         }
 
-        if ($user?->role === \App\Enums\UserRole::Parent) {
+        if ($user?->isParent()) {
             return $query->where(function (Builder $builder) use ($user): Builder {
                 return $builder
                     ->where('student_id', $user->id)
@@ -584,8 +645,8 @@ class LessonResource extends Resource
         }
 
         return match (auth()->user()?->role) {
-            \App\Enums\UserRole::Tutor => 'Моё расписание',
-            \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent => 'Мои уроки',
+            UserRole::Tutor => 'Моё расписание',
+            UserRole::Student, UserRole::Parent => 'Мои уроки',
             default => 'Уроки',
         };
     }
@@ -613,6 +674,6 @@ class LessonResource extends Resource
     {
         $user = auth()->user();
 
-        return in_array($user?->role, [\App\Enums\UserRole::Tutor, \App\Enums\UserRole::Student, \App\Enums\UserRole::Parent, \App\Enums\UserRole::Admin], true);
+        return in_array($user?->role, [UserRole::Tutor, UserRole::Student, UserRole::Parent, UserRole::Admin], true);
     }
 }

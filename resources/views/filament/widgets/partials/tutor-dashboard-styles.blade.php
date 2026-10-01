@@ -489,20 +489,56 @@
     /* ═══ SaaS подписка ═══════════════════════════════════════ */
 
     .tutor-comm-top {
-        display: flex; flex-wrap: wrap; align-items: baseline;
-        justify-content: space-between; gap: 8px 32px;
+        display: flex; flex-wrap: wrap; align-items: flex-start;
+        justify-content: space-between; gap: 12px 24px;
     }
     .tutor-comm-rate {
-        display: flex; align-items: baseline; gap: 12px;
+        display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+    }
+    .tutor-comm-plan-price {
+        display: inline-flex; align-items: baseline; gap: 8px; flex-shrink: 0;
     }
     .tutor-comm-rate-value {
-        font-size: clamp(1.875rem, 1.4rem + 2vw, 2.5rem);
+        font-size: clamp(1.75rem, 1.3rem + 2vw, 2.25rem);
         font-weight: 900; letter-spacing: -.02em; line-height: 1;
         font-variant-numeric: tabular-nums; color: #0C0A14;
     }
     .dark .tutor-comm-rate-value { color: #fff; }
-    .tutor-comm-rate-unit { font-size: 1.125rem; font-weight: 700; color: #9CA3AF; }
+    .tutor-comm-rate-unit {
+        font-size: 0.95rem; font-weight: 700; color: #6B7280;
+        white-space: nowrap; flex-shrink: 0;
+    }
+    .dark .tutor-comm-rate-unit { color: #9CA3AF; }
+    .tutor-comm-status-chip {
+        font-size: 11px; padding: 4px 10px;
+        white-space: nowrap; max-width: 100%;
+        overflow: hidden; text-overflow: ellipsis;
+        border-radius: 9999px;
+    }
     .tutor-comm-revenue { text-align: right; }
+    @media (max-width: 639px) {
+        .tutor-comm-top {
+            flex-direction: column;
+            gap: 12px;
+        }
+        .tutor-comm-revenue {
+            text-align: left;
+            width: 100%;
+            padding-top: 12px;
+            margin-top: 4px;
+            border-top: 1px dashed #E5E7EB;
+        }
+        .dark .tutor-comm-revenue { border-top-color: #374151; }
+        .tutor-chips {
+            flex-direction: column;
+        }
+        .tutor-chips .tutor-chip {
+            white-space: normal;
+            line-height: 1.35;
+            padding: 8px 12px;
+            justify-content: flex-start;
+        }
+    }
     .tutor-comm-revenue-value {
         margin: 2px 0 0; font-size: 1.375rem; font-weight: 900; letter-spacing: -.01em;
         font-variant-numeric: tabular-nums; color: #7D39EB; line-height: 1.1;

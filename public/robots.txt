@@ -1,12 +1,30 @@
 User-agent: *
 Allow: /
+Allow: /tutors
+Allow: /for-tutors
+Allow: /diagnostic
+Allow: /news
+Allow: /offer
+Allow: /privacy-policy
+Allow: /payment-security
+Allow: /refund-policy
+Allow: /contacts
 
 # Закрываем от индексации служебные и приватные разделы платформы
 Disallow: /admin/
+Disallow: /site-admin/
 Disallow: /api/
 Disallow: /checkout/
 Disallow: /cart/
 Disallow: /livewire/
+Disallow: /auth/
+Disallow: /login
+Disallow: /register
+Disallow: /account/
+Disallow: /logout
 
-Sitemap: https://edusfera.by/sitemap.xml
+# Исключаем технические параметры отслеживания для чистоты поискового индекса
+Clean-param: utm_source&utm_medium&utm_campaign&utm_content&utm_term&fbclid&gclid&_openstat /
+
 Host: https://edusfera.by
+Sitemap: https://edusfera.by/sitemap.xml

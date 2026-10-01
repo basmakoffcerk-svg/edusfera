@@ -1,0 +1,17 @@
+[Unit]
+Description=Edusfera Queue Worker
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=5s
+WorkingDirectory=/var/www/edusfera.by
+ExecStart=/usr/bin/php /var/www/edusfera.by/artisan queue:work --sleep=3 --tries=3 --max-time=3600 --timeout=120
+StandardOutput=append:/var/www/edusfera.by/storage/logs/worker.log
+StandardError=append:/var/www/edusfera.by/storage/logs/worker-error.log
+
+[Install]
+WantedBy=multi-user.target

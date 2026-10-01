@@ -3,8 +3,91 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $tutor->user->name }} — Edusfera</title>
-    <meta name="description" content="Профиль репетитора {{ $tutor->user->name }} на Edusfera. Онлайн-запись и безопасная оплата через платформу.">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @include('partials.pwa-meta')
+    @include('partials.analytics')
+    <title>{{ $tutor->user->name }} — Репетитор{{ !empty($tutor->subjects) ? ' по ' . implode(', ', $tutor->subjects) : '' }} | Edusfera</title>
+    <meta name="description" content="Репетитор {{ $tutor->user->name }}{{ !empty($tutor->subjects) ? ' (' . implode(', ', $tutor->subjects) . ')' : '' }} на Edusfera. {{ (float) $tutor->price_per_hour }} BYN/час. Онлайн-запись на уроки и интерактивный класс.">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="{{ route('tutors.show', $tutor->id) }}">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="profile">
+    <meta property="og:locale" content="ru_BY">
+    <meta property="og:site_name" content="Edusfera">
+    <meta property="og:title" content="{{ $tutor->user->name }} — Репетитор{{ !empty($tutor->subjects) ? ' (' . implode(', ', $tutor->subjects) . ')' : '' }}">
+    <meta property="og:description" content="Ставка: {{ (float) $tutor->price_per_hour }} BYN/час. Проверенный преподаватель на платформе Edusfera. Удобная запись.">
+    <meta property="og:url" content="{{ route('tutors.show', $tutor->id) }}">
+    <meta property="og:image" content="{{ $tutor->avatar_url ?: asset('og-image.png') }}">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $tutor->user->name }} — Edusfera">
+    <meta name="twitter:description" content="Репетитор{{ !empty($tutor->subjects) ? ' по ' . implode(', ', $tutor->subjects) : '' }}. Безопасная запись на уроки.">
+    <meta name="twitter:image" content="{{ $tutor->avatar_url ?: asset('og-image.png') }}">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": "https://edusfera.by/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Каталог репетиторов",
+              "item": "https://edusfera.by/tutors"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "{{ addslashes($tutor->user->name ?? 'Репетитор') }}",
+              "item": "{{ route('tutors.show', $tutor->id) }}"
+            }
+          ]
+        },
+        {
+          "@type": "Person",
+          "@id": "{{ route('tutors.show', $tutor->id) }}#person",
+          "name": "{{ addslashes($tutor->user->name ?? 'Репетитор') }}",
+          "jobTitle": "Репетитор{{ !empty($tutor->subjects) ? ' по ' . implode(', ', $tutor->subjects) : '' }}",
+          "url": "{{ route('tutors.show', $tutor->id) }}",
+          "image": "{{ $tutor->avatar_url ?: asset('og-image.png') }}",
+          "description": "{{ addslashes(Str::limit(preg_replace('/\s+/', ' ', strip_tags($tutor->bio ?? 'Репетитор на платформе Edusfera')), 160)) }}",
+          "worksFor": {
+            "@type": "EducationalOrganization",
+            "name": "Edusfera",
+            "url": "https://edusfera.by/"
+          },
+          "makesOffer": {
+            "@type": "Offer",
+            "price": "{{ (float) $tutor->price_per_hour }}",
+            "priceCurrency": "BYN",
+            "availability": "https://schema.org/InStock",
+            "url": "{{ route('tutors.show', $tutor->id) }}"
+          }
+          @if((float) $tutor->rating_avg > 0 && (int) ($tutor->rating_count ?? 1) > 0)
+          ,
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "{{ number_format((float)$tutor->rating_avg, 1) }}",
+            "bestRating": "5",
+            "worstRating": "1",
+            "ratingCount": "{{ max(1, (int) ($tutor->rating_count ?? 1)) }}"
+          }
+          @endif
+        }
+      ]
+    }
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -266,13 +349,19 @@
         $homeworkText = trim((string) ($tutor->homework_policy ?: 'Домашние задания и обратная связь обсуждаются индивидуально под цель ученика.'));
     @endphp
 
-    <div class="container">
+    <div class="container" style="padding-bottom: 4rem;">
         @include('partials.site-nav')
 
         <a href="{{ route('tutors.index') }}" class="tp-back">← Назад к каталогу</a>
 
         @if(session('booking_success'))
-            <div class="tp-success">{{ session('booking_success') }}</div>
+            <div class="tp-success" style="display:flex;align-items:center;gap:.75rem;background:#f0fdf4;border:1px solid #86efac;color:#166534;padding:1rem 1.25rem;border-radius:1rem;font-size:1rem;margin-bottom:1.5rem;box-shadow:0 4px 12px rgba(34,197,94,.08);">
+                <span style="font-size:1.5rem;">🎉</span>
+                <div>
+                    <strong style="display:block;margin-bottom:.2rem;">Занятие успешно забронировано!</strong>
+                    <span>{{ session('booking_success') }} Вы можете отслеживать статус в <a href="/admin/lessons" style="color:#15803d;text-decoration:underline;font-weight:700;">личном кабинете</a>.</span>
+                </div>
+            </div>
         @endif
 
         <div class="tp-grid">
@@ -281,8 +370,8 @@
                 <article class="tp-card">
                     <div class="tp-hero-grid">
                         <div class="tp-photo" aria-hidden="true">
-                            @if($tutor->avatar_path)
-                                <img src="{{ asset('storage/'.$tutor->avatar_path) }}" alt="{{ $maskedName }}">
+                            @if($tutor->avatar_url)
+                                <img src="{{ $tutor->avatar_url }}" alt="{{ $maskedName }}">
                             @else
                                 {{ mb_substr($maskedName, 0, 1) }}
                             @endif
@@ -290,7 +379,11 @@
                         <div>
                             <div class="tp-badges">
                                 <span class="tp-badge verify">✓ Диплом проверен</span>
-                                <span class="tp-badge safe">🛡️ Безопасная оплата</span>
+                                <span class="tp-badge safe">🛡️ Удобная бронь</span>
+                                <button type="button" class="tp-badge" onclick="shareTutorProfile()" style="cursor: pointer; background: #ede9fe; color: #7c3aed; border: 1px solid rgba(124,58,237,0.2); display: inline-flex; align-items: center; gap: 4px;" title="Поделиться профилем">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    Поделиться
+                                </button>
                             </div>
                             <h1 class="tp-name">{{ $maskedName }}</h1>
                             <p class="tp-spec">{{ $specialization }}</p>
@@ -445,7 +538,7 @@
                             </div>
 
                             <div>
-                                <span class="tp-form-label">Пакет оплаты</span>
+                                <span class="tp-form-label">Формат занятий</span>
                                 <div class="tp-packages">
                                     <label class="tp-package-option">
                                         <input type="radio" name="package" value="single" @checked($selectedPackageCode === 'single')>
@@ -498,7 +591,7 @@
 
                             <label class="tp-terms">
                                 <input type="checkbox" name="terms" value="1" required @checked(old('terms'))>
-                                <span>Согласен с условиями отмены и переноса. Оплата и история брони остаются внутри платформы.</span>
+                                <span>Согласен с условиями отмены и переноса занятий. Оплата напрямую преподавателю.</span>
                             </label>
                             @error('terms')<span class="tp-error">{{ $message }}</span>@enderror
 
@@ -526,7 +619,7 @@
                             @endforelse
                         </div>
                         <div class="tp-auth-box">
-                            <p>Чтобы зафиксировать время и безопасно оплатить урок, войдите или создайте аккаунт ученика или родителя.</p>
+                            <p>Чтобы зафиксировать время и забронировать урок, войдите или создайте аккаунт ученика или родителя.</p>
                             <div class="tp-auth-actions">
                                 <a href="/admin/login?redirect_to={{ urlencode(url()->full()) }}" class="btn btn-primary">Войти</a>
                                 <a href="/admin/register?redirect_to={{ urlencode(url()->full()) }}" class="btn btn-outline">Регистрация</a>
@@ -538,10 +631,10 @@
                 <!-- REVIEWS -->
                 <section id="reviews" class="tp-section">
                     <h2>Отзывы</h2>
-                    <p>Отзывы публикуются только после оплаченных уроков через Edusfera.</p>
+                    <p>Отзывы публикуются после проведённых уроков через Edusfera.</p>
                     <div class="tp-review-empty">
                         <strong>Пока нет опубликованных отзывов</strong>
-                        <span>После первых проведённых и оплаченных уроков здесь появятся отзывы с пометкой «Ученик подтверждён платформой».</span>
+                        <span>После проведённых уроков здесь появятся отзывы с пометкой «Ученик подтверждён платформой».</span>
                     </div>
                 </section>
             </div>
@@ -551,10 +644,10 @@
                 <section class="tp-card">
                     <div class="tp-price-label">Первый урок</div>
                     <div class="tp-price">{{ number_format($singlePrice, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/></div>
-                    <p class="tp-side-copy">Оплата через платформу. Контакты открываются после первого бронирования.</p>
+                    <p class="tp-side-copy">Оплата напрямую репетитору (на карту, ЕРИП или наличными). Платформа Edusfera не берёт комиссию.</p>
                     <div class="tp-actions">
                         <a href="#booking" class="btn btn-primary">Выбрать время</a>
-                        @if($tutor->intro_video_url)
+                        @if($tutor->intro_video_url && ($tutor->user && app(\App\Domain\Subscription\Services\SubscriptionFeatureGate::class)->canUseVideoIntro($tutor->user)))
                             <a href="{{ $tutor->intro_video_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Видео-визитка</a>
                         @endif
                         @if (!empty($canStartConversation))
@@ -602,10 +695,36 @@
                 <strong>{{ number_format($singlePrice, 2, '.', ' ') }}&nbsp;<x-byn-icon class="h-[0.9em] w-[0.9em] -mt-1"/> / 60 мин</strong>
                 <span>Пакеты и расписание ↑</span>
             </div>
-            <a href="#booking" class="btn btn-primary">Записаться</a>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" onclick="shareTutorProfile()" class="btn" style="background: #f1f5f9; color: #0f172a; padding: 0.6rem 0.8rem; border-radius: var(--radius); border: 1px solid var(--border);" title="Поделиться">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </button>
+                <a href="#booking" class="btn btn-primary" style="flex: 1;">Записаться</a>
+            </div>
         </div>
     </div>
     <script>
+        function shareTutorProfile() {
+            window.EdusferaHaptics?.tap();
+            const shareData = {
+                title: '{{ $maskedName }} — Репетитор на Edusfera',
+                text: 'Рекомендую преподавателя {{ $maskedName }} ({{ $specialization }}) на платформе Edusfera.',
+                url: window.location.href
+            };
+            if (navigator.share) {
+                navigator.share(shareData).catch((e) => {
+                    if (e.name !== 'AbortError') console.warn(e);
+                });
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert('Ссылка на анкету репетитора скопирована!');
+                }).catch(() => {
+                    prompt('Ссылка на анкету:', window.location.href);
+                });
+            } else {
+                prompt('Ссылка на анкету:', window.location.href);
+            }
+        }
         (() => {
             const packageForm = document.querySelector('[data-package-booking]');
             const packageInputs = document.querySelectorAll('input[type="radio"][name="package"]');
@@ -694,6 +813,44 @@
 
             render();
         })();
+
+        // Analytics tracking for tutor profile and booking funnel
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.trackEdusferaEvent === 'function') {
+                window.trackEdusferaEvent('tutor_view', {
+                    tutor_id: {{ $tutor->id }},
+                    tutor_name: @js($tutor->user->name ?? ''),
+                    price_per_hour: {{ (float) $tutor->price_per_hour }},
+                    subjects: @js($tutor->subjects ?? [])
+                });
+            }
+
+            // Track slot selection
+            document.querySelectorAll('.tp-slots input[name="slot"], .tp-slots input[name="slots[]"]').forEach(el => {
+                el.addEventListener('change', () => {
+                    if (el.checked && typeof window.trackEdusferaEvent === 'function') {
+                        window.trackEdusferaEvent('slot_click', {
+                            tutor_id: {{ $tutor->id }},
+                            slot: el.value
+                        });
+                    }
+                });
+            });
+
+            // Track booking submit
+            const bookingForms = document.querySelectorAll('.tp-booking-form');
+            bookingForms.forEach(form => {
+                form.addEventListener('submit', () => {
+                    if (typeof window.trackEdusferaEvent === 'function') {
+                        window.trackEdusferaEvent('booking_submit', {
+                            tutor_id: {{ $tutor->id }},
+                            is_package: form.hasAttribute('data-package-booking')
+                        });
+                    }
+                });
+            });
+        });
     </script>
+    @include('partials.pwa-prompt')
 </body>
 </html>

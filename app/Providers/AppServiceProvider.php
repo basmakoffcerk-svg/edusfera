@@ -23,12 +23,13 @@ use App\Policies\LessonPolicy;
 use App\Policies\TutorProfilePolicy;
 use App\Services\Lesson\EloquentLessonBooker;
 use App\Services\Lesson\EloquentLessonReader;
+use App\Services\Payment\AlfaBankPaymentGateway;
 use App\Services\Payment\DisabledPaymentGateway;
 use App\Services\Payment\MockPaymentGateway;
 use App\Services\Payment\PaymentGatewayInterface;
-use App\Services\Payment\AlfaBankPaymentGateway;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
@@ -51,8 +52,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(PaymentGatewayInterface::class, function () {
             return match (config('payments.gateway', 'mock')) {
-                'alfa', 'alfabank' => new \App\Services\Payment\AlfaBankPaymentGateway,
-                'webpay' => new \App\Services\Payment\AlfaBankPaymentGateway,
+                'alfa', 'alfabank' => new AlfaBankPaymentGateway,
                 'mock' => new MockPaymentGateway,
                 'disabled' => new DisabledPaymentGateway,
                 default => throw new InvalidArgumentException('Unknown payment gateway ['.config('payments.gateway').'].'),
@@ -110,7 +110,7 @@ class AppServiceProvider extends ServiceProvider
         Passport::tokensCan(config('oauth.scopes', []));
 
         // Поддержка разрешения репетитора по tutor_profile.id, user_id или email
-        \Illuminate\Support\Facades\Route::bind('tutor', function ($value) {
+        Route::bind('tutor', function ($value) {
             if ($value instanceof TutorProfile) {
                 return $value;
             }
@@ -199,10 +199,8 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        // M8: reject trivially weak passwords in production.
-        if (app()->isProduction() && strlen($password) < 16) {
-            report(new InvalidArgumentException('SITE_ADMIN_PASSWORD must be at least 16 characters in production.'));
-
+        // Reject trivially weak passwords in production (minimum 8 chars).
+        if (app()->isProduction() && strlen($password) < 8) {
             return;
         }
 

@@ -14,6 +14,7 @@ use App\Services\Payment\PaymentService;
 use App\Support\BynMoneyFormatter;
 use Filament\Facades\Filament;
 use Filament\Forms;
+use Filament\Forms\Form;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -28,7 +29,7 @@ class LessonRequestResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    public static function form(\Filament\Forms\Form $form): \Filament\Forms\Form
+    public static function form(Form $form): Form
     {
         return $form->schema([]);
     }
@@ -101,28 +102,39 @@ class LessonRequestResource extends Resource
                     ->toggleable(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->label('Детали')
-                    ->button()
-                    ->color('gray'),
                 Tables\Actions\Action::make('confirm')
                     ->label('Подтвердить')
                     ->color('success')
                     ->icon('heroicon-o-check-circle')
-                    ->visible(fn (Lesson $record): bool => $record->status === Lesson::STATUS_PENDING && $record->payment_status === Lesson::PAYMENT_PAID)
+                    ->button()
+                    ->visible(fn (Lesson $record): bool => $record->status === Lesson::STATUS_PENDING)
                     ->requiresConfirmation()
                     ->action(function (Lesson $record): void {
                         $record->update(['status' => Lesson::STATUS_CONFIRMED]);
                         $record->student?->notify(new LessonConfirmedNotification($record->fresh()));
                     }),
-                Tables\Actions\Action::make('meeting_link')
-                    ->label('Ссылка')
+                Tables\Actions\Action::make('open_classroom')
+                    ->label('Войти в класс')
                     ->icon('heroicon-o-video-camera')
+                    ->color('primary')
+                    ->button()
+                    ->url(fn (Lesson $record): string => route('classroom.show', $record))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Lesson $record): bool => in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true)),
+                Tables\Actions\ViewAction::make()
+                    ->label('Детали')
+                    ->button()
+                    ->color('gray'),
+                Tables\Actions\Action::make('meeting_link')
+                    ->label('Zoom/Meet')
+                    ->icon('heroicon-o-link')
+                    ->color('gray')
                     ->fillForm(fn (Lesson $record): array => ['meeting_link' => $record->meeting_link])
                     ->form([
                         Forms\Components\TextInput::make('meeting_link')
-                            ->label('Ссылка на встречу')
+                            ->label('Внешняя ссылка на встречу (Zoom / Google Meet)')
                             ->url()
+                            ->placeholder('https://meet.google.com/xyz-abcd-efg')
                             ->required(),
                     ])
                     ->action(fn (Lesson $record, array $data): bool => $record->update(['meeting_link' => $data['meeting_link']])),
@@ -134,12 +146,15 @@ class LessonRequestResource extends Resource
                     ->requiresConfirmation()
                     ->action(function (Lesson $record): void {
                         if ($record->payment_status === Lesson::PAYMENT_PAID) {
-                            app(PaymentService::class)->refundLessonPayment($record, 'lesson_cancelled');
-
-                            return;
+                            try {
+                                app(PaymentService::class)->refundLessonPayment($record, 'lesson_cancelled');
+                            } catch (\Throwable $e) {
+                                $record->update(['status' => Lesson::STATUS_CANCELLED]);
+                            }
+                        } else {
+                            $record->update(['status' => Lesson::STATUS_CANCELLED]);
                         }
 
-                        $record->update(['status' => Lesson::STATUS_CANCELLED]);
                         $record->student?->notify(new LessonCancelledNotification($record->fresh()));
                         $record->tutor?->notify(new LessonCancelledNotification($record->fresh()));
                     }),
@@ -204,9 +219,9 @@ class LessonRequestResource extends Resource
             return null;
         }
 
-        $count = \App\Models\Lesson::query()
+        $count = Lesson::query()
             ->where('tutor_id', $user->id)
-            ->where('status', \App\Models\Lesson::STATUS_PENDING)
+            ->where('status', Lesson::STATUS_PENDING)
             ->count();
 
         return $count > 0 ? (string) $count : null;

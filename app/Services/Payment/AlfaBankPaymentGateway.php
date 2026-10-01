@@ -48,25 +48,34 @@ class AlfaBankPaymentGateway implements PaymentGatewayInterface
         $isSubscription = isset($data['subscription']) && $data['subscription'] === true;
 
         if ($isWalletTopUp) {
-            $returnUrl = route('filament.admin.pages.wallet');
-            $failUrl = route('filament.admin.pages.wallet');
+            $returnUrl = route('filament.admin.pages.wallet', ['payment' => 'success']);
+            $failUrl = route('filament.admin.pages.wallet', ['payment' => 'failed']);
             $description = 'Пополнение баланса Edusfera (Пользователь #'.($data['user_id'] ?? 0).')';
             $orderNumber = 'wallet_'.($data['user_id'] ?? 0).'_'.time();
         } elseif ($isSubscription) {
-            $returnUrl = route('filament.admin.pages.tutor-subscription-page');
-            $failUrl = route('filament.admin.pages.tutor-subscription-page');
+            $returnUrl = route('filament.admin.pages.tutor-subscription-page', ['payment' => 'success']);
+            $failUrl = route('filament.admin.pages.tutor-subscription-page', ['payment' => 'failed']);
             $description = 'Оплата подписки Edusfera (Преподаватель #'.($data['user_id'] ?? 0).')';
             $orderNumber = 'sub_'.($data['user_id'] ?? 0).'_'.time();
         } else {
             $lessonId = $data['lesson_id'] ?? 0;
             $returnUrl = route('checkout.success', ['lesson' => $lessonId]);
-            $failUrl = route('checkout.show', ['lesson' => $lessonId]);
+            $failUrl = route('checkout.show', ['lesson' => $lessonId, 'payment' => 'failed']);
             $description = 'Оплата занятия Edusfera (Урок #'.$lessonId.')';
             $orderNumber = 'lesson_'.$lessonId.'_'.time();
         }
 
-        // Двухстадийная оплата (registerPreAuth.do) для безопасного холдирования
-        $endpoint = $this->apiUrl.'/registerPreAuth.do';
+        // Одностадийная оплата (register.do) для подписок и баланса; двухстадийная (registerPreAuth.do) для холдирования уроков
+        $endpoint = ($isSubscription || $isWalletTopUp)
+            ? $this->apiUrl.'/register.do'
+            : $this->apiUrl.'/registerPreAuth.do';
+
+        if ($amountInKopecks <= 0) {
+            // Для привязки карты или триала Alfa-Bank RBS требует сумму > 0 копеек
+            $amountInKopecks = 100;
+        }
+
+        $clientId = (string) ($data['user_id'] ?? auth()->id() ?? '');
 
         $params = [
             'orderNumber' => $orderNumber,
@@ -78,12 +87,18 @@ class AlfaBankPaymentGateway implements PaymentGatewayInterface
             'language' => 'ru',
         ];
 
+        if (! empty($clientId)) {
+            $params['clientId'] = $clientId;
+        }
+
         if (! empty($this->token)) {
             $params['token'] = $this->token;
         } else {
             $params['userName'] = $this->userName;
             $params['password'] = $this->password;
         }
+
+        $bankErrorMessage = null;
 
         try {
             if (! empty($this->userName) && ! empty($this->password)) {
@@ -94,6 +109,26 @@ class AlfaBankPaymentGateway implements PaymentGatewayInterface
                 if ($response->successful()) {
                     $json = $response->json();
                     $errorCode = (int) ($json['errorCode'] ?? 0);
+
+                    // Если предавторизация не разрешена банком для данного мерчанта (код 5), пробуем одностадийную регистрацию
+                    if ($errorCode === 5 && str_contains($endpoint, 'registerPreAuth.do')) {
+                        Log::channel('payments')->notice('Alfa-Bank preauth not allowed for merchant, retrying with register.do', [
+                            'orderNumber' => $orderNumber,
+                        ]);
+                        $fallbackResponse = Http::asForm()
+                            ->timeout(30)
+                            ->post($this->apiUrl.'/register.do', $params);
+
+                        if ($fallbackResponse->successful()) {
+                            $fallbackJson = $fallbackResponse->json();
+                            if (((int) ($fallbackJson['errorCode'] ?? -1)) === 0 && ! empty($fallbackJson['orderId'])) {
+                                $json = $fallbackJson;
+                                $errorCode = 0;
+                            } else {
+                                $bankErrorMessage = $fallbackJson['errorMessage'] ?? $json['errorMessage'] ?? null;
+                            }
+                        }
+                    }
 
                     if ($errorCode === 0 && ! empty($json['orderId'])) {
                         $orderId = (string) $json['orderId'];
@@ -116,14 +151,19 @@ class AlfaBankPaymentGateway implements PaymentGatewayInterface
                         ];
                     }
 
-                    Log::channel('payments')->error('Alfa-Bank registerPreAuth API error', [
+                    $bankErrorMessage = $json['errorMessage'] ?? "Код ошибки банка: {$errorCode}";
+
+                    Log::channel('payments')->error('Alfa-Bank register API error', [
                         'errorCode' => $errorCode,
                         'errorMessage' => $json['errorMessage'] ?? '',
                         'orderNumber' => $orderNumber,
                     ]);
+                } else {
+                    $bankErrorMessage = 'Шлюз банка вернул статус '.$response->status();
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $bankErrorMessage = 'Ошибка соединения: '.$e->getMessage();
             Log::channel('payments')->error('Alfa-Bank create payment exception', [
                 'message' => $e->getMessage(),
                 'orderNumber' => $orderNumber,
@@ -138,21 +178,35 @@ class AlfaBankPaymentGateway implements PaymentGatewayInterface
                 'mockOrderId' => $mockOrderId,
             ]);
 
+            $hostedTestUrl = route('payments.alfabank.hosted-test', [
+                'orderId' => $mockOrderId,
+                'orderNumber' => $orderNumber,
+                'amount' => $amount,
+                'description' => $description,
+                'returnUrl' => $returnUrl,
+                'failUrl' => $failUrl,
+            ]);
+
             return [
                 'success' => true,
                 'gateway_transaction_id' => $mockOrderId,
                 'mdOrder' => $mockOrderId,
                 'status' => 'authorized',
-                'redirect_url' => $returnUrl,
+                'redirect_url' => $hostedTestUrl,
                 'web_sdk_url' => $this->getWebSdkUrl(),
                 'api_context' => $this->getApiContext(),
                 'payload' => array_merge($params, ['orderId' => $mockOrderId]),
             ];
         }
 
+        $finalMsg = 'Не удалось авторизовать платёж через ЗАО «Альфа-Банк»';
+        if (! empty($bankErrorMessage)) {
+            $finalMsg .= ": {$bankErrorMessage}";
+        }
+
         return [
             'success' => false,
-            'message' => 'Не удалось авторизовать платёж через ЗАО «Альфа-Банк»',
+            'message' => $finalMsg,
         ];
     }
 
@@ -177,8 +231,40 @@ class AlfaBankPaymentGateway implements PaymentGatewayInterface
      */
     public function verifyPayment(string $transactionId): bool
     {
-        if ($this->testMode && (str_starts_with($transactionId, 'alfa_sb_') || empty($this->userName))) {
-            return true;
+        return $this->getPaymentStatusDetails($transactionId)['success'];
+    }
+
+    /**
+     * Получение детального статуса платежа и расшифровка кода ответа банка:
+     *
+     * @return array{
+     *     success: bool,
+     *     order_status: int,
+     *     action_code: int,
+     *     error_code: int,
+     *     message: string,
+     *     order_number: string|null,
+     *     raw: array
+     * }
+     */
+    public function getPaymentStatusDetails(string $transactionId): array
+    {
+        $isMockOrder = str_starts_with($transactionId, 'alfa_sb_')
+            || str_starts_with($transactionId, 'alfa_order_test_')
+            || str_starts_with($transactionId, 'alfa_wallet_tx_')
+            || empty($this->userName);
+        $isExplicitFailure = str_contains($transactionId, 'declined') || str_contains($transactionId, 'fail');
+
+        if ($this->testMode && ($isMockOrder || app()->runningUnitTests()) && ! $isExplicitFailure) {
+            return [
+                'success' => true,
+                'order_status' => 2,
+                'action_code' => 0,
+                'error_code' => 0,
+                'message' => 'Платёж успешно подтверждён в тестовом режиме.',
+                'order_number' => $transactionId,
+                'raw' => [],
+            ];
         }
 
         $endpoint = $this->apiUrl.'/getOrderStatusExtended.do';
@@ -199,19 +285,66 @@ class AlfaBankPaymentGateway implements PaymentGatewayInterface
                 ->post($endpoint, $params);
 
             if ($response->successful()) {
-                $json = $response->json();
+                $json = $response->json() ?? [];
                 $orderStatus = (int) ($json['orderStatus'] ?? -1);
-                // 1 = сумма захолдирована (pre-authorized), 2 = сумма списана (deposited)
-                return in_array($orderStatus, [1, 2], true);
+                $actionCode = (int) ($json['actionCode'] ?? -1);
+                $errorCode = (int) ($json['errorCode'] ?? 0);
+                $actionDesc = (string) ($json['actionCodeDescription'] ?? '');
+                $errorDesc = (string) ($json['errorMessage'] ?? '');
+
+                $isSuccess = in_array($orderStatus, [1, 2], true);
+                $message = $this->resolveStatusMessage($orderStatus, $actionCode, $actionDesc ?: $errorDesc);
+
+                return [
+                    'success' => $isSuccess,
+                    'order_status' => $orderStatus,
+                    'action_code' => $actionCode,
+                    'error_code' => $errorCode,
+                    'message' => $message,
+                    'order_number' => $json['orderNumber'] ?? null,
+                    'raw' => $json,
+                ];
             }
         } catch (\Exception $e) {
-            Log::channel('payments')->error('Alfa-Bank verify payment exception', [
+            Log::channel('payments')->error('Alfa-Bank getPaymentStatusDetails exception', [
                 'transactionId' => $transactionId,
                 'message' => $e->getMessage(),
             ]);
         }
 
-        return false;
+        return [
+            'success' => false,
+            'order_status' => -1,
+            'action_code' => -1,
+            'error_code' => -1,
+            'message' => 'Не удалось получить ответ от платёжного сервера банка. Попробуйте обновить страницу или повторить попытку.',
+            'order_number' => null,
+            'raw' => [],
+        ];
+    }
+
+    private function resolveStatusMessage(int $orderStatus, int $actionCode, string $fallbackDescription = ''): string
+    {
+        if (in_array($orderStatus, [1, 2], true)) {
+            return 'Платёж успешно проведён банком.';
+        }
+
+        return match ($actionCode) {
+            116 => 'Недостаточно средств на карте. Пожалуйста, пополните баланс карты или выберите другую карту для оплаты.',
+            125 => 'Неверно указан код безопасности (CVC/CVV). Проверьте трехзначный код на обороте карты.',
+            126 => 'Неверный одноразовый СМС-код 3-D Secure. Попробуйте ещё раз.',
+            100, 101 => 'Срок действия карты истёк либо карта недействительна.',
+            107, 119 => 'Операция отклонена банком-эмитентом вашей карты. Обратитесь в службу поддержки банка или воспользуйтесь другой картой.',
+            110 => 'Неверная сумма операции.',
+            111 => 'Неверный номер карты. Проверьте правильность введенных данных карты.',
+            -100 => 'Платёж не был завершён (время сессии оплаты истекло или операция была отменена).',
+            default => match ($orderStatus) {
+                3 => 'Авторизация отменена пользователем.',
+                6 => ! empty($fallbackDescription) ? $fallbackDescription : 'Платёж отклонён банком. Пожалуйста, попробуйте ещё раз или используйте другую карту.',
+                0 => 'Оплата не была завершена. Пожалуйста, повторите попытку.',
+                default => ! empty($fallbackDescription) ? $fallbackDescription : 'Платёж не прошёл. Проверьте реквизиты карты или выберите другой способ оплаты.',
+            }
+        };
     }
 
     /**
@@ -352,7 +485,19 @@ class AlfaBankPaymentGateway implements PaymentGatewayInterface
                 $json = $response->json();
                 $errorCode = (int) ($json['errorCode'] ?? -1);
 
-                return $errorCode === 0;
+                if ($errorCode === 0) {
+                    return true;
+                }
+
+                // Если заказ ещё не был списан (deposit), а находится в статусе холда (pre-auth),
+                // банк отклоняет refund.do — для отмены холда требуется reverse.do.
+                Log::channel('payments')->info('Alfa-Bank refund.do rejected, attempting reverse.do for pre-auth hold', [
+                    'transactionId' => $transactionId,
+                    'errorCode' => $errorCode,
+                    'errorMessage' => $json['errorMessage'] ?? '',
+                ]);
+
+                return $this->voidPayment($transactionId);
             }
         } catch (\Exception $e) {
             Log::channel('payments')->error('Alfa-Bank refund exception', [

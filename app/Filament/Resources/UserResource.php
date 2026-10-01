@@ -34,6 +34,15 @@ class UserResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Основные данные пользователя')
                     ->schema([
+                        Forms\Components\FileUpload::make('avatar')
+                            ->label('Аватарка / Фото профиля')
+                            ->image()
+                            ->avatar()
+                            ->disk('public')
+                            ->directory('avatars')
+                            ->visibility('public')
+                            ->columnSpanFull(),
+
                         Forms\Components\TextInput::make('name')
                             ->label('ФИО / Имя')
                             ->required()
@@ -68,10 +77,11 @@ class UserResource extends Resource
                             ->label('Новый пароль')
                             ->password()
                             ->revealable()
+                            ->required(fn (string $operation): bool => $operation === 'create')
                             ->minLength(8)
                             ->maxLength(255)
-                            ->dehydrated(false)
-                            ->helperText('Заполняйте только при необходимости сброса/изменения пароля'),
+                            ->dehydrated(fn (?string $state): bool => filled($state))
+                            ->helperText('Обязателен при создании. При редактировании заполняйте только для смены пароля'),
                     ]),
             ]);
     }
@@ -81,6 +91,11 @@ class UserResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
+                Tables\Columns\ImageColumn::make('avatar')
+                    ->label('Фото')
+                    ->disk('public')
+                    ->circular(),
+
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
                     ->sortable(),

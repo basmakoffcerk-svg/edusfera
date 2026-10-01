@@ -9,7 +9,6 @@ use App\Models\HomeworkAssignment;
 use App\Models\Lesson;
 use App\Models\TutorProfile;
 use App\Models\User;
-use App\Services\Ai\GeminiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -218,5 +217,154 @@ class AiCopilotControllerTest extends TestCase
             'success' => true,
             'reply' => 'Ловушка в части А заключается в знаке корня.',
         ]);
+    }
+
+    public function test_copilot_handles_persona_free_chat(): void
+    {
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => function ($request) {
+                $body = $request->data();
+                $systemInstruction = $body['systemInstruction']['parts'][0]['text'] ?? '';
+
+                $this->assertStringContainsString('живой образовательный брейншторм', $systemInstruction);
+
+                return Http::response([
+                    'candidates' => [
+                        [
+                            'content' => [
+                                'parts' => [
+                                    ['text' => 'Отличная идея для открытого обсуждения!'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ], 200);
+            },
+        ]);
+
+        $user = User::factory()->create([
+            'role' => UserRole::Tutor,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->postJson('/admin/ai-copilot/chat', [
+            'prompt' => 'Как повысить вовлеченность старшеклассников?',
+            'persona' => 'free_chat',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'reply' => 'Отличная идея для открытого обсуждения!',
+        ]);
+    }
+
+    public function test_copilot_injects_platform_context_for_parent(): void
+    {
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => function ($request) {
+                $body = $request->data();
+                $systemInstruction = $body['systemInstruction']['parts'][0]['text'] ?? '';
+
+                $this->assertStringContainsString('Родитель', $systemInstruction);
+                $this->assertStringContainsString('Степан Ученик', $systemInstruction);
+
+                return Http::response([
+                    'candidates' => [
+                        [
+                            'content' => [
+                                'parts' => [
+                                    ['text' => 'У вашего ребенка запланирован урок завтра.'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ], 200);
+            },
+        ]);
+
+        $parent = User::factory()->create([
+            'role' => UserRole::Parent,
+            'name' => 'Ольга Мама',
+        ]);
+
+        $student = User::factory()->create([
+            'role' => UserRole::Student,
+            'name' => 'Степан Ученик',
+        ]);
+
+        $tutor = User::factory()->create([
+            'role' => UserRole::Tutor,
+            'name' => 'Елена Учитель',
+        ]);
+
+        TutorProfile::create([
+            'user_id' => $tutor->id,
+            'subject' => 'Физика',
+            'hourly_rate' => 45.00,
+        ]);
+
+        Lesson::create([
+            'tutor_id' => $tutor->id,
+            'student_id' => $student->id,
+            'parent_id' => $parent->id,
+            'start_time' => now()->addDay(),
+            'end_time' => now()->addDay()->addHour(),
+            'duration_minutes' => 60,
+            'price' => 45.00,
+            'platform_commission' => 5.00,
+            'net_amount' => 40.00,
+            'status' => Lesson::STATUS_CONFIRMED,
+            'notes' => 'Законы Ньютона',
+        ]);
+
+        $this->actingAs($parent);
+
+        $response = $this->postJson('/admin/ai-copilot/chat', [
+            'prompt' => 'Когда следующий урок у сына?',
+            'persona' => 'default',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'reply' => 'У вашего ребенка запланирован урок завтра.',
+        ]);
+    }
+
+    public function test_copilot_solve_task_endpoint(): void
+    {
+        Http::fake([
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                ['text' => "### Пошаговое решение:\n1. ОДЗ: x > 0\n2. Ответ: 4"],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $user = User::factory()->create([
+            'role' => UserRole::Admin,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->postJson('/admin/ai-copilot/solve-task', [
+            'task' => 'Решите уравнение: log2(x) = 2',
+            'subject' => 'Математика',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+        ]);
+        $this->assertStringContainsString('Пошаговое решение', (string) $response->json('result'));
+        $this->assertStringContainsString('Ответ: 4', (string) $response->json('result'));
     }
 }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 class LedgerClient
 {
     private string $baseUrl;
+
     private bool $enabled;
 
     public function __construct()
@@ -28,7 +29,7 @@ class LedgerClient
      */
     public function createWallet(string|int $userId, string $currency = 'BYN'): ?string
     {
-        if (!$this->enabled) {
+        if (! $this->enabled) {
             return null;
         }
 
@@ -64,7 +65,7 @@ class LedgerClient
      */
     public function getWalletByUserId(string|int $userId): ?array
     {
-        if (!$this->enabled) {
+        if (! $this->enabled) {
             return null;
         }
 
@@ -99,7 +100,7 @@ class LedgerClient
      */
     public function getBalance(string $walletId): ?array
     {
-        if (!$this->enabled) {
+        if (! $this->enabled) {
             return null;
         }
 
@@ -137,7 +138,7 @@ class LedgerClient
         string $status,
         ?string $externalId = null
     ): ?array {
-        if (!$this->enabled) {
+        if (! $this->enabled) {
             return null;
         }
 
@@ -184,7 +185,7 @@ class LedgerClient
      */
     public function createTransfer(array $postings, ?string $externalId = null): ?array
     {
-        if (!$this->enabled) {
+        if (! $this->enabled) {
             return null;
         }
 
@@ -228,7 +229,7 @@ class LedgerClient
      */
     public function updateTransactionStatus(string $transactionId, string $status): ?array
     {
-        if (!$this->enabled) {
+        if (! $this->enabled) {
             return null;
         }
 
@@ -263,7 +264,7 @@ class LedgerClient
      */
     public function updateStatusByExternalId(string $externalId, string $status): ?array
     {
-        if (!$this->enabled) {
+        if (! $this->enabled) {
             return null;
         }
 
@@ -299,10 +300,11 @@ class LedgerClient
     private function generateJwtToken(): string
     {
         $privateKeyPath = storage_path('oauth-private.key');
-        if (!file_exists($privateKeyPath)) {
+        if (! file_exists($privateKeyPath)) {
             // Если в тестах/локально файл ключа отсутствует, используем заглушку
             // для бесшовного прохождения тестов без пре-генерации ключей.
             Log::warning('Приватный ключ Passport не найден. Использование временного JWT токена.');
+
             return 'fake-token-unsigned';
         }
 
@@ -318,16 +320,16 @@ class LedgerClient
         $base64UrlHeader = $this->base64UrlEncode($header);
         $base64UrlPayload = $this->base64UrlEncode($payload);
 
-        $signatureInput = $base64UrlHeader . '.' . $base64UrlPayload;
+        $signatureInput = $base64UrlHeader.'.'.$base64UrlPayload;
 
         $signature = '';
-        if (!openssl_sign($signatureInput, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+        if (! openssl_sign($signatureInput, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
             throw new \RuntimeException('Не удалось подписать JWT через OpenSSL');
         }
 
         $base64UrlSignature = $this->base64UrlEncode($signature);
 
-        return $base64UrlHeader . '.' . $base64UrlPayload . '.' . $base64UrlSignature;
+        return $base64UrlHeader.'.'.$base64UrlPayload.'.'.$base64UrlSignature;
     }
 
     private function base64UrlEncode(string $data): string

@@ -6,6 +6,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
@@ -109,7 +110,7 @@ class ThrottleApiTest extends TestCase
     public function test_limiter_is_registered(): void
     {
         // Требование 17.1: rate-limiter `api.v1` определён.
-        $limiter = app(\Illuminate\Cache\RateLimiter::class)
+        $limiter = app(RateLimiter::class)
             ->limiter(RouteServiceProvider::API_V1_LIMITER);
 
         $this->assertNotNull(

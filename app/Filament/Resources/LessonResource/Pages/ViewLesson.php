@@ -17,12 +17,18 @@ class ViewLesson extends ViewRecord
     {
         return [
             Actions\Action::make('open_classroom')
-                ->label('Войти в класс')
+                ->label(fn (Lesson $record): string => (! config('classroom.enabled', false) && ! empty($record->meeting_link)) ? 'Подключиться к уроку' : 'Войти в класс')
                 ->icon('heroicon-o-video-camera')
                 ->color('primary')
-                ->url(fn (Lesson $record): string => route('classroom.show', $record))
-                ->visible(fn (Lesson $record): bool => $record->payment_status === Lesson::PAYMENT_PAID
-                    && in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true)),
+                ->url(function (Lesson $record): string {
+                    if (! config('classroom.enabled', false) && ! empty($record->meeting_link) && str_starts_with($record->meeting_link, 'http')) {
+                        return $record->meeting_link;
+                    }
+
+                    return route('classroom.show', $record);
+                })
+                ->openUrlInNewTab(fn (Lesson $record): bool => ! config('classroom.enabled', false) && ! empty($record->meeting_link) && str_starts_with($record->meeting_link, 'http'))
+                ->visible(fn (Lesson $record): bool => in_array($record->status, [Lesson::STATUS_CONFIRMED, Lesson::STATUS_COMPLETED], true)),
         ];
     }
 }

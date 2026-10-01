@@ -8,14 +8,11 @@ use App\Domain\Subscription\Enums\InvoiceStatus;
 use App\Domain\Subscription\Enums\SubscriptionPlan;
 use App\Domain\Subscription\Enums\SubscriptionStatus;
 use App\Domain\Subscription\Models\Subscription;
-use App\Domain\Subscription\Models\SubscriptionInvoice;
 use App\Domain\Subscription\Services\SubscriptionFeatureGate;
 use App\Domain\Subscription\Services\SubscriptionService;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Notifications\SubscriptionGracePeriodNotification;
-use App\Services\Payment\AlfaBankPaymentGateway;
-use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
@@ -26,41 +23,42 @@ class SubscriptionTest extends TestCase
 
     public function test_subscription_plans_pricing_and_features(): void
     {
-        // START Plan
-        $this->assertEquals(2900, SubscriptionPlan::START->monthlyPriceKopecks());
-        $this->assertEquals(29, SubscriptionPlan::START->monthlyPriceByn());
-        $this->assertEquals(29000, SubscriptionPlan::START->yearlyPriceKopecks());
-        $this->assertEquals(290, SubscriptionPlan::START->yearlyPriceByn());
-        $this->assertNull(SubscriptionPlan::START->maxResponsesPerMonth());
+        // START / BASIC Plan
+        $this->assertEquals(2000, SubscriptionPlan::START->monthlyPriceKopecks());
+        $this->assertEquals(20, SubscriptionPlan::START->monthlyPriceByn());
+        $this->assertEquals(19200, SubscriptionPlan::START->yearlyPriceKopecks());
+        $this->assertEquals(192, SubscriptionPlan::START->yearlyPriceByn());
+        $this->assertEquals(0, SubscriptionPlan::START->maxResponsesPerMonth());
 
         $startFeatures = SubscriptionPlan::START->features();
         $this->assertCount(5, $startFeatures);
-        $this->assertContains('Виртуальный класс (SFU)', $startFeatures);
-        $this->assertContains('Интерактивная доска (Workspace)', $startFeatures);
         $this->assertContains('CRM и расписание уроков', $startFeatures);
-        $this->assertContains('Неограниченно учеников', $startFeatures);
-        $this->assertContains('Персональная ссылка для записи', $startFeatures);
 
         // PRO Plan
-        $this->assertEquals(5900, SubscriptionPlan::PRO->monthlyPriceKopecks());
-        $this->assertEquals(59, SubscriptionPlan::PRO->monthlyPriceByn());
-        $this->assertEquals(59000, SubscriptionPlan::PRO->yearlyPriceKopecks());
-        $this->assertEquals(590, SubscriptionPlan::PRO->yearlyPriceByn());
-        $this->assertNull(SubscriptionPlan::PRO->maxResponsesPerMonth());
+        $this->assertEquals(4000, SubscriptionPlan::PRO->monthlyPriceKopecks());
+        $this->assertEquals(40, SubscriptionPlan::PRO->monthlyPriceByn());
+        $this->assertEquals(38400, SubscriptionPlan::PRO->yearlyPriceKopecks());
+        $this->assertEquals(384, SubscriptionPlan::PRO->yearlyPriceByn());
+        $this->assertEquals(10, SubscriptionPlan::PRO->maxResponsesPerMonth());
 
         $proFeatures = SubscriptionPlan::PRO->features();
-        $this->assertCount(5, $proFeatures);
-        $this->assertContains('Все возможности тарифа «Старт»', $proFeatures);
+        $this->assertCount(7, $proFeatures);
+        $this->assertContains('Все возможности тарифа «Стандарт»', $proFeatures);
         $this->assertContains('ИИ-диагностика знаний (тесты РИКЗ)', $proFeatures);
         $this->assertContains('ИИ-помощник (конспекты, ДЗ, тесты)', $proFeatures);
-        $this->assertContains('Авто-НПД (чеки МНС РБ)', $proFeatures);
-        $this->assertContains('Персональный брендинг комнат', $proFeatures);
+
+        // PREMIUM Plan
+        $this->assertEquals(6000, SubscriptionPlan::PREMIUM->monthlyPriceKopecks());
+        $this->assertEquals(60, SubscriptionPlan::PREMIUM->monthlyPriceByn());
+        $this->assertEquals(57600, SubscriptionPlan::PREMIUM->yearlyPriceKopecks());
+        $this->assertEquals(576, SubscriptionPlan::PREMIUM->yearlyPriceByn());
+        $this->assertNull(SubscriptionPlan::PREMIUM->maxResponsesPerMonth());
 
         // BASIC Plan is alias to START
         $this->assertEquals(SubscriptionPlan::START->monthlyPriceKopecks(), SubscriptionPlan::BASIC->monthlyPriceKopecks());
         $this->assertEquals(SubscriptionPlan::START->yearlyPriceKopecks(), SubscriptionPlan::BASIC->yearlyPriceKopecks());
         $this->assertEquals(SubscriptionPlan::START->features(), SubscriptionPlan::BASIC->features());
-        $this->assertNull(SubscriptionPlan::BASIC->maxResponsesPerMonth());
+        $this->assertEquals(0, SubscriptionPlan::BASIC->maxResponsesPerMonth());
     }
 
     public function test_subscription_status_is_operational(): void
@@ -178,7 +176,7 @@ class SubscriptionTest extends TestCase
         $this->assertEquals('card_token_abc', $active->payment_token);
         $this->assertDatabaseHas('subscription_invoices', [
             'subscription_id' => $active->id,
-            'amount_kopecks' => 5900,
+            'amount_kopecks' => 4000,
             'status' => InvoiceStatus::PAID->value,
             'payment_method' => 'card',
         ]);

@@ -71,8 +71,8 @@ class BookingServiceTest extends TestCase
             'id' => $lesson->id,
             'tutor_id' => $tutor->id,
             'student_id' => $student->id,
-            'status' => Lesson::STATUS_CONFIRMED,
-            'payment_status' => Lesson::PAYMENT_PAID,
+            'status' => Lesson::STATUS_PENDING,
+            'payment_status' => Lesson::PAYMENT_UNPAID,
             'price' => '100.00',
             'platform_commission' => '0.00',
             'net_amount' => '100.00',
@@ -80,8 +80,9 @@ class BookingServiceTest extends TestCase
             'package_lessons' => 1,
             'package_total' => '100.00',
             'package_discount' => '0.00',
-            'payment_lock_expires_at' => null,
         ]);
+
+        $this->assertNull($lesson->payment_lock_expires_at);
 
         Notification::assertSentTo($student, LessonBookedStudentNotification::class);
         Notification::assertSentTo($tutor, LessonBookedTutorNotification::class);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Metrics;
 
+use App\Providers\MetricsServiceProvider;
 use Illuminate\Support\Facades\DB;
 use Prometheus\CollectorRegistry;
 use Prometheus\RenderTextFormat;
@@ -16,7 +17,7 @@ use Throwable;
 /**
  * Обёртка над CollectorRegistry из promphp/prometheus_client_php.
  *
- * Регистрируется синглтоном в контейнере (см. {@see \App\Providers\MetricsServiceProvider}).
+ * Регистрируется синглтоном в контейнере (см. {@see MetricsServiceProvider}).
  * Предоставляет удобные хелперы для регистрации и обновления counters, histograms,
  * gauges, а также метод {@see render()} для экспорта в Prometheus exposition format.
  *

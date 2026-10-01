@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\UserRole;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Crypt;
@@ -91,7 +93,7 @@ class MultiAccountService
 
         // Log in as the target user via the 'web' guard and Filament auth
         $guard->login($user, remember: true);
-        \Filament\Facades\Filament::auth()->login($user, remember: true);
+        Filament::auth()->login($user, remember: true);
 
         // Regenerate session to prevent fixation attacks
         session()->regenerate();
@@ -124,9 +126,9 @@ class MultiAccountService
     /**
      * Get role label in Russian.
      */
-    public static function roleLabel(string|\App\Enums\UserRole|null $role): string
+    public static function roleLabel(string|UserRole|null $role): string
     {
-        if ($role instanceof \App\Enums\UserRole) {
+        if ($role instanceof UserRole) {
             $role = $role->value;
         }
 

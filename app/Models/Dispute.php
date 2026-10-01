@@ -13,8 +13,11 @@ class Dispute extends Model
     use HasFactory;
 
     public const STATUS_OPEN = 'open';
+
     public const STATUS_RESOLVED_REFUNDED = 'resolved_refunded';
+
     public const STATUS_RESOLVED_PAYOUT = 'resolved_payout';
+
     public const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [

@@ -1,10 +1,17 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\Filament\AdminPanelProvider;
+use App\Providers\Filament\SiteAdminPanelProvider;
+use App\Providers\MetricsServiceProvider;
+use App\Providers\RouteServiceProvider;
+use Laravel\Passport\PassportServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\MetricsServiceProvider::class,
-    App\Providers\RouteServiceProvider::class,
-    App\Providers\Filament\AdminPanelProvider::class,
-    App\Providers\Filament\SiteAdminPanelProvider::class,
-    Laravel\Passport\PassportServiceProvider::class,
+    AppServiceProvider::class,
+    MetricsServiceProvider::class,
+    RouteServiceProvider::class,
+    AdminPanelProvider::class,
+    SiteAdminPanelProvider::class,
+    PassportServiceProvider::class,
 ];

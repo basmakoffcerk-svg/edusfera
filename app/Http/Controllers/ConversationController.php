@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\Lesson;
 use App\Models\TutorProfile;
 use App\Services\ChatService;
@@ -14,7 +15,7 @@ class ConversationController extends Controller
     public function startWithTutor(TutorProfile $tutor, ChatService $chatService): RedirectResponse
     {
         $user = auth()->user();
-        abort_unless($user && in_array($user->role, [\App\Enums\UserRole::Student, \App\Enums\UserRole::Parent], true), 403);
+        abort_unless($user && in_array($user->role, [UserRole::Student, UserRole::Parent], true), 403);
 
         $conversation = $chatService->getOrCreateConversation(
             tutorId: $tutor->user_id,

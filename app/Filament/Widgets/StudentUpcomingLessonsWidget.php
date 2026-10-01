@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Widgets;
 
 use App\Models\Lesson;
+use App\Models\User;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,11 +26,11 @@ class StudentUpcomingLessonsWidget extends Widget
 
     protected function getViewData(): array
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         // Get up to 3 upcoming or currently running lessons
-        $lessonsRelation = $user->role === 'parent' ? $user->parentLessons() : $user->studentLessons();
+        $lessonsRelation = $user->isParent() ? $user->parentLessons() : $user->studentLessons();
 
         $upcomingLessons = $lessonsRelation
             ->with(['tutor.tutorProfile'])

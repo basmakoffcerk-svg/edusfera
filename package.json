@@ -16,7 +16,10 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@excalidraw/excalidraw": "^0.18.1",
         "@vitejs/plugin-react": "^5.2.0",
+        "livekit-client": "^2.22.3",
+        "livekit-server-sdk": "^2.19.1",
         "lucide-react": "^1.31.0",
         "motion": "^13.1.0",
         "react": "^19.2.8",

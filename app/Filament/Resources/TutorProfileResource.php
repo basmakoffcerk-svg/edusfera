@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use App\Enums\UserRole;
 use App\Filament\Resources\TutorProfileResource\Pages;
 use App\Models\TutorProfile;
+use App\Services\TutorVerificationService;
 use App\Support\BynMoneyFormatter;
 use Filament\Facades\Filament;
 use Filament\Forms;
+use Filament\Forms\Components\Component;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
@@ -131,7 +132,7 @@ class TutorProfileResource extends Resource
     }
 
     /**
-     * @return array<int, \Filament\Forms\Components\Component>
+     * @return array<int, Component>
      */
     private static function tutorSchema(): array
     {
@@ -151,7 +152,9 @@ class TutorProfileResource extends Resource
                         Forms\Components\FileUpload::make('avatar_path')
                             ->label('Портретное фото')
                             ->image()
+                            ->disk('public')
                             ->directory('avatars')
+                            ->visibility('public')
                             ->avatar()
                             ->imageEditor()
                             ->required()
@@ -269,6 +272,7 @@ class TutorProfileResource extends Resource
                                 Forms\Components\TextInput::make('intro_video_url')
                                     ->label('Ссылка на видео-визитку')
                                     ->url()
+                                    ->helperText('Отображается в анкете каталога для репетиторов с тарифом «Премиум» (YouTube, RuTube, VK Видео).')
                                     ->placeholder('https://youtu.be/...'),
                                 Forms\Components\TextInput::make('trial_lesson_minutes')
                                     ->label('Пробный созвон (минут)')
@@ -290,19 +294,11 @@ class TutorProfileResource extends Resource
                                 'none' => 'Нет статуса (Физ. лицо)',
                             ])
                             ->required(),
-                        Forms\Components\TextInput::make('unp')
-                            ->label('УНП (9 цифр)')
-                            ->length(9)
-                            ->regex('/^\d{9}$/')
-                            ->required()
-                            ->helperText('Используется для сплитования выплат через WebPAY. Обязательно верифицируется.'),
-                        Forms\Components\TextInput::make('payout_account')
-                            ->label('Расчетный счет / Номер карты для выплат')
-                            ->required()
-                            ->helperText('Реквизиты для перечисления 85% стоимости уроков.'),
                         Forms\Components\FileUpload::make('diploma_path')
                             ->label('Диплом / сертификат')
+                            ->disk('public')
                             ->directory('diplomas')
+                            ->visibility('public')
                             ->required()
                             ->helperText("Документы не публикуются. Нужны модератору для бейджа '✓ Проверенный специалист'."),
                         Forms\Components\Checkbox::make('verification_consent')
@@ -333,7 +329,7 @@ class TutorProfileResource extends Resource
     }
 
     /**
-     * @return array<int, \Filament\Forms\Components\Component>
+     * @return array<int, Component>
      */
     private static function adminSchema(): array
     {
@@ -392,10 +388,18 @@ class TutorProfileResource extends Resource
                             Forms\Components\FileUpload::make('avatar_path')
                                 ->label('Фото профиля')
                                 ->image()
+                                ->disk('public')
+                                ->visibility('public')
+                                ->openable()
+                                ->downloadable()
                                 ->disabled()
                                 ->dehydrated(false),
                             Forms\Components\FileUpload::make('diploma_path')
                                 ->label('Диплом / сертификат')
+                                ->disk('public')
+                                ->visibility('public')
+                                ->openable()
+                                ->downloadable()
                                 ->disabled()
                                 ->dehydrated(false),
                         ]),
@@ -435,6 +439,7 @@ class TutorProfileResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('avatar_path')
                     ->label('Фото')
+                    ->disk('public')
                     ->circular(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Имя')
@@ -503,19 +508,15 @@ class TutorProfileResource extends Resource
                     ->color('success')
                     ->visible(fn (): bool => self::isAdminContext())
                     ->requiresConfirmation()
+                    ->modalHeading('Одобрить анкету репетитора?')
+                    ->modalDescription('Профиль получит статус «✓ Диплом проверен», будет опубликован в каталоге, а репетитор получит мгновенное уведомление.')
+                    ->modalSubmitActionLabel('Да, одобрить')
                     ->action(function (TutorProfile $record): void {
-                        $record->update([
-                            'verification_status' => 'approved',
-                            'is_verified' => true,
-                        ]);
-
-                        $record->user?->update([
-                            'is_verified' => true,
-                        ]);
+                        app(TutorVerificationService::class)->approve($record, auth()->user());
 
                         Notification::make()
                             ->title('Анкета одобрена')
-                            ->body('Профиль опубликован в каталоге.')
+                            ->body('Профиль опубликован в каталоге, репетитор получил уведомление.')
                             ->success()
                             ->send();
                     }),
@@ -524,20 +525,25 @@ class TutorProfileResource extends Resource
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->visible(fn (): bool => self::isAdminContext())
-                    ->requiresConfirmation()
-                    ->action(function (TutorProfile $record): void {
-                        $record->update([
-                            'verification_status' => 'rejected',
-                            'is_verified' => false,
-                        ]);
-
-                        $record->user?->update([
-                            'is_verified' => false,
-                        ]);
+                    ->modalHeading('Отклонить анкету репетитора?')
+                    ->modalDescription('Профиль будет снят с публикации. Репетитору будет отправлено уведомление с причиной отклонения.')
+                    ->modalSubmitActionLabel('Отклонить анкету')
+                    ->form([
+                        Forms\Components\Textarea::make('reason')
+                            ->label('Причина отклонения / комментарий для репетитора')
+                            ->placeholder('Например: Скан диплома не читается, пожалуйста, прикрепите более четкий снимок...')
+                            ->rows(3),
+                    ])
+                    ->action(function (TutorProfile $record, array $data): void {
+                        app(TutorVerificationService::class)->reject(
+                            $record,
+                            auth()->user(),
+                            $data['reason'] ?? null
+                        );
 
                         Notification::make()
                             ->title('Анкета отклонена')
-                            ->body('Профиль снят с публикации.')
+                            ->body('Профиль снят с публикации, репетитору отправлено уведомление.')
                             ->danger()
                             ->send();
                     }),
@@ -550,20 +556,18 @@ class TutorProfileResource extends Resource
                     ->color('success')
                     ->visible(fn (): bool => self::isAdminContext())
                     ->requiresConfirmation()
+                    ->modalHeading('Одобрить выбранные анкеты?')
+                    ->modalDescription('Выбранные профили будут опубликованы в каталоге, а репетиторы получат уведомления.')
                     ->action(function ($records): void {
+                        $service = app(TutorVerificationService::class);
+                        $admin = auth()->user();
                         foreach ($records as $record) {
-                            $record->update([
-                                'verification_status' => 'approved',
-                                'is_verified' => true,
-                            ]);
-
-                            $record->user?->update([
-                                'is_verified' => true,
-                            ]);
+                            $service->approve($record, $admin);
                         }
 
                         Notification::make()
                             ->title('Выбранные анкеты одобрены')
+                            ->body('Профили опубликованы, репетиторы получили уведомления.')
                             ->success()
                             ->send();
                     }),
@@ -574,15 +578,10 @@ class TutorProfileResource extends Resource
                     ->visible(fn (): bool => self::isAdminContext())
                     ->requiresConfirmation()
                     ->action(function ($records): void {
+                        $service = app(TutorVerificationService::class);
+                        $admin = auth()->user();
                         foreach ($records as $record) {
-                            $record->update([
-                                'verification_status' => 'rejected',
-                                'is_verified' => false,
-                            ]);
-
-                            $record->user?->update([
-                                'is_verified' => false,
-                            ]);
+                            $service->reject($record, $admin);
                         }
 
                         Notification::make()

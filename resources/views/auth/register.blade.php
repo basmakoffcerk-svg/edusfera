@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @include('partials.pwa-meta')
     <title>Вход и Регистрация — Edusfera</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,5 +21,6 @@
 </head>
 <body class="aurora-body bg-black text-white antialiased font-sans min-h-screen selection:bg-[#C6FF33] selection:text-black">
     <div id="aurora-auth" class="w-full min-h-screen"></div>
+    @include('partials.pwa-prompt')
 </body>
 </html>

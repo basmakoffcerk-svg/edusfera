@@ -172,7 +172,7 @@ class AuroraAuthBackendTest extends TestCase
                 'success' => true,
                 'role' => 'tutor',
                 'isTutor' => true,
-                'redirect' => '/admin',
+                'redirect' => '/admin/tutor-subscription-page?onboarding=1',
             ]);
 
         $user = User::where('email', 'sergey.tutor@edusfera.by')->firstOrFail();
@@ -187,6 +187,7 @@ class AuroraAuthBackendTest extends TestCase
         $this->assertEquals(SubscriptionPlan::START, $sub->plan);
         $this->assertEquals(SubscriptionStatus::TRIAL, $sub->status);
         $this->assertTrue($sub->isActive());
+        $this->assertFalse($sub->is_onboarded);
 
         $this->assertAuthenticatedAs($user);
         $this->assertEquals($user->id, Filament::auth()->id());
@@ -202,5 +203,23 @@ class AuroraAuthBackendTest extends TestCase
         $this->assertEquals('Ученик', MultiAccountService::roleLabel('student'));
         $this->assertEquals('Родитель', MultiAccountService::roleLabel(UserRole::Parent));
         $this->assertEquals('Родитель', MultiAccountService::roleLabel('parent'));
+    }
+
+    public function test_register_with_existing_email_returns_friendly_russian_error(): void
+    {
+        User::factory()->create([
+            'email' => 'basmakoffcerk@gmail.com',
+        ]);
+
+        $response = $this->postJson('/api/auth/register', [
+            'firstName' => 'Коля',
+            'lastName' => 'Просторов',
+            'email' => 'basmakoffcerk@gmail.com',
+            'password' => 'Password123!',
+            'role' => 'student',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertStringContainsString('Пользователь с таким e-mail уже зарегистрирован', json_encode($response->json(), JSON_UNESCAPED_UNICODE));
     }
 }

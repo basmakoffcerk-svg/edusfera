@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Classroom;
 
 use App\Contracts\Classroom\ClassroomTokenIssuer;
+use App\Domain\Classroom\RsaClassroomTokenIssuer;
 use App\Domain\Subscription\Services\SubscriptionFeatureGate;
 use App\Exceptions\LessonAccessDeniedException;
 use App\Exceptions\LessonNotFoundException;
@@ -12,13 +13,14 @@ use App\Http\Api\V1\Resources\Dto\ClassroomTokenDto;
 use App\Models\Lesson;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
+use Tests\Architecture\LayerIsolationTest;
 
 /**
  * Application-сервис, обслуживающий эндпоинт
  * `GET /api/v1/lessons/{id}/classroom-token` (требования 11.5, 11.6).
  *
  * ── Зачем отдельный сервис ────────────────────────────────────────────────
- * Архитектурный инвариант (требование 14.2, {@see \Tests\Architecture\LayerIsolationTest})
+ * Архитектурный инвариант (требование 14.2, {@see LayerIsolationTest})
  * запрещает классам под `app/Http/Api/V1/*` ссылаться на `App\Models\*`. Поэтому
  * вся работа с Eloquent (резолв урока/пользователя, проверка доступа) вынесена
  * сюда, в `app/Services/*`, где доступ к моделям разрешён. Контроллер лишь
@@ -95,7 +97,7 @@ final class ClassroomTokenService
 
     /**
      * room id определяется тем же способом, что и в issuer
-     * ({@see \App\Domain\Classroom\RsaClassroomTokenIssuer}): из активной
+     * ({@see RsaClassroomTokenIssuer}): из активной
      * classroom-сессии, либо детерминированный fallback `lesson-{id}`.
      */
     private function resolveRoom(Lesson $lesson): string

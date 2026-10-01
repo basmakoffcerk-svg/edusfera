@@ -3,10 +3,15 @@
 declare(strict_types=1);
 
 return [
+    'enabled' => env('CLASSROOM_ENABLED', true),
+    'livekit_host' => env('LIVEKIT_URL', env('LIVEKIT_HOST', 'wss://edusfera-iae194s8.livekit.cloud')),
+    'livekit_api_key' => env('LIVEKIT_API_KEY', env('LIVEKIT_KEY', '')),
+    'livekit_api_secret' => env('LIVEKIT_API_SECRET', env('LIVEKIT_SECRET', '')),
     'media_server_url' => env('MEDIA_SERVER_URL', 'wss://media.edusfera.by'),
     'media_server_internal_url' => env('MEDIA_SERVER_INTERNAL_URL', 'http://localhost:8088'),
     'jwt_secret' => env('CLASSROOM_JWT_SECRET'),
     'jwt_ttl' => (int) env('CLASSROOM_JWT_TTL', 3600),
+    'jitsi_domain' => env('JITSI_DOMAIN', 'meet.jit.si'),
 
     // M2: Separate secret for internal S2S endpoints (whiteboard, etc.).
     // MUST differ from jwt_secret — used for HMAC auth, not JWT signing.
@@ -36,12 +41,21 @@ return [
     'allowed_file_types' => ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'gif'],
     'max_room_size' => (int) env('CLASSROOM_MAX_ROOM_SIZE', 5),
     'ice_servers' => [
-        ['urls' => env('STUN_SERVER', 'stun:stun.l.google.com:19302')],
+        ['urls' => 'stun:stun.l.google.com:19302'],
+        ['urls' => 'stun:stun1.l.google.com:19302'],
+        ['urls' => 'stun:stun2.l.google.com:19302'],
+        ['urls' => 'stun:stun.cloudflare.com:3478'],
+        ['urls' => 'stun:global.stun.twilio.com:3478'],
     ],
     'turn' => [
         'url' => env('TURN_SERVER_URL'),
-        'username' => env('TURN_SERVER_USERNAME'),
-        'credential' => env('TURN_SERVER_CREDENTIAL'),
+        'username' => env('TURN_SERVER_USERNAME', 'edusfera'),
+        'credential' => env('TURN_SERVER_CREDENTIAL', 'change-me-strong-password'),
+        'realm' => env('TURN_SERVER_REALM', 'edusfera.by'),
+    ],
+    'metered' => [
+        'app_name' => env('METERED_APP_NAME'),
+        'api_key' => env('METERED_API_KEY'),
     ],
     'workspace_internal_url' => env('WORKSPACE_INTERNAL_URL', 'http://localhost:8083'),
     'workspace_internal_secret' => env('WORKSPACE_INTERNAL_SECRET'),

@@ -101,9 +101,8 @@ class DisputeResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('lesson.id')
                     ->label('Урок')
-                    ->description(fn (Dispute $record): string => 
-                        'Репетитор: ' . ($record->lesson->tutor->name ?? '—') . 
-                        ' | Ученик: ' . ($record->lesson->student->name ?? '—')
+                    ->description(fn (Dispute $record): string => 'Репетитор: '.($record->lesson->tutor->name ?? '—').
+                        ' | Ученик: '.($record->lesson->student->name ?? '—')
                     ),
                 Tables\Columns\TextColumn::make('initiator.name')
                     ->label('Инициатор'),
@@ -149,7 +148,7 @@ class DisputeResource extends Resource
                     ->action(function (Dispute $record, array $data): void {
                         try {
                             $paymentService = app(PaymentService::class);
-                            $paymentService->refundLessonPayment($record->lesson, $data['notes']);
+                            $paymentService->refundLessonPayment($record->lesson, $data['notes'], allowCompleted: true);
 
                             $record->update([
                                 'status' => Dispute::STATUS_RESOLVED_REFUNDED,
@@ -160,7 +159,7 @@ class DisputeResource extends Resource
 
                             Notification::make()
                                 ->title('Спор разрешен')
-                                ->body('Средства успешно возвращены ученику (WebPAY / баланс).')
+                                ->body('Средства успешно возвращены ученику (Альфа-Банк / баланс).')
                                 ->success()
                                 ->send();
                         } catch (\Exception $e) {
@@ -186,7 +185,10 @@ class DisputeResource extends Resource
                     ->action(function (Dispute $record, array $data): void {
                         try {
                             $paymentService = app(PaymentService::class);
-                            $paymentService->settleCompletedLesson($record->lesson);
+                            if ($record->lesson && $record->lesson->status !== Lesson::STATUS_COMPLETED) {
+                                $record->lesson->update(['status' => Lesson::STATUS_COMPLETED]);
+                            }
+                            $paymentService->settleCompletedLesson($record->lesson->fresh());
 
                             $record->update([
                                 'status' => Dispute::STATUS_RESOLVED_PAYOUT,

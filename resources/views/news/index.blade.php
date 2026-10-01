@@ -3,9 +3,65 @@
 <head>
     <meta charset="utf-8">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @include('partials.pwa-meta')
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Новости Edusfera — Полезные материалы и объявления</title>
-    <meta name="description" content="Будьте в курсе последних новостей платформы Edusfera. Полезные статьи, видеоуроки, лайфхаки по подготовке к ЦТ/ЦЭ.">
+    <title>Новости и статьи Edusfera — Подготовка к ЦТ/ЦЭ и советы экспертов</title>
+    <meta name="description" content="Полезные материалы, разборы тестов РИКЗ, новости образования Беларуси и лайфхаки для сдачи ЦТ и ЦЭ на 100 баллов от преподавателей Edusfera.">
+    <meta name="keywords" content="блог edusfera, статьи цт, разборы тестов рикз, новости образования беларусь, как сдать цт, подготовка к цэ">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://edusfera.by/news">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_BY">
+    <meta property="og:site_name" content="Edusfera">
+    <meta property="og:title" content="Новости и статьи Edusfera — Подготовка к ЦТ/ЦЭ">
+    <meta property="og:description" content="Полезные материалы, разборы тестов РИКЗ и рекомендации ведущих преподавателей Беларуси.">
+    <meta property="og:url" content="https://edusfera.by/news">
+    <meta property="og:image" content="https://edusfera.by/og-image.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Блог и новости Edusfera">
+    <meta name="twitter:description" content="Разборы тестов РИКЗ, подготовка к ЦТ/ЦЭ и советы репетиторов.">
+    <meta name="twitter:image" content="https://edusfera.by/og-image.png">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": "https://edusfera.by/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Новости и блог",
+              "item": "https://edusfera.by/news"
+            }
+          ]
+        },
+        {
+          "@type": "Blog",
+          "name": "Блог и материалы Edusfera",
+          "description": "Экспертные статьи, инструкции и новости по подготовке к экзаменам в Беларуси",
+          "url": "https://edusfera.by/news",
+          "publisher": {
+            "@type": "EducationalOrganization",
+            "name": "Edusfera",
+            "url": "https://edusfera.by/"
+          }
+        }
+      ]
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -229,6 +285,6 @@
     </main>
 
     @include('partials.site-footer')
-
+    @include('partials.pwa-prompt')
 </body>
 </html>

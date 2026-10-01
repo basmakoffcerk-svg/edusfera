@@ -11,6 +11,7 @@ class NewsArticle extends Model
     use HasFactory;
 
     protected $connection = 'news';
+
     protected $table = 'news_articles';
 
     protected $fillable = [
@@ -44,7 +45,7 @@ class NewsArticle extends Model
         return $query->where('status', 'published')
             ->where(function ($q) {
                 $q->whereNull('published_at')
-                  ->orWhere('published_at', '<=', now());
+                    ->orWhere('published_at', '<=', now());
             });
     }
 
@@ -53,7 +54,7 @@ class NewsArticle extends Model
      */
     public function getEmbedVideoUrlAttribute(): ?string
     {
-        if (!$this->video_url) {
+        if (! $this->video_url) {
             return null;
         }
 

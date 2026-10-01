@@ -74,7 +74,7 @@ class StudentBalanceService
         $ledgerTxId = null;
         $skipLedger = $meta['skip_ledger'] ?? false;
 
-        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
+        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && ! $skipLedger) {
             $ledgerTx = $this->ledgerClient->createTransaction(
                 walletId: $balance->ledger_wallet_id,
                 amount: $amount,
@@ -119,7 +119,7 @@ class StudentBalanceService
             ]);
 
             // Финальная синхронизация балансов, если Ledger вернул ответ
-            if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
+            if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && ! $skipLedger) {
                 $this->syncBalance($balance);
             }
 
@@ -138,10 +138,16 @@ class StudentBalanceService
         ?Transaction $transaction = null,
         ?array $meta = null,
     ): StudentBalance {
+        if (bccomp($amount, '0.00', 2) <= 0) {
+            throw ValidationException::withMessages([
+                'payment' => 'Сумма блокировки должна быть больше нуля.',
+            ]);
+        }
+
         $ledgerTxId = null;
         $skipLedger = $meta['skip_ledger'] ?? false;
 
-        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
+        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && ! $skipLedger) {
             try {
                 // В Ledger списания идут со знаком минус
                 $negativeAmount = $this->sub('0.00', $amount);
@@ -205,7 +211,7 @@ class StudentBalanceService
                 'meta' => $mergedMeta,
             ]);
 
-            if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
+            if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && ! $skipLedger) {
                 $this->syncBalance($balance);
             }
 
@@ -226,7 +232,7 @@ class StudentBalanceService
     ): StudentBalance {
         $skipLedger = $meta['skip_ledger'] ?? false;
 
-        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
+        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && ! $skipLedger) {
             $holdEntry = StudentBalanceLedgerEntry::query()
                 ->where('student_balance_id', $balance->id)
                 ->where('lesson_id', $lesson->id)
@@ -237,7 +243,7 @@ class StudentBalanceService
             $ledgerTxId = $holdEntry?->meta['ledger_transaction_id'] ?? null;
             if ($ledgerTxId) {
                 $res = $this->ledgerClient->updateTransactionStatus($ledgerTxId, 'failed');
-                if (!$res) {
+                if (! $res) {
                     throw new \RuntimeException('Ledger transaction status update failed');
                 }
             }
@@ -269,7 +275,7 @@ class StudentBalanceService
                 'meta' => $meta,
             ]);
 
-            if ($this->ledgerClient->isEnabled() && $lockedBalance->ledger_wallet_id && !$skipLedger) {
+            if ($this->ledgerClient->isEnabled() && $lockedBalance->ledger_wallet_id && ! $skipLedger) {
                 $this->syncBalance($lockedBalance);
             }
 
@@ -290,7 +296,7 @@ class StudentBalanceService
     ): StudentBalance {
         $skipLedger = $meta['skip_ledger'] ?? false;
 
-        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
+        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && ! $skipLedger) {
             $holdEntry = StudentBalanceLedgerEntry::query()
                 ->where('student_balance_id', $balance->id)
                 ->where('lesson_id', $lesson->id)
@@ -301,21 +307,23 @@ class StudentBalanceService
             $ledgerTxId = $holdEntry?->meta['ledger_transaction_id'] ?? null;
             if ($ledgerTxId) {
                 $res = $this->ledgerClient->updateTransactionStatus($ledgerTxId, 'completed');
-                if (!$res) {
+                if (! $res) {
                     throw new \RuntimeException('Ledger transaction status update failed');
                 }
             }
         }
 
         return DB::transaction(function () use ($balance, $amount, $currency, $lesson, $transaction, $meta, $skipLedger) {
-            $balance->update([
-                'locked_amount' => $this->maxZero($this->sub((string) $balance->locked_amount, $amount)),
-                'total_spent' => $this->add((string) $balance->total_spent, $amount),
+            $lockedBalance = StudentBalance::query()->where('id', $balance->id)->lockForUpdate()->first() ?? $balance;
+
+            $lockedBalance->update([
+                'locked_amount' => $this->maxZero($this->sub((string) $lockedBalance->locked_amount, $amount)),
+                'total_spent' => $this->add((string) $lockedBalance->total_spent, $amount),
             ]);
 
             StudentBalanceLedgerEntry::query()->create([
-                'student_balance_id' => $balance->id,
-                'user_id' => $balance->user_id,
+                'student_balance_id' => $lockedBalance->id,
+                'user_id' => $lockedBalance->user_id,
                 'lesson_id' => $lesson->id,
                 'transaction_id' => $transaction?->id,
                 'type' => StudentBalanceLedgerEntry::TYPE_PAYMENT,
@@ -324,11 +332,11 @@ class StudentBalanceService
                 'meta' => $meta,
             ]);
 
-            if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
-                $this->syncBalance($balance);
+            if ($this->ledgerClient->isEnabled() && $lockedBalance->ledger_wallet_id && ! $skipLedger) {
+                $this->syncBalance($lockedBalance);
             }
 
-            return $balance->fresh();
+            return $lockedBalance->fresh();
         });
     }
 
@@ -346,7 +354,7 @@ class StudentBalanceService
         $ledgerTxId = null;
         $skipLedger = $meta['skip_ledger'] ?? false;
 
-        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
+        if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && ! $skipLedger) {
             $ledgerTx = $this->ledgerClient->createTransaction(
                 walletId: $balance->ledger_wallet_id,
                 amount: $amount,
@@ -363,9 +371,11 @@ class StudentBalanceService
         }
 
         return DB::transaction(function () use ($balance, $amount, $currency, $lesson, $transaction, $meta, $ledgerTxId, $skipLedger) {
-            $balance->update([
-                'locked_amount' => $this->maxZero($this->sub((string) $balance->locked_amount, $amount)),
-                'total_refunded' => $this->add((string) $balance->total_refunded, $amount),
+            $lockedBalance = StudentBalance::query()->where('id', $balance->id)->lockForUpdate()->first() ?? $balance;
+
+            $lockedBalance->update([
+                'locked_amount' => $this->maxZero($this->sub((string) $lockedBalance->locked_amount, $amount)),
+                'total_refunded' => $this->add((string) $lockedBalance->total_refunded, $amount),
             ]);
 
             $mergedMeta = array_merge($meta ?? [], [
@@ -383,7 +393,7 @@ class StudentBalanceService
                 'meta' => $mergedMeta,
             ]);
 
-            if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && !$skipLedger) {
+            if ($this->ledgerClient->isEnabled() && $balance->ledger_wallet_id && ! $skipLedger) {
                 $this->syncBalance($balance);
             }
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Lesson;
+use Filament\Notifications\Actions\Action as FilamentAction;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -23,27 +25,73 @@ class LessonBookedTutorNotification extends Notification implements ShouldQueue
 
     public function toDatabase(object $notifiable): array
     {
-        return [
-            'title' => 'Новая заявка на урок',
-            'body' => 'Новая заявка от '.$this->lesson->student->name.' по уроку #'.$this->lesson->id.'.',
-            'lesson_id' => $this->lesson->id,
-            'url' => '/admin/lessons',
-        ];
+        $start = $this->lesson->start_time
+            ?->clone()
+            ->setTimezone((string) config('booking.display_timezone', 'Europe/Minsk'))
+            ->format('d.m.Y H:i');
+
+        $studentName = $this->lesson->student?->name ?? 'Ученик';
+        $packageLabel = match ($this->lesson->package_code) {
+            'pack_4' => ' (Пакет 4 занятия)',
+            'pack_8' => ' (Пакет 8 занятий)',
+            default => '',
+        };
+
+        $title = 'Новая бронь занятия!';
+        $body = "Ученик {$studentName} забронировал урок на {$start}{$packageLabel}.";
+        $url = '/admin/lesson-requests';
+
+        return FilamentNotification::make()
+            ->title($title)
+            ->body($body)
+            ->icon('heroicon-o-calendar-days')
+            ->iconColor('success')
+            ->actions([
+                FilamentAction::make('view')
+                    ->label('Посмотреть заявку')
+                    ->url($url),
+            ])
+            ->getDatabaseMessage() + [
+                'title' => $title,
+                'body' => $body,
+                'lesson_id' => $this->lesson->id,
+                'url' => $url,
+            ];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
         $start = $this->lesson->start_time
-            ->clone()
-            ->setTimezone(config('booking.display_timezone'))
+            ?->clone()
+            ->setTimezone((string) config('booking.display_timezone', 'Europe/Minsk'))
             ->format('d.m.Y H:i');
 
-        return (new MailMessage)
-            ->subject('Новая заявка на урок')
+        $studentName = $this->lesson->student?->name ?? 'Ученик';
+        $studentPhone = $this->lesson->student?->phone;
+        $notes = $this->lesson->notes;
+        $packageLabel = match ($this->lesson->package_code) {
+            'pack_4' => 'Пакет 4 занятия',
+            'pack_8' => 'Пакет 8 занятий',
+            default => '1 занятие',
+        };
+
+        $mail = (new MailMessage)
+            ->subject('Новая бронь занятия на Edusfera')
             ->greeting('Здравствуйте, '.$notifiable->name.'!')
-            ->line('Появилась новая заявка на урок от '.$this->lesson->student->name.'.')
+            ->line("Появилась новая бронь занятия от ученика: {$studentName}.")
             ->line('Дата и время: '.$start.' (Минск)')
-            ->action('Открыть расписание', url('/admin/lessons'))
-            ->line('Проверьте детали и подтвердите занятие в кабинете.');
+            ->line('Формат: '.$packageLabel);
+
+        if ($studentPhone) {
+            $mail->line('Телефон ученика: '.$studentPhone);
+        }
+
+        if ($notes) {
+            $mail->line('Комментарий к уроку: «'.$notes.'»');
+        }
+
+        return $mail
+            ->action('Открыть заявку в кабинете', url('/admin/lesson-requests'))
+            ->line('Пожалуйста, перейдите в панель управления для подтверждения бронирования.');
     }
 }

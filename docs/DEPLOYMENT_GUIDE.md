@@ -11,7 +11,7 @@
 - **Веб-сервер**: Nginx или Apache (директория DocumentRoot должна указывать на папку `/public`)
 - **Node.js**: Node 18+ (для сборки фронтенда при необходимости)
 - **Composer**: Composer 2.x
-- **Протокол**: SSL / HTTPS (сертификат Let's Encrypt) — обязательно для платежного эквайринга WebPay и защиты авторизации!
+- **Протокол**: SSL / HTTPS (сертификат Let's Encrypt) — обязательно для платежного эквайринга Альфа-Банк и защиты авторизации!
 
 ---
 
@@ -46,12 +46,17 @@
    SESSION_ENCRYPT=true
    SESSION_SECURE_COOKIE=true
 
-   # Настройки платежного шлюза WebPay
-   PAYMENT_GATEWAY=webpay
-   WEBPAY_STORE_ID=123456789
-   WEBPAY_SECRET_KEY=ВашСекретныйКлючWebPay
-   WEBPAY_TEST_MODE=false
-   PAYMENT_WEBHOOK_REQUIRE_SIGNATURE=true
+   # Настройки платежного шлюза Альфа-Банк (Беларусь)
+   PAYMENT_GATEWAY=alfa
+   ALFABANK_USER_NAME=your_alfabank_api_login
+   ALFABANK_PASSWORD=your_alfabank_api_password
+   ALFABANK_TEST_MODE=false
+   ALFABANK_API_URL=https://payment.alfabank.by/payment/rest
+   ALFABANK_CHECKOUT_URL=https://payment.alfabank.by/payment/rest
+   ALFABANK_WEB_SDK_URL=https://ecom.alfabank.by/payment/modules/multiframe/main.js
+
+   # Портал МНС (Налог на профессиональный доход)
+   NPD_PORTAL_URL=https://npd.nalog.gov.by/npdweb/
 
    # Технический администратор сайта
    SITE_ADMIN_SYNC_ENABLED=true

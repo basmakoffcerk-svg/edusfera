@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Middleware;
 
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnforceServiceScope;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -40,7 +42,7 @@ class EnforceServiceScopeTest extends TestCase
      */
     private function actingWithSanctumToken(array $abilities): static
     {
-        $user = \App\Models\User::factory()->make(['id' => 1]);
+        $user = User::factory()->make(['id' => 1]);
 
         // Sanctum использует HasApiTokens::tokenCan() — мокаем через
         // actingAs с указанием abilities (второй аргумент).
@@ -55,7 +57,7 @@ class EnforceServiceScopeTest extends TestCase
     {
         $this->registerScopeRoute('lessons:read');
 
-        $user = \App\Models\User::factory()->make(['id' => 1]);
+        $user = User::factory()->make(['id' => 1]);
 
         // actingAs с abilities — Sanctum проверяет их через tokenCan()
         $this->actingAs($user, 'sanctum');
@@ -63,7 +65,7 @@ class EnforceServiceScopeTest extends TestCase
         // Мокаем tokenCan через частичный мок пользователя
         $mockUser = $this->createMockUserWithScope('lessons:read', hasScope: true);
 
-        $response = $this->withoutMiddleware(\App\Http\Middleware\AssignRequestId::class)
+        $response = $this->withoutMiddleware(AssignRequestId::class)
             ->actingAs($mockUser, 'sanctum')
             ->getJson('/test-scope-probe');
 
@@ -164,7 +166,7 @@ class EnforceServiceScopeTest extends TestCase
         $request->attributes->set('oauth_scopes', ['lessons:read', 'homework:read']);
 
         // Нужен аутентифицированный пользователь
-        $user = \App\Models\User::factory()->make(['id' => 2]);
+        $user = User::factory()->make(['id' => 2]);
         $request->setUserResolver(fn () => $user);
 
         $called = false;
@@ -191,7 +193,7 @@ class EnforceServiceScopeTest extends TestCase
         $request = Request::create('/test', 'GET');
         $request->attributes->set('oauth_scopes', ['homework:read']);
 
-        $user = \App\Models\User::factory()->make(['id' => 3]);
+        $user = User::factory()->make(['id' => 3]);
         $request->setUserResolver(fn () => $user);
 
         $called = false;
@@ -217,9 +219,9 @@ class EnforceServiceScopeTest extends TestCase
     /**
      * Создаёт мок пользователя, у которого tokenCan($scope) возвращает $hasScope.
      */
-    private function createMockUserWithScope(string $scope, bool $hasScope): \App\Models\User
+    private function createMockUserWithScope(string $scope, bool $hasScope): User
     {
-        $user = $this->createPartialMock(\App\Models\User::class, ['tokenCan']);
+        $user = $this->createPartialMock(User::class, ['tokenCan']);
         $user->method('tokenCan')
             ->with($scope)
             ->willReturn($hasScope);

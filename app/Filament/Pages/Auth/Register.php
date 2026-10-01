@@ -13,10 +13,12 @@ use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Pages\Auth\Register as BaseRegister;
 use Illuminate\Support\HtmlString;
+use Illuminate\Validation\Rules\Password;
 
 class Register extends BaseRegister
 {
     protected static string $view = 'filament.admin.pages.auth.register';
+
     protected static string $layout = 'filament-panels::components.layout.base';
 
     public function mount(): void
@@ -82,7 +84,7 @@ class Register extends BaseRegister
                                 ->accepted(),
                         ]),
                 ])
-                ->submitAction(new HtmlString('
+                    ->submitAction(new HtmlString('
                     <button type="submit" class="fi-btn fi-btn-size-md fi-btn-color-primary relative inline-flex items-center justify-center gap-1.5 rounded-xl px-6 py-3.5 text-base font-extrabold shadow-lg transition-all bg-violet-600 hover:bg-violet-500 text-white w-full uppercase tracking-wider">
                         Завершить регистрацию →
                     </button>
@@ -158,7 +160,7 @@ class Register extends BaseRegister
         return parent::getPasswordFormComponent()
             ->label('Пароль')
             ->rules([
-                \Illuminate\Validation\Rules\Password::min(8)
+                Password::min(8)
                     ->letters()
                     ->numbers()
                     ->uncompromised(2),

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserRole;
 use App\Models\TutorAvailability;
 use App\Models\TutorProfile;
 use App\Services\BookingService;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
@@ -22,7 +22,7 @@ class CatalogController extends Controller
 
         $query->orderByRaw(
             'CASE WHEN search_penalized_until IS NOT NULL AND search_penalized_until > ? THEN 1 ELSE 0 END ASC',
-            [now('UTC')]
+            [now('UTC')->toDateTimeString()]
         );
 
         // Premium and Pro subscribers get priority placement
@@ -31,7 +31,7 @@ class CatalogController extends Controller
                 SELECT CASE 
                     WHEN plan = 'premium' AND status IN ('trial', 'active') THEN 1
                     WHEN plan = 'pro' AND status IN ('trial', 'active') THEN 2
-                    WHEN plan = 'basic' AND status IN ('trial', 'active') THEN 3
+                    WHEN plan IN ('basic', 'start') AND status IN ('trial', 'active') THEN 3
                     ELSE 4
                 END 
                 FROM subscriptions 
@@ -41,10 +41,15 @@ class CatalogController extends Controller
         ");
 
         if ($request->filled('q')) {
-            $search = str_replace(['%', '_'], ['\%', '\_'], trim((string) $request->q));
+            $search = str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], trim((string) $request->q));
+            $isPgsql = $query->getConnection()->getDriverName() === 'pgsql';
 
-            $query->whereHas('user', function ($userQuery) use ($search) {
-                $userQuery->where('name', 'like', "%{$search}%");
+            $query->whereHas('user', function ($userQuery) use ($search, $isPgsql) {
+                if ($isPgsql) {
+                    $userQuery->whereRaw("name ILIKE ? ESCAPE '\\'", ["%{$search}%"]);
+                } else {
+                    $userQuery->whereRaw("name LIKE ? ESCAPE '\\'", ["%{$search}%"]);
+                }
             });
         }
 
@@ -127,11 +132,15 @@ class CatalogController extends Controller
     public function show(TutorProfile $tutor)
     {
         $tutor->load(['user', 'user.subscription']);
-        $selectedDate = request('date')
-            ? CarbonImmutable::createFromFormat('Y-m-d', (string) request('date'), $this->bookingService->displayTimezone())
-            : $this->bookingService->minBookableDate();
+        try {
+            $selectedDate = request('date')
+                ? CarbonImmutable::createFromFormat('Y-m-d', (string) request('date'), $this->bookingService->displayTimezone())
+                : $this->bookingService->minBookableDate();
+        } catch (\Throwable) {
+            $selectedDate = $this->bookingService->minBookableDate();
+        }
 
-        if ($selectedDate === false) {
+        if (! $selectedDate) {
             $selectedDate = $this->bookingService->minBookableDate();
         }
 
@@ -219,20 +228,36 @@ class CatalogController extends Controller
      * Apply match-based sorting: boost tutors who teach the diagnostic subject
      * and specialize in the diagnostic exam type.
      */
-    private function applyMatchSort(\Illuminate\Database\Eloquent\Builder $query, array $context): void
+    private function applyMatchSort(Builder $query, array $context): void
     {
+        $isPgsql = $query->getConnection()->getDriverName() === 'pgsql';
+
         if ($context['subject'] !== null) {
-            $query->orderByRaw(
-                "CASE WHEN subjects @> ?::jsonb THEN 0 ELSE 1 END ASC",
-                [json_encode([$context['subject']])]
-            );
+            if ($isPgsql) {
+                $query->orderByRaw(
+                    'CASE WHEN subjects @> ?::jsonb THEN 0 ELSE 1 END ASC',
+                    [json_encode([$context['subject']])]
+                );
+            } else {
+                $query->orderByRaw(
+                    'CASE WHEN subjects LIKE ? THEN 0 ELSE 1 END ASC',
+                    ['%"'.$context['subject'].'"%']
+                );
+            }
         }
 
         if ($context['exam_type'] !== null) {
-            $query->orderByRaw(
-                "CASE WHEN exam_specializations @> ?::jsonb THEN 0 ELSE 1 END ASC",
-                [json_encode([$context['exam_type']])]
-            );
+            if ($isPgsql) {
+                $query->orderByRaw(
+                    'CASE WHEN exam_specializations @> ?::jsonb THEN 0 ELSE 1 END ASC',
+                    [json_encode([$context['exam_type']])]
+                );
+            } else {
+                $query->orderByRaw(
+                    'CASE WHEN exam_specializations LIKE ? THEN 0 ELSE 1 END ASC',
+                    ['%"'.$context['exam_type'].'"%']
+                );
+            }
         }
 
         $query->orderByDesc('average_score_growth')

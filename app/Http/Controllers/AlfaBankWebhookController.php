@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Domain\Subscription\Enums\InvoiceStatus;
+use App\Domain\Subscription\Models\Subscription;
+use App\Domain\Subscription\Models\SubscriptionInvoice;
+use App\Domain\Subscription\Services\SubscriptionService;
 use App\Models\Lesson;
+use App\Models\PaymentWebhookLog;
 use App\Models\StudentBalanceLedgerEntry;
 use App\Models\Transaction;
 use App\Models\WalletTopup;
-use App\Models\WebpayWebhookLog;
 use App\Services\Finance\StudentBalanceService;
 use App\Services\Payment\AlfaBankPaymentGateway;
 use App\Services\Payment\PaymentService;
@@ -26,32 +30,36 @@ class AlfaBankWebhookController extends Controller
         PaymentService $paymentService
     ): JsonResponse {
         $clientIp = (string) $request->ip();
-        $allowedIps = config('payments.alfabank.allowed_ips', config('payments.webpay.allowed_ips', []));
+        $allowedIps = config('payments.webhook_allowed_ips', config('payments.alfabank.allowed_ips', []));
         $requireIpCheck = (bool) config('payments.webhook_require_ip_allowlist', false);
 
         // 1. Фильтрация IP-адресов
-        if ($requireIpCheck && ! empty($allowedIps) && ! in_array($clientIp, $allowedIps, true)) {
-            Log::channel('payments')->warning('webhook_blocked_ip', [
-                'ip' => $clientIp,
-                'allowed_ips' => $allowedIps,
-            ]);
+        if ($requireIpCheck) {
+            if (empty($allowedIps) || ! in_array($clientIp, $allowedIps, true)) {
+                Log::channel('payments')->warning('webhook_blocked_ip', [
+                    'ip' => $clientIp,
+                    'allowed_ips' => $allowedIps,
+                ]);
 
-            $this->logWebhook($request, null, null, 403, 'Forbidden IP: '.$clientIp);
+                $this->logWebhook($request, null, null, 403, 'Forbidden IP: '.$clientIp);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Forbidden IP address.',
-            ], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Forbidden IP address.',
+                ], 403);
+            }
         }
 
         $payload = $request->all();
 
-        // 2. Проверка подписи WebPAY (если запрос на legacy роут webpay или передан заголовок/поле подписи)
-        $isWebpayRequest = $request->is('*webpay*') || $request->has('ws_signature') || $request->hasHeader('X-WebPay-Signature');
+        // 2. Проверка подписи/контрольной суммы (если включена)
         $requireSignature = (bool) config('payments.webhook_require_signature', false);
 
-        if ($isWebpayRequest && $requireSignature) {
-            $signature = (string) $request->header('X-WebPay-Signature', $payload['ws_signature'] ?? '');
+        if ($requireSignature) {
+            $signature = (string) ($request->header('X-Payment-Signature')
+                ?: $request->header('X-Signature')
+                ?: ($payload['signature'] ?? ''));
+
             if (empty($signature)) {
                 $this->logWebhook($request, null, null, 403, 'Missing signature.');
 
@@ -94,30 +102,48 @@ class AlfaBankWebhookController extends Controller
             ], 422);
         }
 
-        // 4. Обработка транзакции в БД
-        DB::transaction(function () use ($transactionId, $orderNumber, $operation, $status, $paymentService) {
-            $query = Transaction::query()->lockForUpdate();
-            if (! empty($transactionId)) {
-                $query->where('gateway_transaction_id', $transactionId);
+        $isSuccess = in_array($operation, ['deposited', 'success', 'completion', 'completed', 'successful'], true)
+            || in_array($status, ['2', 'success', 'completed', 'successful'], true);
+        $isAuthorized = in_array($operation, ['approved', 'hold', 'authorized', 'authorize'], true)
+            || in_array($status, ['1', 'authorized', 'hold', 'pending'], true);
+        $isVoided = in_array($operation, ['reversed', 'voided', 'void', 'cancelled'], true)
+            || in_array($status, ['3', 'voided', 'cancelled', 'void'], true);
+        $isFailed = in_array($operation, ['declined', 'failed', 'error'], true)
+            || in_array($status, ['6', 'failed', 'declined', 'error'], true);
+
+        // 4. Верификация через шлюз Альфа-Банка для предотвращения несанкционированных вызовов
+        if (! empty($transactionId) && ($isSuccess || $isAuthorized)) {
+            if (! $gateway->verifyPayment($transactionId)) {
+                Log::channel('payments')->warning('alfabank_webhook_gateway_verification_failed', [
+                    'transaction_id' => $transactionId,
+                    'operation' => $operation,
+                    'ip' => $clientIp,
+                ]);
+
+                $this->logWebhook($request, $operation, $transactionId, 400, 'Gateway verification failed');
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment verification failed at gateway.',
+                ], 400);
             }
-            if (! empty($orderNumber)) {
+        }
+
+        // 5. Обработка транзакции в БД
+        DB::transaction(function () use ($transactionId, $orderNumber, $paymentService, $isSuccess, $isAuthorized, $isVoided, $isFailed, $gateway) {
+            $tx = null;
+            if (! empty($transactionId)) {
+                $tx = Transaction::query()->lockForUpdate()->where('gateway_transaction_id', $transactionId)->first();
+            }
+
+            if (! $tx && ! empty($orderNumber)) {
                 $parts = explode('_', $orderNumber);
                 if (count($parts) >= 2 && $parts[0] === 'lesson' && is_numeric($parts[1])) {
-                    $query->orWhere('lesson_id', (int) $parts[1]);
+                    $tx = Transaction::query()->lockForUpdate()->where('lesson_id', (int) $parts[1])->first();
                 } elseif (is_numeric($orderNumber)) {
-                    $query->orWhere('id', (int) $orderNumber);
+                    $tx = Transaction::query()->lockForUpdate()->where('id', (int) $orderNumber)->first();
                 }
             }
-            $tx = $query->first();
-
-            $isSuccess = in_array($operation, ['deposited', 'success', 'completion', 'completed', 'successful'], true)
-                || in_array($status, ['2', 'success', 'completed', 'successful'], true);
-            $isAuthorized = in_array($operation, ['approved', 'hold', 'authorized', 'authorize'], true)
-                || in_array($status, ['1', 'authorized', 'hold', 'pending'], true);
-            $isVoided = in_array($operation, ['reversed', 'voided', 'void', 'cancelled'], true)
-                || in_array($status, ['3', 'voided', 'cancelled', 'void'], true);
-            $isFailed = in_array($operation, ['declined', 'failed', 'error'], true)
-                || in_array($status, ['6', 'failed', 'declined', 'error'], true);
 
             if ($tx) {
                 if ($isSuccess) {
@@ -147,12 +173,11 @@ class AlfaBankWebhookController extends Controller
                 }
             }
 
-            // Проверка WalletTopup
-            $topupQuery = WalletTopup::query()->lockForUpdate();
+            // Проверка WalletTopup — строго по transaction_id
+            $topup = null;
             if (! empty($transactionId)) {
-                $topupQuery->where('gateway_transaction_id', $transactionId);
+                $topup = WalletTopup::query()->lockForUpdate()->where('gateway_transaction_id', $transactionId)->first();
             }
-            $topup = $topupQuery->first();
 
             if ($topup && $topup->status === 'pending') {
                 if ($isSuccess) {
@@ -162,6 +187,11 @@ class AlfaBankWebhookController extends Controller
                         ->update(['status' => 'success']);
 
                     if ($claimed > 0) {
+                        // Депозитируем платеж в шлюзе, если это холд
+                        if (! empty($transactionId)) {
+                            $gateway->capturePayment($transactionId, (float) $topup->amount);
+                        }
+
                         app(StudentBalanceService::class)->credit(
                             balance: app(StudentBalanceService::class)->getOrCreate($topup->user_id),
                             amount: number_format((float) $topup->amount, 2, '.', ''),
@@ -178,6 +208,58 @@ class AlfaBankWebhookController extends Controller
                     $topup->update(['status' => 'failed']);
                 }
             }
+
+            // Обработка подписок репетиторов (заказы вида sub_{userId}_{time})
+            if (! empty($orderNumber)) {
+                $subParts = explode('_', $orderNumber);
+                if (count($subParts) >= 2 && $subParts[0] === 'sub' && is_numeric($subParts[1])) {
+                    $userId = (int) $subParts[1];
+                    $sub = Subscription::query()->lockForUpdate()->where('tutor_id', $userId)->first();
+                    if ($sub && $isSuccess) {
+                        // Проверка на идемпотентность: был ли этот заказ или транзакция уже оплачены ранее
+                        $alreadyProcessed = SubscriptionInvoice::where('subscription_id', $sub->id)
+                            ->where('status', InvoiceStatus::PAID)
+                            ->where(function ($query) use ($orderNumber, $transactionId) {
+                                $query->where('payload->order_number', $orderNumber);
+                                if (! empty($transactionId)) {
+                                    $query->orWhere('payload->gateway_transaction_id', $transactionId);
+                                }
+                            })
+                            ->exists();
+
+                        if (! $alreadyProcessed) {
+                            if (! empty($transactionId)) {
+                                try {
+                                    $gateway->capturePayment($transactionId, (float) ($sub->plan->monthlyPriceByn()));
+                                } catch (\Throwable $e) {
+                                    Log::error('Alfa-Bank subscription webhook capture failed', [
+                                        'orderNumber' => $orderNumber,
+                                        'error' => $e->getMessage(),
+                                    ]);
+                                }
+                            }
+
+                            $subService = app(SubscriptionService::class);
+                            $invoice = SubscriptionInvoice::where('subscription_id', $sub->id)
+                                ->where('status', InvoiceStatus::PENDING)
+                                ->latest()
+                                ->first();
+
+                            if (! $invoice) {
+                                $invoice = $subService->createInvoice($sub, $sub->plan, 1);
+                            }
+
+                            if ($invoice && $invoice->status !== InvoiceStatus::PAID) {
+                                $subService->recordPayment($invoice, 'card', [
+                                    'bank' => 'Альфа-Банк (Alfa-Bank)',
+                                    'gateway_transaction_id' => $transactionId,
+                                    'order_number' => $orderNumber,
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         $this->logWebhook($request, $operation, (string) ($transactionId ?: $orderNumber), 200);
@@ -190,7 +272,7 @@ class AlfaBankWebhookController extends Controller
 
     private function verifySignature(array $payload, string $signature): bool
     {
-        $secret = config('payments.webpay.secret_key', config('payments.webhook_secret', ''));
+        $secret = config('payments.webhook_secret', '');
         if (empty($secret)) {
             return false;
         }
@@ -200,9 +282,9 @@ class AlfaBankWebhookController extends Controller
                  ($payload['amount'] ?? '').
                  ($payload['payment_method'] ?? '').
                  ($payload['order_id'] ?? '').
-                 ($payload['site_order_id'] ?? '').
-                 ($payload['transaction_id'] ?? '').
-                 ($payload['payment_type'] ?? '').
+                 ($payload['site_order_id'] ?? $payload['orderNumber'] ?? '').
+                 ($payload['transaction_id'] ?? $payload['mdOrder'] ?? '').
+                 ($payload['payment_type'] ?? $payload['operation'] ?? '').
                  ($payload['rrn'] ?? '').
                  $secret;
 
@@ -212,7 +294,7 @@ class AlfaBankWebhookController extends Controller
     private function logWebhook(Request $request, ?string $event, ?string $transactionId, int $statusCode, ?string $errorReason = null): void
     {
         try {
-            WebpayWebhookLog::query()->create([
+            PaymentWebhookLog::query()->create([
                 'event' => $event,
                 'transaction_id' => $transactionId,
                 'payload' => SecuritySanitizer::maskSensitiveData($request->all()),

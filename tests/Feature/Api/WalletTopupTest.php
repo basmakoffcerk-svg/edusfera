@@ -20,7 +20,8 @@ class WalletTopupTest extends TestCase
     use RefreshDatabase;
 
     private User $student;
-    private string $webpaySecret = 'test_webpay_secret';
+
+    private string $webhookSecret = 'test_webhook_secret';
 
     protected function setUp(): void
     {
@@ -28,7 +29,7 @@ class WalletTopupTest extends TestCase
 
         $this->student = User::factory()->create(['role' => 'student', 'phone' => '+375292222222']);
 
-        Config::set('payments.webpay.secret_key', $this->webpaySecret);
+        Config::set('payments.webhook_secret', $this->webhookSecret);
         Config::set('payments.webhook_require_signature', false);
         Config::set('payments.webhook_require_ip_allowlist', false);
     }
@@ -39,26 +40,37 @@ class WalletTopupTest extends TestCase
 
         $this->actingAs($this->student);
 
-        // По умолчанию selectedTopUpAmount = 152
         Livewire::test(WalletPage::class)
             ->call('topUp')
             ->assertHasNoErrors();
 
-        // Проверяем начисление баланса
+        $balance = StudentBalance::query()->where('user_id', $this->student->id)->first();
+        $this->assertNotNull($balance);
+        $this->assertEquals('152.00', $balance->available_amount);
+    }
+
+    public function test_student_can_top_up_wallet_with_custom_amount(): void
+    {
+        $this->actingAs($this->student);
+
+        Livewire::test(WalletPage::class)
+            ->set('customTopUpAmount', '152')
+            ->call('topUp')
+            ->assertHasNoErrors();
+
         $balance = StudentBalance::query()->where('user_id', $this->student->id)->first();
         $this->assertNotNull($balance);
         $this->assertEquals('152.00', $balance->available_amount);
 
-        // Проверяем запись пополнения
         $topup = WalletTopup::query()->where('user_id', $this->student->id)->first();
         $this->assertNotNull($topup);
         $this->assertEquals('152.00', $topup->amount);
         $this->assertEquals('success', $topup->status);
     }
 
-    public function test_it_does_not_credit_balance_immediately_with_webpay_gateway(): void
+    public function test_it_does_not_credit_balance_immediately_with_async_gateway(): void
     {
-        Config::set('payments.gateway', 'webpay');
+        Config::set('payments.gateway', 'alfa');
 
         $mockGateway = $this->createMock(PaymentGatewayInterface::class);
         $mockGateway->method('createPayment')
@@ -66,7 +78,7 @@ class WalletTopupTest extends TestCase
                 'success' => true,
                 'gateway_transaction_id' => 'checkout-token-topup-123',
                 'status' => 'pending',
-                'redirect_url' => 'https://apisandbox.webpay.by/checkout?token=checkout-token-topup-123',
+                'redirect_url' => 'https://ecom.alfabank.by/checkout?token=checkout-token-topup-123',
             ]);
 
         $this->app->instance(PaymentGatewayInterface::class, $mockGateway);
@@ -76,7 +88,7 @@ class WalletTopupTest extends TestCase
         Livewire::test(WalletPage::class)
             ->set('customTopUpAmount', '100')
             ->call('topUp')
-            ->assertRedirect('https://apisandbox.webpay.by/checkout?token=checkout-token-topup-123');
+            ->assertRedirect('https://ecom.alfabank.by/checkout?token=checkout-token-topup-123');
 
         // Баланс не должен измениться (не создан или равен 0)
         $balance = StudentBalance::query()->where('user_id', $this->student->id)->first();
@@ -94,7 +106,7 @@ class WalletTopupTest extends TestCase
 
     public function test_webhook_credits_pending_topup_balance(): void
     {
-        Config::set('payments.gateway', 'webpay');
+        Config::set('payments.gateway', 'alfa');
 
         // Создаем ожидающий top-up
         $topup = WalletTopup::query()->create([
@@ -113,7 +125,7 @@ class WalletTopupTest extends TestCase
             'currency' => 'BYN',
         ];
 
-        $response = $this->postJson('/webhooks/webpay', $payload);
+        $response = $this->postJson('/webhooks/alfabank', $payload);
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -138,7 +150,7 @@ class WalletTopupTest extends TestCase
 
     public function test_webhook_updates_status_on_failed_topup(): void
     {
-        Config::set('payments.gateway', 'webpay');
+        Config::set('payments.gateway', 'alfa');
 
         $topup = WalletTopup::query()->create([
             'user_id' => $this->student->id,
@@ -154,7 +166,7 @@ class WalletTopupTest extends TestCase
             'status' => 'failed',
         ];
 
-        $response = $this->postJson('/webhooks/webpay', $payload);
+        $response = $this->postJson('/webhooks/alfabank', $payload);
 
         $response->assertStatus(200);
 

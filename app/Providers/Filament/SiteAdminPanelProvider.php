@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\MessagesPage;
 use App\Filament\SiteAdmin\Auth\Login;
@@ -15,7 +16,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -38,6 +38,7 @@ class SiteAdminPanelProvider extends PanelProvider
             ->path('site-admin')
             ->homeUrl('/')
             ->login(Login::class)
+            ->profile(EditProfile::class)
             ->databaseNotifications()
             ->databaseNotificationsPolling('10s')
             ->maxContentWidth(MaxWidth::Full)
@@ -58,6 +59,14 @@ class SiteAdminPanelProvider extends PanelProvider
                 Dashboard::class,
                 MessagesPage::class,
             ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render('@include("partials.pwa-meta")'),
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => Blade::render('@include("partials.pwa-prompt")'),
+            )
             ->widgets([
                 AdminOverviewStatsWidget::class,
                 AdminQuickActionsWidget::class,

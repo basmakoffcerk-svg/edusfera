@@ -1,0 +1,108 @@
+{
+  "id": "/?source=pwa",
+  "name": "Edusfera — Образовательная платформа",
+  "short_name": "Edusfera",
+  "description": "Платформа для репетиторов и учеников в Беларуси: видеоуроки, расписание, ИИ-диагностика и онлайн-класс",
+  "lang": "ru-BY",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#0C0A14",
+  "theme_color": "#7D39EB",
+  "prefer_related_applications": false,
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "share_target": {
+    "action": "/admin/messages",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Каталог репетиторов",
+      "short_name": "Каталог",
+      "description": "Поиск и выбор проверенных преподавателей",
+      "url": "/tutors?source=pwa_shortcut",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Личный кабинет",
+      "short_name": "Кабинет",
+      "description": "Управление уроками, расписанием и подпиской",
+      "url": "/admin?source=pwa_shortcut",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Я — репетитор",
+      "short_name": "Репетиторам",
+      "description": "Возможности платформы для преподавателей",
+      "url": "/for-tutors?source=pwa_shortcut",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

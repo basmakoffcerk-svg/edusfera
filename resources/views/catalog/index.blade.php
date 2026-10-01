@@ -3,9 +3,74 @@
 <head>
     <meta charset="utf-8">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @include('partials.pwa-meta')
+    @include('partials.analytics')
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Каталог репетиторов — Edusfera</title>
-    <meta name="description" content="Подберите проверенного репетитора в Беларуси. Фильтр по предмету, цене и рейтингу. Безопасная оплата через платформу.">
+    <title>Каталог репетиторов — Edusfera | Подготовка к ЦТ и ЦЭ в Беларуси</title>
+    <meta name="description" content="Подберите проверенного репетитора в Беларуси для подготовки к ЦТ и ЦЭ. Фильтр по предмету, цене и отзывам. Безопасная оплата занятий и онлайн-класс.">
+    <meta name="keywords" content="каталог репетиторов беларусь, репетиторы минск цт, найти репетитора цэ, репетитор математика цт, репетитор русский цт, безопасная оплата уроков">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://edusfera.by/tutors">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ru_BY">
+    <meta property="og:site_name" content="Edusfera">
+    <meta property="og:title" content="Каталог проверенных репетиторов Беларуси — Edusfera">
+    <meta property="og:description" content="Подберите проверенного репетитора в Беларуси. Фильтр по предмету, цене и рейтингу. Прямая оплата репетитору без комиссии платформы.">
+    <meta property="og:url" content="https://edusfera.by/tutors">
+    <meta property="og:image" content="https://edusfera.by/og-image.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Каталог репетиторов Беларуси — Edusfera">
+    <meta name="twitter:description" content="Проверенные репетиторы по всем предметам ЦТ и ЦЭ. Безопасная сделка.">
+    <meta name="twitter:image" content="https://edusfera.by/og-image.png">
+
+    <!-- Schema.org JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Главная",
+              "item": "https://edusfera.by/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Каталог репетиторов",
+              "item": "https://edusfera.by/tutors"
+            }
+          ]
+        },
+        {
+          "@type": "ItemList",
+          "name": "Каталог проверенных преподавателей Edusfera",
+          "description": "Список аккредитованных репетиторов для подготовки к экзаменам ЦТ/ЦЭ в Беларуси",
+          "url": "https://edusfera.by/tutors",
+          "numberOfItems": {{ isset($tutors) ? $tutors->total() : 0 }},
+          "itemListElement": [
+            @if(isset($tutors))
+              @foreach($tutors->take(10) as $index => $item)
+                {
+                  "@type": "ListItem",
+                  "position": {{ $index + 1 }},
+                  "url": "{{ route('tutors.show', $item->id) }}",
+                  "name": "{{ addslashes($item->user->name ?? 'Репетитор') }}"
+                }@if(!$loop->last),@endif
+              @endforeach
+            @endif
+          ]
+        }
+      ]
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -223,7 +288,7 @@
                 <h1 class="text-[clamp(2rem,4vw,3.5rem)] font-rimma font-black uppercase tracking-tight text-gray-900 mb-3 leading-tight">
                     Найдите <span class="text-violet-600">репетитора</span>
                 </h1>
-                <p class="text-lg text-gray-500 font-medium max-w-xl">Фильтр по предмету, цене и рейтингу. Все анкеты проверены, оплата через платформу.</p>
+                <p class="text-lg text-gray-500 font-medium max-w-xl">Фильтр по предмету, цене и рейтингу. Все анкеты проверены, прямая оплата репетитору без комиссии платформы.</p>
             </div>
 
             <!-- Search bar -->
@@ -372,14 +437,16 @@
                             $examSpecializations = array_values(array_filter($tutor->exam_specializations ?? []));
                             $isOfficial = $tutor->legal_status !== 'none';
                             $isTop = (float)$tutor->rating_avg >= 4.8;
+                            $sub = $tutor->user?->subscription;
+                            $isPremium = $sub !== null && $sub->isActive() && $sub->plan === \App\Domain\Subscription\Enums\SubscriptionPlan::PREMIUM;
                         @endphp
 
-                        <article class="reveal bg-white rounded-3xl border border-gray-100 shadow-sm p-6 hover:shadow-xl hover:border-violet-200 hover:-translate-y-1 transition-all duration-300 group">
+                        <article class="reveal bg-white rounded-3xl border {{ $isPremium ? 'border-amber-300 shadow-md ring-2 ring-amber-400/20' : 'border-gray-100 shadow-sm' }} p-6 hover:shadow-xl hover:border-violet-200 hover:-translate-y-1 transition-all duration-300 group">
                             <div class="flex gap-5">
                                 <!-- Avatar -->
-                                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-50 to-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden text-lg font-bold text-gray-500">
-                                    @if($tutor->avatar_path)
-                                        <img src="{{ asset('storage/'.$tutor->avatar_path) }}" alt="" class="w-full h-full object-cover">
+                                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-50 to-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden text-lg font-bold text-gray-500 {{ $isPremium ? 'ring-2 ring-amber-400/60' : '' }}">
+                                    @if($tutor->avatar_url)
+                                        <img src="{{ $tutor->avatar_url }}" alt="" class="w-full h-full object-cover">
                                     @else
                                         {{ $initials ?: 'ED' }}
                                     @endif
@@ -389,6 +456,9 @@
                                 <div class="flex-1 min-w-0">
                                     <!-- Badges -->
                                     <div class="flex gap-1.5 flex-wrap mb-2">
+                                        @if($isPremium)
+                                            <span class="inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-[11px] font-black bg-amber-400/20 text-amber-900 border border-amber-400/50 shadow-sm">👑 Топ-эксперт</span>
+                                        @endif
                                         @if($isOfficial)<span class="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-bold bg-lime-50 text-lime-700 border border-lime-200">Официальный</span>@endif
                                         @if($tutor->diagnostic_supported)<span class="inline-flex items-center h-6 px-2.5 rounded-full text-[11px] font-bold bg-violet-50 text-violet-600 border border-violet-200">Диагностика</span>@endif
                                         @if(in_array('ЦЭ', $examSpecializations, true) || in_array('ЦТ', $examSpecializations, true))
@@ -495,6 +565,14 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.trackEdusferaEvent === 'function') {
+                window.trackEdusferaEvent('catalog_view', {
+                    subject: @js(request('subject', '')),
+                    sort: @js(request('sort', '')),
+                    total_tutors: {{ isset($tutors) ? $tutors->total() : 0 }}
+                });
+            }
+
             const els = document.querySelectorAll('.reveal');
             if (!els.length) return;
             const io = new IntersectionObserver(entries => {
@@ -508,5 +586,6 @@
             els.forEach(el => io.observe(el));
         });
     </script>
+    @include('partials.pwa-prompt')
 </body>
 </html>

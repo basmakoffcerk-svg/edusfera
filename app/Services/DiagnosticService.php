@@ -205,7 +205,7 @@ class DiagnosticService
             }
             if (count($gaps) > 0) {
                 $gapTopics = array_unique(array_column($gaps, 'topic'));
-                $summary .= ' Выявлены пробелы: ' . implode(', ', array_slice($gapTopics, 0, 3)) . '.';
+                $summary .= ' Выявлены пробелы: '.implode(', ', array_slice($gapTopics, 0, 3)).'.';
             }
 
             ProgressSnapshot::query()->updateOrCreate(

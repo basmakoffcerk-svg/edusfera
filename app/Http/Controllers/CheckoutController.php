@@ -9,7 +9,9 @@ use App\Models\StudentBalance;
 use App\Models\Transaction;
 use App\Models\TutorProfile;
 use App\Services\PackageService;
+use App\Services\Payment\AlfaBankPaymentGateway;
 use App\Services\Payment\PaymentService;
+use App\Services\PromoCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,11 +62,11 @@ class CheckoutController extends Controller
         return view('checkout.show', [
             'lesson' => $lesson,
             'paymentMethods' => $paymentMethods,
-            'walletBalance' => 0.0,
+            'walletBalance' => (float) ($walletBalance?->available_amount ?? 0.0),
             'expiresInSeconds' => max((int) now('UTC')->diffInSeconds($lesson->payment_lock_expires_at, false), 0),
             'activeGateway' => config('payments.gateway'),
-            'webSdkUrl' => config('payments.alfabank.web_sdk_url', 'https://abby.rbsuat.com/payment/modules/multiframe/main.js'),
-            'apiContext' => config('payments.alfabank.api_context', '/payment'),
+            'webSdkUrl' => app(AlfaBankPaymentGateway::class)->getWebSdkUrl(),
+            'apiContext' => app(AlfaBankPaymentGateway::class)->getApiContext(),
         ]);
     }
 
@@ -94,6 +96,7 @@ class CheckoutController extends Controller
         }
 
         $useWalletBalance = (bool) $request->input('use_wallet_balance', false);
+        $promoCode = $request->input('promo_code');
 
         $transaction = $paymentService->processPayment(
             $lesson->id,
@@ -101,6 +104,7 @@ class CheckoutController extends Controller
             'card',
             (bool) $request->input('remember_card', false),
             $useWalletBalance,
+            $promoCode ? (string) $promoCode : null,
         );
 
         $gatewayResponse = (array) ($transaction->gateway_response ?? []);
@@ -116,6 +120,65 @@ class CheckoutController extends Controller
             'amount' => $transaction->amount,
             'currency' => $transaction->currency,
             'redirect_url' => $gatewayResponse['redirect_url'] ?? route('checkout.success', $lesson),
+        ]);
+    }
+
+    public function applyPromo(Request $request, Lesson $lesson, PromoCodeService $promoService): JsonResponse
+    {
+        abort_unless($this->canAccessLesson($lesson), 403);
+
+        $code = trim((string) $request->input('promo_code', ''));
+        if (empty($code)) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Введите промокод.',
+            ], 422);
+        }
+
+        $packageCode = (string) $request->input('package_code', $lesson->package_code ?? 'single');
+        if (! in_array($packageCode, ['single', 'pack_4', 'pack_8'], true)) {
+            $packageCode = 'single';
+        }
+
+        $singlePrice = (float) $lesson->price;
+        $lessonsCount = match ($packageCode) {
+            'pack_4' => 4,
+            'pack_8' => 8,
+            default => 1,
+        };
+        $packageDiscountRate = match ($packageCode) {
+            'pack_4' => 0.05,
+            'pack_8' => 0.10,
+            default => 0.0,
+        };
+        $originalAmount = round($singlePrice * $lessonsCount * (1 - $packageDiscountRate), 2);
+
+        $subject = $lesson->tutor?->tutorProfile?->subjects[0] ?? null;
+
+        $result = $promoService->validate($code, $originalAmount, $request->user(), [
+            'order_type' => 'lesson',
+            'package_code' => $packageCode,
+            'tutor_id' => $lesson->tutor_id,
+            'subject' => $subject,
+        ]);
+
+        if (! $result['valid']) {
+            return response()->json([
+                'valid' => false,
+                'message' => $result['error'] ?? 'Недействительный промокод',
+            ], 422);
+        }
+
+        return response()->json([
+            'valid' => true,
+            'code' => $result['promo_code']->code,
+            'description' => $result['promo_code']->description,
+            'discount_type' => $result['promo_code']->discount_type,
+            'discount_value' => $result['promo_code']->discount_value,
+            'discount_amount' => $result['discount_amount'],
+            'original_amount' => $originalAmount,
+            'final_amount' => $result['final_amount'],
+            'message' => 'Промокод успешно применён!',
         ]);
     }
 
@@ -145,6 +208,7 @@ class CheckoutController extends Controller
             'payment_method' => ['required', 'in:wallet,card,erip,apple_pay,google_pay'],
             'use_wallet_balance' => ['nullable', 'boolean'],
             'remember_card' => ['nullable', 'boolean'],
+            'promo_code' => ['nullable', 'string', 'max:64'],
         ]);
 
         $useWalletBalance = (bool) ($validated['use_wallet_balance'] ?? false);
@@ -171,14 +235,15 @@ class CheckoutController extends Controller
             $validated['payment_method'],
             (bool) ($validated['remember_card'] ?? false),
             $useWalletBalance,
+            ! empty($validated['promo_code']) ? (string) $validated['promo_code'] : null,
         );
 
         if (
             in_array($transaction->status, [Transaction::STATUS_PENDING, Transaction::STATUS_AUTHORIZED], true)
             && $transaction->gateway_transaction_id !== null
         ) {
-            $isTest = (bool) config('payments.alfabank.test_mode', true) || app()->environment('local', 'testing');
-            if ($isTest || $paymentService->verifyPayment((string) $transaction->gateway_transaction_id)) {
+            $isAutomatedTest = app()->environment('testing');
+            if ($isAutomatedTest || $paymentService->verifyPayment((string) $transaction->gateway_transaction_id)) {
                 $paymentService->capturePendingPayment($transaction);
                 $lesson->refresh();
 
@@ -235,7 +300,7 @@ class CheckoutController extends Controller
                 ->first();
 
             if ($pendingTransaction && $pendingTransaction->gateway_transaction_id) {
-                $isTest = (bool) config('payments.alfabank.test_mode', true) || app()->environment('local', 'testing');
+                $isTest = app()->environment('testing') || (app()->environment('local') && (bool) config('payments.alfabank.test_mode', false));
                 if ($isTest || $paymentService->verifyPayment($pendingTransaction->gateway_transaction_id)) {
                     $paymentService->capturePendingPayment($pendingTransaction);
                     $lesson->refresh();

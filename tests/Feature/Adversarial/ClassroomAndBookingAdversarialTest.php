@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace Tests\Feature\Adversarial;
 
 use App\Domain\Subscription\Enums\SubscriptionPlan;
-use App\Domain\Subscription\Models\Subscription;
-use App\Domain\Subscription\Models\SubscriptionInvoice;
 use App\Domain\Subscription\Services\SubscriptionService;
 use App\Enums\UserRole;
 use App\Models\ClassroomFile;
 use App\Models\ClassroomSession;
 use App\Models\Lesson;
+use App\Models\Transaction;
 use App\Models\TutorAvailability;
 use App\Models\TutorBalance;
 use App\Models\TutorProfile;
@@ -19,7 +18,6 @@ use App\Models\User;
 use App\Services\BookingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -67,7 +65,7 @@ class ClassroomAndBookingAdversarialTest extends TestCase
         ]);
 
         // Transaction backing the paid lesson
-        \App\Models\Transaction::query()->create([
+        Transaction::query()->create([
             'lesson_id' => $lesson->id,
             'user_id' => $student->id,
             'amount' => '80.00',
@@ -75,7 +73,7 @@ class ClassroomAndBookingAdversarialTest extends TestCase
             'acquiring_fee' => '2.00',
             'net_amount' => '70.00',
             'currency' => 'BYN',
-            'status' => \App\Models\Transaction::STATUS_SUCCESS,
+            'status' => Transaction::STATUS_SUCCESS,
             'payment_method' => 'wallet',
             'gateway_response' => [
                 'charged_amount' => '80.00',

@@ -7,6 +7,7 @@ namespace Tests\Feature\Api;
 use App\Models\Lesson;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\Payment\PaymentGatewayInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -17,10 +18,14 @@ class PaymentWebhookTest extends TestCase
     use RefreshDatabase;
 
     private User $student;
+
     private User $tutor;
+
     private Lesson $lesson;
+
     private Transaction $transaction;
-    private string $webpaySecret = 'test_webpay_secret';
+
+    private string $webhookSecret = 'test_webhook_secret';
 
     protected function setUp(): void
     {
@@ -34,8 +39,6 @@ class PaymentWebhookTest extends TestCase
             'experience_years' => 5,
             'legal_status' => 'self_employed',
             'unp' => '123456789',
-            'webpay_billing_id' => 'billing_123',
-            'webpay_account_id' => 'account_123',
             'bio' => 'Подготовка к экзаменам.',
             'is_verified' => true,
             'verification_status' => 'approved',
@@ -58,7 +61,7 @@ class PaymentWebhookTest extends TestCase
             'payment_lock_expires_at' => CarbonImmutable::now('UTC')->addMinutes(15),
         ]);
 
-        $this->transaction = Transaction::query()->create([
+        $this->transaction = Transaction::query()->forceCreate([
             'lesson_id' => $this->lesson->id,
             'user_id' => $this->student->id,
             'amount' => '40.00',
@@ -72,14 +75,13 @@ class PaymentWebhookTest extends TestCase
             'gateway_response' => ['charged_amount' => '40.00'],
         ]);
 
-        Config::set('payments.webpay.secret_key', $this->webpaySecret);
-        Config::set('payments.webpay.allowed_ips', ['127.0.0.1', '178.163.225.84']);
+        Config::set('payments.webhook_secret', $this->webhookSecret);
         Config::set('payments.webhook_require_ip_allowlist', false);
     }
 
-    public function test_it_successfully_processes_webpay_success_webhook(): void
+    public function test_it_successfully_processes_payment_success_webhook(): void
     {
-        Config::set('payments.gateway', 'webpay');
+        Config::set('payments.gateway', 'alfa');
 
         $payload = [
             'transaction_id' => 'checkout-token-12345',
@@ -88,9 +90,9 @@ class PaymentWebhookTest extends TestCase
             'amount' => '40.00',
             'currency' => 'BYN',
         ];
-        $payload['ws_signature'] = $this->signPayload($payload);
+        $payload['signature'] = $this->signPayload($payload);
 
-        $response = $this->postJson('/webhooks/webpay', $payload);
+        $response = $this->postJson('/webhooks/alfabank', $payload);
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -103,18 +105,18 @@ class PaymentWebhookTest extends TestCase
         $this->assertSame(Lesson::STATUS_CONFIRMED, $this->lesson->status);
     }
 
-    public function test_it_marks_transaction_failed_on_webpay_failed_webhook(): void
+    public function test_it_marks_transaction_failed_on_payment_failed_webhook(): void
     {
-        Config::set('payments.gateway', 'webpay');
+        Config::set('payments.gateway', 'alfa');
 
         $payload = [
             'transaction_id' => 'checkout-token-12345',
             'payment_type' => 'failed',
             'status' => 'failed',
         ];
-        $payload['ws_signature'] = $this->signPayload($payload);
+        $payload['signature'] = $this->signPayload($payload);
 
-        $response = $this->postJson('/webhooks/webpay', $payload);
+        $response = $this->postJson('/webhooks/alfabank', $payload);
 
         $response->assertStatus(200);
 
@@ -136,19 +138,19 @@ class PaymentWebhookTest extends TestCase
                  ($payload['transaction_id'] ?? '').
                  ($payload['payment_type'] ?? '').
                  ($payload['rrn'] ?? '').
-                 $this->webpaySecret;
+                 $this->webhookSecret;
 
         return md5($batch);
     }
 
     public function test_checkout_success_page_verifies_payment_synchronously_to_resolve_race_condition(): void
     {
-        $mockGateway = $this->createMock(\App\Services\Payment\PaymentGatewayInterface::class);
+        $mockGateway = $this->createMock(PaymentGatewayInterface::class);
         $mockGateway->method('verifyPayment')
             ->with('checkout-token-12345')
             ->willReturn(true);
-        
-        $this->app->instance(\App\Services\Payment\PaymentGatewayInterface::class, $mockGateway);
+
+        $this->app->instance(PaymentGatewayInterface::class, $mockGateway);
 
         $response = $this->actingAs($this->student)
             ->get("/checkout/{$this->lesson->id}/success");

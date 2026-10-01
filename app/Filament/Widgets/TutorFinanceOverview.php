@@ -14,9 +14,9 @@ use Filament\Widgets\Widget;
  */
 class TutorFinanceOverview extends Widget
 {
-    protected static string $view = "filament.widgets.tutor-finance-overview";
+    protected static string $view = 'filament.widgets.tutor-finance-overview';
 
-    protected int|string|array $columnSpan = "full";
+    protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = 1;
 
@@ -30,7 +30,7 @@ class TutorFinanceOverview extends Widget
         $user = auth()->user();
 
         if (! $user) {
-            return ["stats" => []];
+            return ['stats' => []];
         }
 
         $now = now();
@@ -38,48 +38,61 @@ class TutorFinanceOverview extends Widget
         $endOfMonth = $now->copy()->endOfMonth()->utc();
 
         $earnedThisMonth = Lesson::query()
-            ->where("tutor_id", $user->id)
-            ->where("status", Lesson::STATUS_COMPLETED)
-            ->where("start_time", ">=", $startOfMonth)
-            ->where("start_time", "<=", $endOfMonth)
-            ->sum("amount");
+            ->where('tutor_id', $user->id)
+            ->where('status', Lesson::STATUS_COMPLETED)
+            ->where('start_time', '>=', $startOfMonth)
+            ->where('start_time', '<=', $endOfMonth)
+            ->sum('net_amount');
 
         $completedLessonsCount = Lesson::query()
-            ->where("tutor_id", $user->id)
-            ->where("status", Lesson::STATUS_COMPLETED)
-            ->where("start_time", ">=", $startOfMonth)
-            ->where("start_time", "<=", $endOfMonth)
+            ->where('tutor_id', $user->id)
+            ->where('status', Lesson::STATUS_COMPLETED)
+            ->where('start_time', '>=', $startOfMonth)
+            ->where('start_time', '<=', $endOfMonth)
             ->count();
 
         $monthlyForecast = Lesson::query()
-            ->where("tutor_id", $user->id)
-            ->whereIn("status", [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED])
-            ->where("start_time", ">=", now()->utc())
-            ->where("start_time", "<=", $endOfMonth)
-            ->sum("amount");
+            ->where('tutor_id', $user->id)
+            ->whereIn('status', [Lesson::STATUS_PENDING, Lesson::STATUS_CONFIRMED])
+            ->where('start_time', '>=', now()->utc())
+            ->where('start_time', '<=', $endOfMonth)
+            ->sum('net_amount');
+
+        $subscription = $user->subscription;
+        $planTitle = $subscription ? ($subscription->plan?->title() ?? 'Тариф Pro') : 'Пробный доступ';
+        if ($subscription && $subscription->is_founder) {
+            $planTitle = 'Основатель (Founder)';
+        }
 
         return [
-            "stats" => [
+            'stats' => [
                 [
-                    "label" => "Заработано за " . now()->translatedFormat("F"),
-                    "value" => $this->shortMoney((string) $earnedThisMonth) . " BYN",
-                    "hint" => "Прямая оплата на вашу карту",
-                    "href" => "/admin/lessons",
-                    "accent" => true,
+                    'label' => 'Прямой доход · '.now()->translatedFormat('F'),
+                    'value' => $this->shortMoney((string) $earnedThisMonth).' BYN',
+                    'hint' => 'Оплаты от учеников (для НПД)',
+                    'href' => '/admin/tutor-npd',
+                    'accent' => true,
                 ],
                 [
-                    "label" => "Проведено занятий",
-                    "value" => (string) $completedLessonsCount,
-                    "hint" => "Во встроенном классе",
-                    "href" => "/admin/lessons",
-                    "accent" => false,
+                    'label' => 'Проведено уроков',
+                    'value' => (string) $completedLessonsCount,
+                    'hint' => 'В виртуальном классе',
+                    'href' => '/admin/lessons',
+                    'accent' => false,
                 ],
                 [
-                    "label" => "Запланировано к получению",
-                    "value" => $this->shortMoney((string) $monthlyForecast) . " BYN",
-                    "hint" => "Ожидаемый доход от учеников",
-                    "href" => "/admin/lessons",
-                    "accent" => false,
+                    'label' => 'Подписка на платформу',
+                    'value' => $planTitle,
+                    'hint' => 'Управление тарифом',
+                    'href' => '/admin/tutor-subscription-page',
+                    'accent' => false,
+                ],
+                [
+                    'label' => 'Чеки НПД (МНС РБ)',
+                    'value' => '10%',
+                    'hint' => 'Формирование и учёт чеков',
+                    'href' => '/admin/tutor-npd',
+                    'accent' => false,
                 ],
             ],
         ];
@@ -93,9 +106,9 @@ class TutorFinanceOverview extends Widget
         $value = (float) $amount;
 
         if (fmod($value, 1.0) < 0.005) {
-            return number_format($value, 0, ".", " ");
+            return number_format($value, 0, '.', ' ');
         }
 
-        return number_format($value, 2, ".", " ");
+        return number_format($value, 2, '.', ' ');
     }
 }

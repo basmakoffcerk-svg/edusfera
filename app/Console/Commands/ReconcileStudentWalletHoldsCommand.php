@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Models\Lesson;
+use App\Models\LessonSettlement;
 use App\Models\StudentBalance;
 use App\Models\Transaction;
 use Illuminate\Console\Command;
@@ -28,7 +28,7 @@ class ReconcileStudentWalletHoldsCommand extends Command
         $expectedByUser = [];
 
         foreach ($transactions as $transaction) {
-            $settlements = \App\Models\LessonSettlement::query()
+            $settlements = LessonSettlement::query()
                 ->where('transaction_id', $transaction->id)
                 ->get();
 
