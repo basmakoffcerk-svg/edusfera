@@ -9,7 +9,9 @@ use App\Services\Classroom\LiveKitService;
 use App\Services\ClassroomService;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Одноразовый веб-скрипт запуска миграций, обслуживания базы данных и настройки WebRTC Edusfera.
@@ -101,6 +103,21 @@ $currentGeminiLiteModel = (string) env('GEMINI_LITE_MODEL', config('services.gem
 $currentGeminiBaseUrl = (string) env('GEMINI_BASE_URL', config('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta'));
 $currentGeminiProxy = (string) env('GEMINI_PROXY', config('services.gemini.proxy', ''));
 $currentGeminiUseXboxDns = (bool) env('GEMINI_USE_XBOX_DNS', config('services.gemini.use_xbox_dns', true));
+
+// Current Queue settings
+$currentQueueConnection = (string) env('QUEUE_CONNECTION', config('queue.default', 'database'));
+$pendingJobsCount = 0;
+$failedJobsCount = 0;
+try {
+    if (Schema::hasTable('jobs')) {
+        $pendingJobsCount = (int) DB::table('jobs')->count();
+    }
+    if (Schema::hasTable('failed_jobs')) {
+        $failedJobsCount = (int) DB::table('failed_jobs')->count();
+    }
+} catch (Throwable $e) {
+    // ignore if table not accessible
+}
 
 if ($action === 'menu') {
     header('Content-Type: text/html; charset=utf-8');
@@ -288,6 +305,57 @@ if ($action === 'menu') {
                     </a>
                 </div>
             </div>
+
+            <!-- 5. Фоновые очереди задач (Laravel Queue) -->
+            <div class="card">
+                <h2>⚡ 5. Фоновые очереди задач (Laravel Queue)</h2>
+                <p>Асинхронная отправка email-уведомлений, счетов и фоновых задач без задержки ответа страниц:</p>
+
+                <div class="box">
+                    <div>Драйвер очереди: <b><?= $currentQueueConnection === 'database' ? '<span style="color:#22c55e">✓ database (Асинхронно, в базе данных)</span>' : ($currentQueueConnection === 'sync' ? '<span style="color:#eab308">⚠ sync (Синхронно, блокирует отклик страниц)</span>' : '<span style="color:#38bdf8">'.htmlspecialchars($currentQueueConnection).'</span>') ?></b></div>
+                    <div>Задач в очереди (pending): <b style="color:<?= $pendingJobsCount > 0 ? '#38bdf8' : '#94a3b8' ?>"><?= $pendingJobsCount ?></b></div>
+                    <div>Ошибок выполнения (failed): <b style="color:<?= $failedJobsCount > 0 ? '#ef4444' : '#22c55e' ?>"><?= $failedJobsCount ?></b></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                    <?php if ($currentQueueConnection !== 'database') { ?>
+                        <a href="?key=edusfera2026&action=set_queue_database" class="btn btn-green" style="flex:1;">
+                            🚀 Включить очередь database
+                        </a>
+                    <?php } else { ?>
+                        <a href="?key=edusfera2026&action=set_queue_sync" class="btn btn-gray" style="flex:1;">
+                            ⏸ Переключить на sync
+                        </a>
+                    <?php } ?>
+                    <a href="?key=edusfera2026&action=run_queue" class="btn btn-purple" style="flex:1;">
+                        ▶ Обработать очередь сейчас
+                    </a>
+                </div>
+
+                <?php if ($failedJobsCount > 0) { ?>
+                    <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                        <a href="?key=edusfera2026&action=retry_failed_jobs" class="btn btn-cyan" style="flex:1; font-size: 0.85rem;">
+                            🔄 Повторить упавшие задачи (<?= $failedJobsCount ?>)
+                        </a>
+                        <a href="?key=edusfera2026&action=flush_failed_jobs" class="btn btn-gray" style="flex:1; font-size: 0.85rem; color:#ef4444;">
+                            🗑 Очистить ошибки
+                        </a>
+                    </div>
+                <?php } ?>
+
+                <details style="background: rgba(15,23,42,0.6); padding: 12px; border-radius: 8px; font-size: 0.82rem; color: #94A3B8;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #38bdf8;">
+                        📋 Настройка регулярного запуска (Cron на Beget):
+                    </summary>
+                    <div style="margin-top: 8px; line-height: 1.5;">
+                        В панели управления хостингом добавьте задание Cron (раз в минуту):<br>
+                        <code style="background: #020617; padding: 4px 8px; border-radius: 4px; color: #a5f3fc; display: block; margin: 6px 0; word-break: break-all;">
+                            * * * * * cd /var/www/u41698-5508/data/www/edusfera.by && php artisan schedule:run >> /dev/null 2>&1
+                        </code>
+                        Планировщик автоматически выполнит <code>queue:work --stop-when-empty</code> и обработает все накопленные уведомления.
+                    </div>
+                </details>
+            </div>
         </div>
     </body>
     </html>
@@ -299,6 +367,66 @@ header('Content-Type: text/html; charset=utf-8');
 echo "<pre style='background:#0f172a; color:#22c55e; padding:24px; font-family:monospace; line-height:1.5; font-size:14px; border-radius:12px; margin:16px; overflow-x:auto;'>";
 
 try {
+    // ── ACTION: Set queue database ────────────────────────────────────
+    if ($action === 'set_queue_database') {
+        echo "⚡ <b>Переключение очереди на драйвер database...</b>\n\n";
+        updateEnvKey('QUEUE_CONNECTION', 'database');
+        $kernel->call('optimize:clear');
+        echo "   ✓ Драйвер QUEUE_CONNECTION=database успешно сохранен в .env\n";
+        echo "   ✓ Кэш конфигурации сброшен.\n\n";
+        echo "Теперь все уведомления и фоновые задачи отправляются в таблицу jobs без блокировки интерфейса.\n";
+        echo "\n<a href='?key=edusfera2026' style='color:#38bdf8; font-weight:bold;'>← Вернуться в меню обслуживания</a>\n";
+        echo '</pre>';
+        exit;
+    }
+
+    // ── ACTION: Set queue sync ────────────────────────────────────────
+    if ($action === 'set_queue_sync') {
+        echo "⏸ <b>Переключение очереди на драйвер sync...</b>\n\n";
+        updateEnvKey('QUEUE_CONNECTION', 'sync');
+        $kernel->call('optimize:clear');
+        echo "   ✓ Драйвер QUEUE_CONNECTION=sync сохранен в .env\n";
+        echo "   ✓ Кэш конфигурации сброшен.\n\n";
+        echo "\n<a href='?key=edusfera2026' style='color:#38bdf8; font-weight:bold;'>← Вернуться в меню обслуживания</a>\n";
+        echo '</pre>';
+        exit;
+    }
+
+    // ── ACTION: Run queue work ────────────────────────────────────────
+    if ($action === 'run_queue') {
+        echo "▶ <b>Обработка очереди задач (php artisan queue:work --stop-when-empty --tries=3)...</b>\n\n";
+        $kernel->call('queue:work', ['--stop-when-empty' => true, '--tries' => 3]);
+        $output = trim($kernel->output());
+        if ($output) {
+            echo $output."\n";
+        } else {
+            echo "   ✓ Очередь пуста, новых задач нет.\n";
+        }
+        echo "\n<a href='?key=edusfera2026' style='color:#38bdf8; font-weight:bold;'>← Вернуться в меню обслуживания</a>\n";
+        echo '</pre>';
+        exit;
+    }
+
+    // ── ACTION: Retry failed jobs ─────────────────────────────────────
+    if ($action === 'retry_failed_jobs') {
+        echo "🔄 <b>Повторный запуск упавших задач (php artisan queue:retry all)...</b>\n\n";
+        $kernel->call('queue:retry', ['id' => ['all']]);
+        echo $kernel->output()."\n";
+        echo "\n<a href='?key=edusfera2026' style='color:#38bdf8; font-weight:bold;'>← Вернуться в меню обслуживания</a>\n";
+        echo '</pre>';
+        exit;
+    }
+
+    // ── ACTION: Flush failed jobs ────────────────────────────────────
+    if ($action === 'flush_failed_jobs') {
+        echo "🗑 <b>Очистка списка упавших задач (php artisan queue:flush)...</b>\n\n";
+        $kernel->call('queue:flush');
+        echo $kernel->output()."\n";
+        echo "\n<a href='?key=edusfera2026' style='color:#38bdf8; font-weight:bold;'>← Вернуться в меню обслуживания</a>\n";
+        echo '</pre>';
+        exit;
+    }
+
     // ── ACTION: Upload patch ──────────────────────────────────────────
     if ($action === 'upload_patch') {
         echo "🚀 <b>Загрузка и распаковка архива патча...</b>\n\n";

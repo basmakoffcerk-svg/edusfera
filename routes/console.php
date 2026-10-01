@@ -44,3 +44,8 @@ Schedule::command('wallet:reconcile-holds')
 // 7. Оптимизация и очистка временных файлов хранилища (еженедельно)
 Schedule::command('app:optimize-storage')
     ->weekly();
+
+// 8. Регламентная обработка очереди задач (для сред без выделенного демона Supervisor)
+Schedule::command('queue:work --stop-when-empty --tries=3 --max-time=50')
+    ->everyMinute()
+    ->withoutOverlapping();
