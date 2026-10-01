@@ -190,33 +190,36 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
     };
 
     return (
-        <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col h-[740px] max-h-[82vh] overflow-hidden">
+        <div className="ed-ai-card flex flex-col h-[740px] max-h-[82vh] overflow-hidden p-0">
             {/* Header */}
-            <div className="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-wrap items-center justify-between gap-3 shrink-0">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center">
-                        <MessageSquare className="w-4 h-4" />
+            <div className="px-6 py-4 border-b border-[#ECEEF1] dark:border-slate-800 bg-[#FAF8FF] dark:bg-slate-800/40 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-2xl bg-[#7D39EB] text-white flex items-center justify-center shadow-xs">
+                        <MessageSquare className="w-4 h-4 text-[#C6FF33]" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-2">
+                        <h3 className="font-extrabold text-xs text-[#0C0A14] dark:text-white flex items-center gap-2 tracking-wide uppercase">
                             <span>Диалог с ИИ-Методистом Edusfera</span>
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
                         </h3>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                            Режим: <span className="font-semibold text-violet-600 dark:text-violet-400">{PERSONAS.find(p => p.id === persona)?.label}</span>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                            Режим: <span className="font-bold text-[#7D39EB] dark:text-violet-400">{PERSONAS.find(p => p.id === persona)?.label}</span>
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 ml-auto">
+                <div className="flex items-center gap-2 ml-auto">
                     {/* Settings Toggler */}
                     <button
                         type="button"
                         onClick={() => setShowSettings(!showSettings)}
-                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                             showSettings
-                                ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 border-violet-200'
-                                : 'border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
+                                ? 'bg-violet-100 dark:bg-violet-900/50 text-[#7D39EB] dark:text-violet-300 border-[#7D39EB]'
+                                : 'border-[#ECEEF1] dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
                         }`}
                         title="Настройки персоны и тона"
                     >
@@ -229,10 +232,10 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                     <button
                         type="button"
                         onClick={onOpenLibrary}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 hover:bg-violet-100 text-xs font-bold transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-[#7D39EB] dark:text-violet-400 hover:bg-violet-100 text-xs font-extrabold transition-colors cursor-pointer"
                     >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Промпты</span>
+                        <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                        <span className="hidden sm:inline">Каталог промптов</span>
                     </button>
 
                     {/* Clear Chat */}
@@ -240,7 +243,7 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                         <button
                             type="button"
                             onClick={clearChat}
-                            className="p-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                            className="p-1.5 rounded-xl border border-[#ECEEF1] dark:border-slate-700 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                             title="Очистить историю диалога"
                         >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -251,9 +254,9 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
 
             {/* Expandable Settings Bar */}
             {showSettings && (
-                <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 space-y-3 animate-fadeIn">
+                <div className="p-4 border-b border-[#ECEEF1] dark:border-slate-800 bg-[#FAF8FF]/60 dark:bg-slate-800/80 space-y-3">
                     <div>
-                        <label className="block text-[10.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        <label className="block text-[10.5px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                             Педагогическая роль (Персона)
                         </label>
                         <div className="flex flex-wrap gap-1.5">
@@ -262,10 +265,10 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                                     key={p.id}
                                     type="button"
                                     onClick={() => setPersona(p.id)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                                         persona === p.id
-                                            ? 'bg-violet-600 text-white shadow-xs'
-                                            : 'bg-white dark:bg-slate-700/80 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-600 hover:bg-slate-100'
+                                            ? 'bg-[#7D39EB] text-white shadow-xs'
+                                            : 'bg-white dark:bg-slate-700/80 text-slate-700 dark:text-slate-300 border border-[#ECEEF1] dark:border-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
                                     {p.label}
@@ -276,7 +279,7 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                         <div>
-                            <label className="block text-[10.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                            <label className="block text-[10.5px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                                 Тональность ответа
                             </label>
                             <div className="flex gap-1">
@@ -285,10 +288,10 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                                         key={t.id}
                                         type="button"
                                         onClick={() => setTone(t.id)}
-                                        className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-medium transition-all ${
+                                        className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                                             tone === t.id
-                                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs'
-                                                : 'bg-white dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'
+                                                ? 'bg-[#0C0A14] text-white dark:bg-white dark:text-slate-900 shadow-2xs'
+                                                : 'bg-white dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 border border-[#ECEEF1] dark:border-slate-600 hover:bg-slate-50'
                                         }`}
                                     >
                                         {t.label}
@@ -298,7 +301,7 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                         </div>
 
                         <div>
-                            <label className="block text-[10.5px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                            <label className="block text-[10.5px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
                                 Объем ответа
                             </label>
                             <div className="flex gap-1">
@@ -307,10 +310,10 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                                         key={l.id}
                                         type="button"
                                         onClick={() => setLength(l.id)}
-                                        className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-medium transition-all ${
+                                        className={`flex-1 py-1.5 px-2 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                                             length === l.id
-                                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs'
-                                                : 'bg-white dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'
+                                                ? 'bg-[#0C0A14] text-white dark:bg-white dark:text-slate-900 shadow-2xs'
+                                                : 'bg-white dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 border border-[#ECEEF1] dark:border-slate-600 hover:bg-slate-50'
                                         }`}
                                     >
                                         {l.label}
@@ -323,17 +326,30 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
             )}
 
             {/* Chat Messages Scroll Canvas */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-slate-50/30 dark:bg-slate-900/50">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-[#FAF8FF]/30 dark:bg-slate-900/50">
                 {messages.length === 0 ? (
-                    <div className="m-auto max-w-lg text-center py-12 space-y-4">
-                        <div className="w-14 h-14 rounded-3xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white mx-auto flex items-center justify-center text-2xl shadow-lg shadow-violet-500/25">
-                            💬
+                    <div className="m-auto max-w-lg text-center py-10 space-y-5">
+                        {/* Animated SVG Mascot Illustration */}
+                        <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
+                            {/* Rotating Orbit */}
+                            <svg className="absolute inset-0 w-full h-full ed-animate-spin-slow" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="44" fill="none" stroke="#7D39EB" strokeWidth="1.5" strokeDasharray="5 7" strokeOpacity="0.4" />
+                                <circle cx="94" cy="50" r="4.5" fill="#C6FF33" />
+                            </svg>
+                            {/* Floating Mascot Card */}
+                            <div className="ed-animate-float w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#7D39EB] to-[#632cd6] text-white flex items-center justify-center shadow-lg shadow-violet-500/25">
+                                <svg width="34" height="34" viewBox="0 0 64 64" fill="none">
+                                    <path d="M32 10L54 32L32 54L10 32L32 10Z" stroke="#C6FF33" strokeWidth="6" strokeLinejoin="round" />
+                                    <path d="M32 22L42 32L32 42L22 32L32 22Z" fill="#C6FF33" />
+                                </svg>
+                            </div>
                         </div>
+
                         <div className="space-y-1.5">
-                            <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                            <h4 className="font-extrabold text-sm text-[#0C0A14] dark:text-white uppercase tracking-wide">
                                 Задайте методический или практический вопрос
                             </h4>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                                 ИИ-Методист поможет составить сценарий урока, разберет нестандартную задачу или проверит критерии РИКЗ.
                             </p>
                         </div>
@@ -345,10 +361,10 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                                     key={i}
                                     type="button"
                                     onClick={() => handleSendMessage(promptText)}
-                                    className="p-3 rounded-2xl bg-white dark:bg-slate-800 hover:bg-violet-50 dark:hover:bg-violet-950/40 border border-slate-200/80 dark:border-slate-700/80 text-left text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-violet-700 dark:hover:text-violet-300 transition-all shadow-2xs flex items-center justify-between group"
+                                    className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-[#FAF8FF] dark:hover:bg-violet-950/40 border border-[#ECEEF1] dark:border-slate-700/80 text-left text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-[#7D39EB] dark:hover:text-violet-300 transition-all shadow-2xs flex items-center justify-between group cursor-pointer"
                                 >
                                     <span>«{promptText}»</span>
-                                    <CornerDownLeft className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-violet-500 transition-opacity shrink-0 ml-2" />
+                                    <CornerDownLeft className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-[#7D39EB] transition-opacity shrink-0 ml-2" />
                                 </button>
                             ))}
                         </div>
@@ -362,15 +378,18 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                                 className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
                             >
                                 {!isUser && (
-                                    <div className="w-8 h-8 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 text-xs font-bold shadow-xs mt-1">
-                                        ✨
+                                    <div className="w-8 h-8 rounded-xl bg-[#7D39EB] text-white flex items-center justify-center shrink-0 shadow-xs mt-1">
+                                        <svg width="18" height="18" viewBox="0 0 64 64" fill="none">
+                                            <path d="M32 10L54 32L32 54L10 32L32 10Z" stroke="#C6FF33" strokeWidth="6" strokeLinejoin="round" />
+                                            <path d="M32 22L42 32L32 42L22 32L32 22Z" fill="#C6FF33" />
+                                        </svg>
                                     </div>
                                 )}
 
                                 <div className={`relative group max-w-[88%] sm:max-w-[80%] rounded-2xl p-4 text-xs leading-relaxed transition-all shadow-2xs ${
                                     isUser
-                                        ? 'bg-violet-600 text-white rounded-tr-xs'
-                                        : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/80 rounded-tl-xs'
+                                        ? 'bg-[#7D39EB] text-white rounded-tr-xs'
+                                        : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-[#ECEEF1] dark:border-slate-700/80 rounded-tl-xs'
                                 }`}>
                                     {/* Author & Timestamp */}
                                     <div className="flex items-center justify-between gap-4 mb-2 pb-1.5 border-b border-black/5 dark:border-white/10">
@@ -433,12 +452,18 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                 {/* Loading indicator */}
                 {isLoading && (
                     <div className="flex gap-3 justify-start">
-                        <div className="w-8 h-8 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 text-xs font-bold animate-pulse">
-                            ✨
+                        <div className="w-8 h-8 rounded-xl bg-[#7D39EB] text-white flex items-center justify-center shrink-0 shadow-xs animate-pulse">
+                            <svg width="18" height="18" viewBox="0 0 64 64" fill="none">
+                                <path d="M32 10L54 32L32 54L10 32L32 10Z" stroke="#C6FF33" strokeWidth="6" strokeLinejoin="round" />
+                                <path d="M32 22L42 32L32 42L22 32L32 22Z" fill="#C6FF33" />
+                            </svg>
                         </div>
-                        <div className="rounded-2xl rounded-tl-xs p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-500 flex items-center gap-2 shadow-2xs">
-                            <span className="inline-block w-2 h-2 rounded-full bg-violet-500 animate-ping"></span>
-                            <span>ИИ-Методист формулирует педагогический ответ...</span>
+                        <div className="rounded-2xl rounded-tl-xs p-3.5 bg-white dark:bg-slate-800 border border-[#ECEEF1] dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2.5 shadow-2xs">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7D39EB]"></span>
+                            </span>
+                            <span className="font-semibold">ИИ-Методист формулирует педагогический ответ...</span>
                         </div>
                     </div>
                 )}
@@ -447,8 +472,8 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
             </div>
 
             {/* Bottom Input Area */}
-            <div className="p-3 sm:p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
-                <div className="relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/30 transition-all p-2 flex flex-col">
+            <div className="p-3.5 sm:p-5 border-t border-[#ECEEF1] dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                <div className="relative rounded-2xl border-2 border-[#ECEEF1] dark:border-slate-700 bg-[#FAF8FF]/40 dark:bg-slate-800/60 focus-within:border-[#7D39EB] focus-within:bg-white focus-within:ring-4 focus-within:ring-violet-500/10 transition-all p-2.5 flex flex-col">
                     <textarea
                         ref={textareaRef}
                         rows={1}
@@ -456,24 +481,24 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder="Спросите у методиста или вставьте текст задачи... (Enter для отправки)"
-                        className="w-full bg-transparent resize-none border-none outline-none text-xs sm:text-[13px] text-slate-900 dark:text-slate-100 placeholder-slate-400 p-1.5 max-h-44 min-h-[38px] leading-relaxed"
+                        className="w-full bg-transparent resize-none border-none outline-none text-xs sm:text-[13px] text-slate-900 dark:text-slate-100 placeholder-slate-400 p-1.5 max-h-44 min-h-[38px] leading-relaxed font-medium"
                         disabled={isLoading}
                     />
 
-                    <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/50 dark:border-slate-700/50 mt-1">
-                        <div className="text-[10px] text-slate-400 px-1 hidden sm:block">
-                            <span>Нажмите <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono">Enter</kbd> для отправки, <kbd className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono">Shift+Enter</kbd> для переноса строки</span>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/50 mt-1">
+                        <div className="text-[10px] text-slate-400 px-1 hidden sm:block font-medium">
+                            <span>Нажмите <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono text-[9px] border border-slate-200 dark:border-slate-600">Enter</kbd> для отправки, <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-mono text-[9px] border border-slate-200 dark:border-slate-600">Shift+Enter</kbd> для новой строки</span>
                         </div>
 
                         <button
                             type="button"
                             onClick={() => handleSendMessage()}
                             disabled={isLoading || !input.trim()}
-                            className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition-all disabled:opacity-40 disabled:pointer-events-none"
+                            className="ml-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black text-white shadow-xs transition-all disabled:opacity-40 disabled:pointer-events-none cursor-pointer hover:shadow-md hover:shadow-violet-500/20 active:scale-98"
                             style={{ background: 'linear-gradient(135deg, #7D39EB 0%, #632cd6 100%)' }}
                         >
                             <span>Отправить</span>
-                            <Send className="w-3.5 h-3.5" />
+                            <Send className="w-3.5 h-3.5 text-[#C6FF33]" />
                         </button>
                     </div>
                 </div>

@@ -606,3 +606,136 @@
         background: #ffffff !important;
     }
 }
+
+/* ─── Edusfera AI Assistant 2026 Design System ─── */
+.ed-ai-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+}
+
+.ed-ai-hero-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid #ECEEF1;
+    padding: 28px 32px;
+    box-shadow: 0 4px 20px -4px rgba(125, 57, 235, 0.06);
+}
+:is(.dark) .ed-ai-hero-card {
+    background: #111827;
+    border-color: #1F2937;
+}
+
+.ed-ai-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+}
+@media (min-width: 1024px) {
+    .ed-ai-grid {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    .ed-ai-col-form {
+        width: 480px;
+        min-width: 460px;
+        flex-shrink: 0;
+    }
+    .ed-ai-col-canvas {
+        flex: 1;
+        min-width: 0;
+        position: sticky;
+        top: 24px;
+    }
+}
+
+.ed-ai-box {
+    background: #ffffff;
+    border: 1px solid #ECEEF1;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(16, 10, 31, 0.04);
+}
+:is(.dark) .ed-ai-box {
+    background: #111827;
+    border-color: #1F2937;
+}
+
+/* Floating animated SVG elements */
+@keyframes ed-float-slow {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(3deg); }
+}
+
+@keyframes ed-glow-pulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes ed-spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.ed-animate-float {
+    animation: ed-float-slow 6s ease-in-out infinite;
+}
+
+.ed-animate-glow {
+    animation: ed-glow-pulse 4s ease-in-out infinite;
+}
+
+.ed-animate-spin-slow {
+    animation: ed-spin-slow 24s linear infinite;
+}
+
+/* Subject Grid Button Cards */
+.ed-subject-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+@media (max-width: 500px) {
+    .ed-subject-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.ed-subject-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    border-radius: 16px;
+    border: 1px solid #ECEEF1;
+    background: #F9FAFB;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: center;
+    position: relative;
+}
+:is(.dark) .ed-subject-btn {
+    background: #1F2937;
+    border-color: #374151;
+}
+.ed-subject-btn:hover {
+    border-color: rgba(125, 57, 235, 0.4);
+    background: #FAF8FF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(125, 57, 235, 0.08);
+}
+.ed-subject-btn.active {
+    border-color: #7D39EB;
+    background: #FAF8FF;
+    box-shadow: 0 0 0 2px rgba(125, 57, 235, 0.2), 0 4px 12px rgba(125, 57, 235, 0.12);
+}
+:is(.dark) .ed-subject-btn.active {
+    background: rgba(125, 57, 235, 0.15);
+    border-color: #9055FD;
+}
+

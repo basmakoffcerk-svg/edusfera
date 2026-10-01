@@ -7,17 +7,46 @@ import {
     Target, 
     History, 
     Trash2, 
-    AlertCircle 
+    AlertCircle,
+    Check
 } from 'lucide-react';
 import AiFormattedOutput from './AiFormattedOutput';
 
+const SUBJECTS = [
+    { id: 'Математика', label: 'Математика', icon: '📐' },
+    { id: 'Физика', label: 'Физика', icon: '⚡' },
+    { id: 'Русский язык', label: 'Русский язык', icon: '📝' },
+    { id: 'Английский язык', label: 'Английский язык', icon: '🇬🇧' },
+    { id: 'Химия', label: 'Химия', icon: '🧪' },
+    { id: 'Биология', label: 'Биология', icon: '🧬' },
+];
+
+const QUESTION_COUNTS = [
+    { value: 3, label: '3 зад.', sub: 'Экспресс' },
+    { value: 5, label: '5 зад.', sub: 'Стандарт' },
+    { value: 8, label: '8 зад.', sub: 'Проверочная' },
+    { value: 10, label: '10 зад.', sub: 'Мини-ЦТ' },
+];
+
+const DIFFICULTIES = [
+    { id: 'Базовый (Часть А ЦТ 2026)', label: 'Часть А (Базовый)', badge: 'Тест 4-5 вар.' },
+    { id: 'Средний (ЦТ 2026, часть А и Б)', label: 'ЦТ 2026 (А + Б)', badge: 'Смешанный' },
+    { id: 'Сложный (Часть Б, высокий балл)', label: 'Часть Б (80+ баллов)', badge: 'Числовой ответ' },
+    { id: 'Олимпиадный уровень со звездочкой', label: 'Олимпиадный (*)', badge: 'Повышенный' },
+];
+
+const FORMATS = [
+    { id: 'Смешанный (Часть А с выбором и Часть Б с кратким числовым ответом)', label: 'Смешанный (А + Б)' },
+    { id: 'Только Часть Б (краткий числовой ответ РИКЗ)', label: 'Только Часть Б' },
+    { id: 'Только Часть А (4-5 вариантов с дистракторами)', label: 'Только Часть А' },
+];
+
 const QUICK_QUIZ_TOPICS = [
-    { label: '📐 Тригонометрические уравнения с отбором корней', subject: 'Математика' },
-    { label: '📐 Стереометрия: расстояния и углы в пирамидах (Часть Б)', subject: 'Математика' },
-    { label: '⚡ Законы постоянного тока и расчет смешанных цепей', subject: 'Физика' },
-    { label: '📝 Пунктуация в сложносочиненных и бессоюзных предложениях', subject: 'Русский язык' },
-    { label: '🇬🇧 Phrasal Verbs & Prepositions (CT 2026 Format)', subject: 'Английский язык' },
-    { label: '🧪 Реакции окисления-восстановления методом электронного баланса', subject: 'Химия' },
+    { label: 'Стереометрия: расстояния и углы в пирамидах (Часть Б)', subject: 'Математика' },
+    { label: 'Тригонометрические уравнения с отбором корней', subject: 'Математика' },
+    { label: 'Законы постоянного тока и расчет смешанных цепей', subject: 'Физика' },
+    { label: 'Пунктуация в бессоюзных и сложносочиненных предложениях', subject: 'Русский язык' },
+    { label: 'Phrasal Verbs & Prepositions (CT 2026)', subject: 'Английский язык' },
 ];
 
 export default function QuizGeneratorTab({ csrfToken, endpoints, initialSubject = 'Математика', onOpenLibrary }) {
@@ -112,221 +141,223 @@ export default function QuizGeneratorTab({ csrfToken, endpoints, initialSubject 
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left: Settings */}
-            <div className="lg:col-span-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-6 shadow-sm space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center">
-                            <CheckSquare className="w-4 h-4" />
+        <div className="ed-ai-grid">
+            {/* ═══ ЛЕВАЯ КОЛОНКА: БЛОКИ ПАРАМЕТРОВ ═══ */}
+            <div className="ed-ai-col-form space-y-4">
+                {/* БЛОК 1: Выбор предмета */}
+                <div className="ed-ai-box">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#ECEEF1] dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">📝</span>
+                            <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider">
+                                1. Предмет заданий
+                            </span>
                         </div>
-                        <div>
-                            <h3 className="font-bold text-xs text-slate-900 dark:text-white">
-                                Параметры заданий РИКЗ
-                            </h3>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                Спецификации ЦТ/ЦЭ 2026, дистракторы и ловушки
-                            </p>
-                        </div>
+                        <span className="text-[11px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 px-2 py-0.5 rounded-md">
+                            {subject}
+                        </span>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                        {history.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => setShowHistory(!showHistory)}
-                                className={`p-1.5 rounded-xl border text-xs transition-colors flex items-center gap-1 ${
-                                    showHistory 
-                                        ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 border-violet-200' 
-                                        : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                                }`}
-                                title="История тестов"
-                            >
-                                <History className="w-3.5 h-3.5" />
-                                <span className="text-[10px] font-bold">{history.length}</span>
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={onOpenLibrary}
-                            className="px-2.5 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 hover:bg-violet-100 text-[11px] font-bold flex items-center gap-1 transition-colors"
-                        >
-                            <Sparkles className="w-3 h-3" />
-                            <span>Промпты</span>
-                        </button>
+                    <div className="ed-subject-grid">
+                        {SUBJECTS.map((s) => {
+                            const isSelected = subject.toLowerCase().includes(s.id.toLowerCase());
+                            return (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => setSubject(s.id)}
+                                    className={`ed-subject-btn ${isSelected ? 'active' : ''}`}
+                                >
+                                    <span className="text-lg mb-1">{s.icon}</span>
+                                    <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-[#7D39EB] dark:text-violet-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                                        {s.label}
+                                    </span>
+                                    {isSelected && (
+                                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#C6FF33] text-black flex items-center justify-center text-[10px] font-black shadow-2xs">
+                                            ✓
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* History if open */}
-                {showHistory && (
-                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                            <span>Недавние тесты ({history.length}):</span>
-                            <button
-                                type="button"
-                                onClick={clearHistory}
-                                className="text-rose-500 hover:text-rose-600 text-[10px] flex items-center gap-1"
-                            >
-                                <Trash2 className="w-3 h-3" /> Очистить
-                            </button>
+                {/* БЛОК 2: Тема заданий */}
+                <div className="ed-ai-box space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#ECEEF1] dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">🎯</span>
+                            <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider">
+                                2. Тема заданий *
+                            </span>
                         </div>
-                        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                            {history.map((item) => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => {
-                                        setResult(item.content);
-                                        setTopic(item.topic);
-                                        setShowHistory(false);
-                                    }}
-                                    className="p-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-violet-50 dark:hover:bg-violet-950/40 border border-slate-200/60 dark:border-slate-700/60 cursor-pointer text-left transition-colors"
-                                >
-                                    <div className="font-semibold text-xs text-slate-900 dark:text-white line-clamp-1">
-                                        {item.topic}
-                                    </div>
-                                    <div className="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
-                                        <span>{item.subject} • {item.count} зад.</span>
-                                        <span>{item.date}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                <form onSubmit={handleGenerate} className="space-y-3.5">
-                    {/* Subject */}
-                    <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            Предмет
-                        </label>
-                        <input
-                            type="text"
-                            value={subject}
-                            onChange={(e) => setSubject(e.target.value)}
-                            placeholder="Математика, Физика, Русский язык..."
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                        />
+                        <button
+                            type="button"
+                            onClick={onOpenLibrary}
+                            className="text-[11px] font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1 cursor-pointer"
+                        >
+                            <Sparkles className="w-3 h-3" />
+                            <span>Промпты ЦТ</span>
+                        </button>
                     </div>
 
-                    {/* Topic */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                                Тема для заданий <span className="text-rose-500">*</span>
-                            </label>
-                            <span className="text-[10px] text-slate-400">Специфика раздела</span>
-                        </div>
+                    <div className="relative">
                         <input
                             type="text"
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
                             placeholder="Напр.: Стереометрия, углы между скрещивающимися прямыми"
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2.5 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                            className="w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3.5 py-3 font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#7D39EB] focus:ring-4 focus:ring-violet-500/10 transition-all"
                             required
                         />
+                        {topic && (
+                            <button
+                                type="button"
+                                onClick={() => setTopic('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
 
-                        {/* Quick Chips */}
-                        <div className="pt-2 flex flex-wrap gap-1.5">
+                    <div>
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                            Популярные темы ЦТ 2026:
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
                             {QUICK_QUIZ_TOPICS.map((item, idx) => (
                                 <button
                                     key={idx}
                                     type="button"
                                     onClick={() => {
-                                        setTopic(item.label.replace(/^[^\s]+\s/, ''));
+                                        setTopic(item.label);
                                         setSubject(item.subject);
                                     }}
-                                    className="text-[10.5px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-violet-50 dark:hover:bg-violet-950/40 text-slate-600 dark:text-slate-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors border border-slate-200/60 dark:border-slate-700/60"
+                                    className="text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-[#FAF8FF] dark:hover:bg-violet-950/40 text-slate-700 dark:text-slate-300 hover:text-[#7D39EB] dark:hover:text-violet-300 transition-all border border-slate-200/80 dark:border-slate-700 text-left font-medium cursor-pointer"
                                 >
                                     {item.label}
                                 </button>
                             ))}
                         </div>
                     </div>
+                </div>
 
-                    {/* Count & Difficulty */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                Количество заданий
-                            </label>
-                            <select
-                                value={count}
-                                onChange={(e) => setCount(Number(e.target.value))}
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                            >
-                                <option value={3}>3 задания (экспресс-срез)</option>
-                                <option value={5}>5 заданий (стандартный тест)</option>
-                                <option value={8}>8 заданий (проверочная работа)</option>
-                                <option value={10}>10 заданий (полный блок)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                Уровень сложности
-                            </label>
-                            <select
-                                value={difficulty}
-                                onChange={(e) => setDifficulty(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                            >
-                                <option value="Базовый (Часть А ЦТ 2026)">Базовый (Часть А)</option>
-                                <option value="Средний (ЦТ 2026, часть А и Б)">Средний (ЦТ 2026, А+Б)</option>
-                                <option value="Сложный (Часть Б, высокий балл)">Сложный (Часть Б, 80+)</option>
-                                <option value="Олимпиадный уровень со звездочкой">Олимпиадный (*)</option>
-                            </select>
-                        </div>
+                {/* БЛОК 3: Количество, сложность и формат */}
+                <div className="ed-ai-box space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-[#ECEEF1] dark:border-slate-800">
+                        <span className="text-base">⚙️</span>
+                        <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider">
+                            3. Спецификация РИКЗ
+                        </span>
                     </div>
 
-                    {/* Format */}
-                    <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            Формат заданий
+                    {/* Count Pills */}
+                    <div className="space-y-1.5">
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                            Количество заданий:
                         </label>
-                        <select
-                            value={format}
-                            onChange={(e) => setFormat(e.target.value)}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                        >
-                            <option value="Смешанный (Часть А с выбором и Часть Б с кратким числовым ответом)">Смешанный (Часть А + Часть Б)</option>
-                            <option value="Только Часть Б (краткий числовой ответ РИКЗ)">Только Часть Б (числовой ответ)</option>
-                            <option value="Только Часть А (4-5 вариантов с дистракторами)">Только Часть А (тест с вариантами)</option>
-                        </select>
-                    </div>
-
-                    {error && (
-                        <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4 shrink-0" />
-                            <span>{error}</span>
+                        <div className="grid grid-cols-4 gap-1.5">
+                            {QUESTION_COUNTS.map((qc) => (
+                                <button
+                                    key={qc.value}
+                                    type="button"
+                                    onClick={() => setCount(qc.value)}
+                                    className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer ${
+                                        count === qc.value
+                                            ? 'border-[#7D39EB] bg-[#7D39EB] text-white font-black shadow-xs'
+                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <div className="text-xs font-bold">{qc.label}</div>
+                                    <div className={`text-[9px] ${count === qc.value ? 'text-violet-200' : 'text-slate-400'}`}>{qc.sub}</div>
+                                </button>
+                            ))}
                         </div>
-                    )}
-
-                    {/* Button */}
-                    <div className="pt-2">
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full relative overflow-hidden py-3 px-4 rounded-xl font-bold text-xs text-white shadow-md shadow-violet-600/25 transition-all duration-200 hover:shadow-lg hover:shadow-violet-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
-                            style={{ background: 'linear-gradient(135deg, #7D39EB 0%, #632cd6 100%)' }}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Sparkles className="w-4 h-4 animate-spin" />
-                                    <span>Генерация заданий РИКЗ...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles className="w-4 h-4" />
-                                    <span>✨ Сгенерировать банк заданий</span>
-                                </>
-                            )}
-                        </button>
                     </div>
-                </form>
+
+                    {/* Difficulty Grid */}
+                    <div className="space-y-1.5 pt-1">
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                            Формат сложности:
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {DIFFICULTIES.map((df) => (
+                                <button
+                                    key={df.id}
+                                    type="button"
+                                    onClick={() => setDifficulty(df.id)}
+                                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                        difficulty === df.id
+                                            ? 'border-[#7D39EB] bg-[#FAF8FF] dark:bg-violet-950/40 text-[#7D39EB] dark:text-violet-300 shadow-2xs font-bold'
+                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <div className="text-[11px] font-bold leading-tight">{df.label}</div>
+                                    <div className="text-[9.5px] opacity-75 mt-0.5">{df.badge}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Format Selector Pills */}
+                    <div className="space-y-1.5 pt-1">
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                            Тип ответов:
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                            {FORMATS.map((fmt) => (
+                                <button
+                                    key={fmt.id}
+                                    type="button"
+                                    onClick={() => setFormat(fmt.id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                        format === fmt.id
+                                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs'
+                                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    {fmt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {error && (
+                    <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                {/* Submit button */}
+                <button
+                    type="button"
+                    onClick={handleGenerate}
+                    disabled={isLoading}
+                    className="w-full relative overflow-hidden py-4 px-6 rounded-2xl font-black text-sm text-white shadow-lg shadow-violet-600/30 transition-all duration-200 hover:shadow-xl hover:shadow-violet-600/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2.5 cursor-pointer uppercase tracking-wider font-rimma"
+                    style={{ background: 'linear-gradient(135deg, #7D39EB 0%, #6827D6 100%)' }}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+
+                    {isLoading ? (
+                        <>
+                            <Sparkles className="w-5 h-5 animate-spin" />
+                            <span>Генерация банка заданий в Gemini...</span>
+                        </>
+                    ) : (
+                        <>
+                            <Sparkles className="w-5 h-5 text-[#C6FF33]" />
+                            <span>Сгенерировать задания РИКЗ</span>
+                        </>
+                    )}
+                </button>
             </div>
 
-            {/* Right: Output */}
-            <div className="lg:col-span-7">
+            {/* ═══ ПРАВАЯ КОЛОНКА: ИНТЕРАКТИВНОЕ ПОЛОТНО ЗАДАНИЙ (STICKY) ═══ */}
+            <div className="ed-ai-col-canvas">
                 {isLoading ? (
                     <AiFormattedOutput isLoading={true} />
                 ) : result ? (
@@ -337,33 +368,46 @@ export default function QuizGeneratorTab({ csrfToken, endpoints, initialSubject 
                         onRegenerate={() => handleGenerate()}
                     />
                 ) : (
-                    <div className="rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-10 text-center flex flex-col items-center justify-center min-h-[460px] space-y-4">
-                        <div className="w-16 h-16 rounded-3xl bg-violet-50 dark:bg-violet-950/40 border border-violet-200/50 dark:border-violet-800/50 flex items-center justify-center text-2xl text-violet-600 shadow-inner">
-                            🎯
+                    /* Стильный пустой стейт */
+                    <div className="ed-ai-box p-8 sm:p-12 text-center flex flex-col items-center justify-center min-h-[540px] space-y-5">
+                        <div className="relative w-32 h-32 flex items-center justify-center">
+                            <svg className="absolute inset-0 w-full h-full ed-animate-spin-slow" viewBox="0 0 120 120">
+                                <circle cx="60" cy="60" r="54" fill="none" stroke="#7D39EB" strokeWidth="2" strokeDasharray="8 12" strokeOpacity="0.3" />
+                                <circle cx="114" cy="60" r="5" fill="#C6FF33" />
+                                <circle cx="6" cy="60" r="4" fill="#7D39EB" />
+                            </svg>
+
+                            <div className="ed-animate-float w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#FAF8FF] to-white dark:from-slate-800 dark:to-slate-700 border-2 border-violet-300 dark:border-violet-700 flex items-center justify-center shadow-xl shadow-violet-500/10">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7D39EB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="m9 12 2 2 4-4"/>
+                                </svg>
+                            </div>
                         </div>
+
                         <div className="max-w-md space-y-2">
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                Банк заданий пока не сформирован
+                            <h3 className="text-lg font-black text-[#0C0A14] dark:text-white font-rimma uppercase tracking-tight">
+                                Банк тестовых заданий РИКЗ
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                Задайте тему и формат слева. ИИ создаст подборку заданий с однозначными условиями, правильными числовыми ответами, пошаговыми выкладками и разбором ловушек.
+                            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                Укажите предмет и тему раздела слева. Gemini составит авторские задачи с готовыми числовыми ключами, логикой решения и анализом ловушек.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg w-full pt-4 text-left">
-                            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
-                                <span className="text-sm">⚠️</span>
-                                <div className="text-[11px] font-bold text-slate-900 dark:text-white">Ловушки РИКЗ</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg pt-4 text-left">
+                            <div className="p-3.5 rounded-2xl bg-[#FAF8FF] dark:bg-slate-800/80 border border-[#ECE5FB] dark:border-slate-700 space-y-1 hover:border-violet-300 transition-colors">
+                                <span className="text-base">⚠️</span>
+                                <div className="text-xs font-bold text-slate-900 dark:text-white">Ловушки РИКЗ</div>
                                 <div className="text-[10px] text-slate-500">Где ошибаются 80%</div>
                             </div>
-                            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
-                                <span className="text-sm">🔑</span>
-                                <div className="text-[11px] font-bold text-slate-900 dark:text-white">Сводка ответов</div>
+                            <div className="p-3.5 rounded-2xl bg-[#FAF8FF] dark:bg-slate-800/80 border border-[#ECE5FB] dark:border-slate-700 space-y-1 hover:border-violet-300 transition-colors">
+                                <span className="text-base">🔑</span>
+                                <div className="text-xs font-bold text-slate-900 dark:text-white">Сводка ответов</div>
                                 <div className="text-[10px] text-slate-500">Для экспресс-проверки</div>
                             </div>
-                            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
-                                <span className="text-sm">📋</span>
-                                <div className="text-[11px] font-bold text-slate-900 dark:text-white">Быстрое ДЗ</div>
+                            <div className="p-3.5 rounded-2xl bg-[#FAF8FF] dark:bg-slate-800/80 border border-[#ECE5FB] dark:border-slate-700 space-y-1 hover:border-violet-300 transition-colors">
+                                <span className="text-base">📋</span>
+                                <div className="text-xs font-bold text-slate-900 dark:text-white">Быстрое ДЗ</div>
                                 <div className="text-[10px] text-slate-500">Копирование в 1 клик</div>
                             </div>
                         </div>

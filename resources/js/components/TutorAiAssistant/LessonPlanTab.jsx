@@ -9,17 +9,42 @@ import {
     CheckCircle2, 
     AlertCircle, 
     History, 
-    Trash2 
+    Trash2,
+    Compass,
+    GraduationCap,
+    Check
 } from 'lucide-react';
 import AiFormattedOutput from './AiFormattedOutput';
 
+const SUBJECTS = [
+    { id: 'Математика', label: 'Математика', icon: '📐', desc: 'Алгебра, геометрия, ЦТ/ЦЭ' },
+    { id: 'Физика', label: 'Физика', icon: '⚡', desc: 'Механика, оптика, законы' },
+    { id: 'Русский язык', label: 'Русский язык', icon: '📝', desc: 'Орфография, пунктуация' },
+    { id: 'Английский язык', label: 'Английский язык', icon: '🇬🇧', desc: 'Grammar, Lexis, CT' },
+    { id: 'Химия', label: 'Химия', icon: '🧪', desc: 'Реакции, формулы, задачи' },
+    { id: 'Биология', label: 'Биология', icon: '🧬', desc: 'Анатомия, генетика, ЦЭ' },
+];
+
+const GRADES = [
+    { id: '11 класс (подготовка к ЦТ/ЦЭ 2026)', label: '11 класс (ЦТ/ЦЭ 2026)', badge: '🎯 Экзамен' },
+    { id: '10 класс (углубленный уровень)', label: '10 класс (углубленный)', badge: '🚀 Профиль' },
+    { id: '9 класс (базовый / выпускные экзамены)', label: '9 класс (выпускной)', badge: '📖 База' },
+    { id: 'Олимпиадная подготовка', label: 'Олимпиада (район/город)', badge: '🏆 Высокий балл' },
+];
+
+const DURATIONS = [
+    { value: '45 минут', label: '45 мин', sub: 'Экспресс' },
+    { value: '60 минут', label: '60 мин', sub: 'Стандарт' },
+    { value: '90 минут', label: '90 мин', sub: 'Интенсив' },
+    { value: '120 минут', label: '120 мин', sub: 'Пара' },
+];
+
 const QUICK_TOPICS = [
-    { label: '📐 Логарифмические неравенства с переменным основанием', subject: 'Математика' },
-    { label: '⚡ Закон сохранения энергии в механике', subject: 'Физика' },
-    { label: '📝 Правописание НЕ и НИ с разными частями речи', subject: 'Русский язык' },
-    { label: '🇬🇧 Conditional Sentences (Type 1, 2, 3 and Mixed)', subject: 'Английский язык' },
-    { label: '🧪 Электролитическая диссоциация и реакции ионного обмена', subject: 'Химия' },
-    { label: '🧬 Синтез белка: транскрипция и трансляция', subject: 'Биология' },
+    { label: 'Логарифмические неравенства с переменным основанием', subject: 'Математика' },
+    { label: 'Закон сохранения энергии в механике', subject: 'Физика' },
+    { label: 'Правописание НЕ и НИ с разными частями речи', subject: 'Русский язык' },
+    { label: 'Conditional Sentences (Type 1, 2, 3 and Mixed)', subject: 'Английский язык' },
+    { label: 'Электролитическая диссоциация и ОВР', subject: 'Химия' },
 ];
 
 export default function LessonPlanTab({ csrfToken, endpoints, initialSubject = 'Математика', onOpenLibrary }) {
@@ -36,7 +61,6 @@ export default function LessonPlanTab({ csrfToken, endpoints, initialSubject = '
     const [history, setHistory] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
 
-    // Load history from localStorage
     useEffect(() => {
         try {
             const saved = localStorage.getItem('edusfera_ai_lp_history');
@@ -116,278 +140,261 @@ export default function LessonPlanTab({ csrfToken, endpoints, initialSubject = '
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column: Form & Settings */}
-            <div className="lg:col-span-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-6 shadow-sm space-y-5">
-                {/* Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 flex items-center justify-center">
-                            <BookOpen className="w-4 h-4" />
+        <div className="ed-ai-grid">
+            {/* ═══ ЛЕВАЯ КОЛОНКА: СТРУКТУРИРОВАННЫЕ БЛОКИ ПАРАМЕТРОВ ═══ */}
+            <div className="ed-ai-col-form space-y-4">
+                {/* БЛОК 1: Выбор предмета */}
+                <div className="ed-ai-box">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#ECEEF1] dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">📐</span>
+                            <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider">
+                                1. Учебный предмет
+                            </span>
                         </div>
-                        <div>
-                            <h3 className="font-bold text-xs text-slate-900 dark:text-white">
-                                Параметры конспекта
-                            </h3>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                Тайминг, теория, задачи с решениями и ДЗ
-                            </p>
-                        </div>
+                        <span className="text-[11px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 px-2 py-0.5 rounded-md">
+                            {subject}
+                        </span>
                     </div>
 
-                    <div className="flex items-center gap-1">
-                        {history.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={() => setShowHistory(!showHistory)}
-                                className={`p-1.5 rounded-xl border text-xs transition-colors flex items-center gap-1 ${
-                                    showHistory 
-                                        ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300 border-violet-200' 
-                                        : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                                }`}
-                                title="История генераций"
-                            >
-                                <History className="w-3.5 h-3.5" />
-                                <span className="text-[10px] font-bold">{history.length}</span>
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={onOpenLibrary}
-                            className="px-2.5 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 hover:bg-violet-100 text-[11px] font-bold flex items-center gap-1 transition-colors"
-                        >
-                            <Sparkles className="w-3 h-3" />
-                            <span>Промпты</span>
-                        </button>
+                    <div className="ed-subject-grid">
+                        {SUBJECTS.map((s) => {
+                            const isSelected = subject.toLowerCase().includes(s.id.toLowerCase());
+                            return (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => setSubject(s.id)}
+                                    className={`ed-subject-btn ${isSelected ? 'active' : ''}`}
+                                >
+                                    <span className="text-lg mb-1">{s.icon}</span>
+                                    <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-[#7D39EB] dark:text-violet-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                                        {s.label}
+                                    </span>
+                                    {isSelected && (
+                                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#C6FF33] text-black flex items-center justify-center text-[10px] font-black shadow-2xs">
+                                            ✓
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* History Drawer if toggled */}
-                {showHistory && (
-                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300">
-                            <span>Недавние планы ({history.length}):</span>
-                            <button
-                                type="button"
-                                onClick={clearHistory}
-                                className="text-rose-500 hover:text-rose-600 text-[10px] flex items-center gap-1"
-                            >
-                                <Trash2 className="w-3 h-3" /> Очистить
-                            </button>
+                {/* БЛОК 2: Тема занятия и быстрые пресеты */}
+                <div className="ed-ai-box space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#ECEEF1] dark:border-slate-800">
+                        <div className="flex items-center gap-2">
+                            <span className="text-base">💡</span>
+                            <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider">
+                                2. Тема занятия *
+                            </span>
                         </div>
-                        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                            {history.map((item) => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => {
-                                        setResult(item.content);
-                                        setTopic(item.topic);
-                                        setShowHistory(false);
-                                    }}
-                                    className="p-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-violet-50 dark:hover:bg-violet-950/40 border border-slate-200/60 dark:border-slate-700/60 cursor-pointer text-left transition-colors"
-                                >
-                                    <div className="font-semibold text-xs text-slate-900 dark:text-white line-clamp-1">
-                                        {item.topic}
-                                    </div>
-                                    <div className="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
-                                        <span>{item.subject}</span>
-                                        <span>{item.date}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                <form onSubmit={handleGenerate} className="space-y-3.5">
-                    {/* Subject & Grade */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                Предмет
-                            </label>
-                            <input
-                                type="text"
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value)}
-                                placeholder="Математика, Физика..."
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                Аудитория и уровень
-                            </label>
-                            <select
-                                value={grade}
-                                onChange={(e) => setGrade(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                            >
-                                <option value="11 класс (подготовка к ЦТ/ЦЭ 2026)">11 класс (ЦТ / ЦЭ 2026)</option>
-                                <option value="10 класс (углубленный уровень)">10 класс (углубленный)</option>
-                                <option value="9 класс (выпускные экзамены / ОГЭ)">9 класс (базовый/экзамен)</option>
-                                <option value="5-8 классы (устранение пробелов)">5–8 классы (пробелы)</option>
-                                <option value="Олимпиадная подготовка (район / город)">Олимпиада (район/город)</option>
-                            </select>
-                        </div>
+                        <button
+                            type="button"
+                            onClick={onOpenLibrary}
+                            className="text-[11px] font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1 cursor-pointer"
+                        >
+                            <Sparkles className="w-3 h-3" />
+                            <span>Промпты ЦТ</span>
+                        </button>
                     </div>
 
-                    {/* Topic Input with Fast Chips */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                                Тема занятия <span className="text-rose-500">*</span>
-                            </label>
-                            <span className="text-[10px] text-slate-400">Точная формулировка</span>
-                        </div>
+                    <div className="relative">
                         <input
                             type="text"
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
-                            placeholder="Напр.: Логарифмические неравенства с переменным основанием"
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2.5 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                            placeholder="Например: Логарифмические неравенства с переменным основанием"
+                            className="w-full rounded-xl border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3.5 py-3 font-semibold text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#7D39EB] focus:ring-4 focus:ring-violet-500/10 transition-all"
                             required
                         />
+                        {topic && (
+                            <button
+                                type="button"
+                                onClick={() => setTopic('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
 
-                        {/* Quick Topic Chips */}
-                        <div className="pt-2 flex flex-wrap gap-1.5">
+                    {/* Quick Preset Chips */}
+                    <div>
+                        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                            Быстрый выбор темы:
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
                             {QUICK_TOPICS.map((item, idx) => (
                                 <button
                                     key={idx}
                                     type="button"
                                     onClick={() => {
-                                        setTopic(item.label.replace(/^[^\s]+\s/, ''));
+                                        setTopic(item.label);
                                         setSubject(item.subject);
                                     }}
-                                    className="text-[10.5px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-violet-50 dark:hover:bg-violet-950/40 text-slate-600 dark:text-slate-300 hover:text-violet-600 dark:hover:text-violet-300 transition-colors border border-slate-200/60 dark:border-slate-700/60"
+                                    className="text-[11px] px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-[#FAF8FF] dark:hover:bg-violet-950/40 text-slate-700 dark:text-slate-300 hover:text-[#7D39EB] dark:hover:text-violet-300 transition-all border border-slate-200/80 dark:border-slate-700 text-left font-medium cursor-pointer"
                                 >
                                     {item.label}
                                 </button>
                             ))}
                         </div>
                     </div>
+                </div>
 
-                    {/* Duration & Focus */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                Длительность
-                            </label>
-                            <select
-                                value={duration}
-                                onChange={(e) => setDuration(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                            >
-                                <option value="45 минут">45 минут (экспресс)</option>
-                                <option value="60 минут">60 минут (стандарт)</option>
-                                <option value="90 минут">90 минут (интенсив)</option>
-                                <option value="120 минут">120 минут (парное)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                                Фокус урока
-                            </label>
-                            <select
-                                value={focus}
-                                onChange={(e) => setFocus(e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                            >
-                                <option value="Практика ЦТ/ЦЭ и разбор ловушек РИКЗ">Практика ЦТ/ЦЭ + ловушки</option>
-                                <option value="Изучение новой темы с нуля (наглядно)">Новая тема с нуля («на пальцах»)</option>
-                                <option value="Олимпиадные задачи повышенной сложности">Олимпиадный уровень</option>
-                                <option value="Экспресс-повторение перед экзаменом">Экспресс-повторение</option>
-                            </select>
-                        </div>
+                {/* БЛОК 3: Аудитория и Длительность */}
+                <div className="ed-ai-box space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-[#ECEEF1] dark:border-slate-800">
+                        <span className="text-base">🎯</span>
+                        <span className="font-extrabold text-xs text-[#0C0A14] dark:text-white uppercase tracking-wider">
+                            3. Уровень и длительность
+                        </span>
                     </div>
 
-                    {/* Target Goal (Optional) */}
-                    <div>
-                        <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                            Конкретная цель / результат (опционально)
+                    {/* Level Pills */}
+                    <div className="space-y-1.5">
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                            Целевая аудитория:
                         </label>
-                        <input
-                            type="text"
-                            value={goal}
-                            onChange={(e) => setGoal(e.target.value)}
-                            placeholder="Напр.: Научить решать задачи части Б №10 без ошибок в ОДЗ"
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800/90 text-xs px-3 py-2 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                        />
-                    </div>
-
-                    {/* Error Banner */}
-                    {error && (
-                        <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4 shrink-0" />
-                            <span>{error}</span>
+                        <div className="grid grid-cols-2 gap-2">
+                            {GRADES.map((g) => (
+                                <button
+                                    key={g.id}
+                                    type="button"
+                                    onClick={() => setGrade(g.id)}
+                                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                                        grade === g.id
+                                            ? 'border-[#7D39EB] bg-[#FAF8FF] dark:bg-violet-950/40 text-[#7D39EB] dark:text-violet-300 shadow-2xs font-bold'
+                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <div className="text-[11px] font-bold leading-tight">{g.label}</div>
+                                    <div className="text-[9.5px] opacity-75 mt-0.5">{g.badge}</div>
+                                </button>
+                            ))}
                         </div>
-                    )}
-
-                    {/* Submit Button */}
-                    <div className="pt-2">
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full relative overflow-hidden py-3 px-4 rounded-xl font-bold text-xs text-white shadow-md shadow-violet-600/25 transition-all duration-200 hover:shadow-lg hover:shadow-violet-600/35 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
-                            style={{ background: 'linear-gradient(135deg, #7D39EB 0%, #632cd6 100%)' }}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Sparkles className="w-4 h-4 animate-spin" />
-                                    <span>Генерация конспекта через Gemini...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles className="w-4 h-4" />
-                                    <span>✨ Сгенерировать конспект урока</span>
-                                </>
-                            )}
-                        </button>
                     </div>
-                </form>
+
+                    {/* Duration Pills */}
+                    <div className="space-y-1.5 pt-1">
+                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                            Тайминг занятия:
+                        </label>
+                        <div className="grid grid-cols-4 gap-1.5">
+                            {DURATIONS.map((d) => (
+                                <button
+                                    key={d.value}
+                                    type="button"
+                                    onClick={() => setDuration(d.value)}
+                                    className={`py-2 px-1 rounded-xl border text-center transition-all cursor-pointer ${
+                                        duration === d.value
+                                            ? 'border-[#7D39EB] bg-[#7D39EB] text-white font-black shadow-xs'
+                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <div className="text-xs font-bold">{d.label}</div>
+                                    <div className={`text-[9px] ${duration === d.value ? 'text-violet-200' : 'text-slate-400'}`}>{d.sub}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Error Banner */}
+                {error && (
+                    <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                {/* Главная кнопка в стиле платформы Edusfera */}
+                <button
+                    type="button"
+                    onClick={handleGenerate}
+                    disabled={isLoading}
+                    className="w-full relative overflow-hidden py-4 px-6 rounded-2xl font-black text-sm text-white shadow-lg shadow-violet-600/30 transition-all duration-200 hover:shadow-xl hover:shadow-violet-600/40 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2.5 cursor-pointer uppercase tracking-wider font-rimma"
+                    style={{ background: 'linear-gradient(135deg, #7D39EB 0%, #6827D6 100%)' }}
+                >
+                    {/* Pulsing glow ray SVG */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+
+                    {isLoading ? (
+                        <>
+                            <Sparkles className="w-5 h-5 animate-spin" />
+                            <span>Составление конспекта в Gemini...</span>
+                        </>
+                    ) : (
+                        <>
+                            <Sparkles className="w-5 h-5 text-[#C6FF33]" />
+                            <span>Сгенерировать конспект урока</span>
+                        </>
+                    )}
+                </button>
             </div>
 
-            {/* Right Column: Output Viewer or Empty State */}
-            <div className="lg:col-span-7">
+            {/* ═══ ПРАВАЯ КОЛОНКА: ИНТЕРАКТИВНОЕ ПОЛОТНО КОНСПЕКТА (STICKY) ═══ */}
+            <div className="ed-ai-col-canvas">
                 {isLoading ? (
                     <AiFormattedOutput isLoading={true} />
                 ) : result ? (
                     <AiFormattedOutput
                         content={result}
-                        title={`План урока: ${topic}`}
+                        title={`Конспект: ${topic}`}
                         subtitle={`${subject} • ${grade} • ${duration}`}
                         onRegenerate={() => handleGenerate()}
                     />
                 ) : (
-                    <div className="rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 p-10 text-center flex flex-col items-center justify-center min-h-[460px] space-y-4">
-                        <div className="w-16 h-16 rounded-3xl bg-violet-50 dark:bg-violet-950/40 border border-violet-200/50 dark:border-violet-800/50 flex items-center justify-center text-2xl text-violet-600 shadow-inner">
-                            📚
+                    /* Стильный пустой стейт с SVG анимацией в стиле платформы */
+                    <div className="ed-ai-box p-8 sm:p-12 text-center flex flex-col items-center justify-center min-h-[540px] space-y-5">
+                        {/* Interactive SVG Animation Illustration */}
+                        <div className="relative w-32 h-32 flex items-center justify-center">
+                            {/* Animated Background Ring */}
+                            <svg className="absolute inset-0 w-full h-full ed-animate-spin-slow" viewBox="0 0 120 120">
+                                <circle cx="60" cy="60" r="54" fill="none" stroke="#7D39EB" strokeWidth="2" strokeDasharray="8 12" strokeOpacity="0.3" />
+                                <circle cx="114" cy="60" r="5" fill="#C6FF33" />
+                                <circle cx="6" cy="60" r="4" fill="#7D39EB" />
+                            </svg>
+
+                            {/* Floating Document and Sparkles SVG */}
+                            <div className="ed-animate-float w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#FAF8FF] to-white dark:from-slate-800 dark:to-slate-700 border-2 border-violet-300 dark:border-violet-700 flex items-center justify-center shadow-xl shadow-violet-500/10">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7D39EB" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                                    <path d="M8 7h8"/>
+                                    <path d="M8 11h6"/>
+                                    <path d="M8 15h4"/>
+                                    <circle cx="17" cy="15" r="2" fill="#C6FF33" stroke="#7D39EB" strokeWidth="1.5" />
+                                </svg>
+                            </div>
                         </div>
+
                         <div className="max-w-md space-y-2">
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                                Конспект занятия пока не составлен
+                            <h3 className="text-lg font-black text-[#0C0A14] dark:text-white font-rimma uppercase tracking-tight">
+                                Полотно готового конспекта
                             </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                Задайте предмет и тему слева, либо выберите один из быстрых чипсов. Gemini составит полноценную технологическую карту с поминутным таймингом, разбором задач и домашним заданием.
+                            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+                                Выберите учебный предмет и тему слева, затем нажмите «Сгенерировать». Gemini Flash составит поминутный конспект с формулами LaTeX, примерами заданий и ДЗ.
                             </p>
                         </div>
 
-                        {/* Feature Badges */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg w-full pt-4 text-left">
-                            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
-                                <span className="text-sm">⏱</span>
-                                <div className="text-[11px] font-bold text-slate-900 dark:text-white">Тайминг этапов</div>
-                                <div className="text-[10px] text-slate-500">От разминки до рефлексии</div>
+                        {/* Interactive Feature Cards */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg pt-4 text-left">
+                            <div className="p-3.5 rounded-2xl bg-[#FAF8FF] dark:bg-slate-800/80 border border-[#ECE5FB] dark:border-slate-700 space-y-1 hover:border-violet-300 transition-colors">
+                                <span className="text-base">⏱</span>
+                                <div className="text-xs font-bold text-slate-900 dark:text-white">Поминутный тайминг</div>
+                                <div className="text-[10px] text-slate-500">От разминки до контроля</div>
                             </div>
-                            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
-                                <span className="text-sm">📐</span>
-                                <div className="text-[11px] font-bold text-slate-900 dark:text-white">LaTeX Формулы</div>
-                                <div className="text-[10px] text-slate-500">KaTeX рендеринг уравнений</div>
+                            <div className="p-3.5 rounded-2xl bg-[#FAF8FF] dark:bg-slate-800/80 border border-[#ECE5FB] dark:border-slate-700 space-y-1 hover:border-violet-300 transition-colors">
+                                <span className="text-base">📐</span>
+                                <div className="text-xs font-bold text-slate-900 dark:text-white">KaTeX Формулы</div>
+                                <div className="text-[10px] text-slate-500">Четкий математический рендеринг</div>
                             </div>
-                            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 space-y-1">
-                                <span className="text-sm">🖨</span>
-                                <div className="text-[11px] font-bold text-slate-900 dark:text-white">Экспорт в PDF</div>
-                                <div className="text-[10px] text-slate-500">Печать чистого конспекта</div>
+                            <div className="p-3.5 rounded-2xl bg-[#FAF8FF] dark:bg-slate-800/80 border border-[#ECE5FB] dark:border-slate-700 space-y-1 hover:border-violet-300 transition-colors">
+                                <span className="text-base">⚠️</span>
+                                <div className="text-xs font-bold text-slate-900 dark:text-white">Ловушки РИКЗ</div>
+                                <div className="text-[10px] text-slate-500">Предупреждения для ЦТ/ЦЭ</div>
                             </div>
                         </div>
                     </div>
