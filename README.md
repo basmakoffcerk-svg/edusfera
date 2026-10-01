@@ -1,6 +1,6 @@
 # Edusfera
 
-Edusfera is a modern Laravel 12 SaaS platform for tutors and exam preparation (CT/CE in Belarus). The platform operates on a **SaaS subscription model for tutors with 0% commission on conducted lessons**, providing an interactive Virtual Classroom, smart scheduling, automated NPD receipt generation (for self-employed tutors), AI diagnostic tools, and secure escrow payments via WebPAY / Alfa-Bank.
+Edusfera is a modern Laravel 12 SaaS platform for tutors and exam preparation (CT/CE in Belarus). The platform operates on a **SaaS subscription model for tutors with 0% commission on conducted lessons**, providing an interactive Virtual Classroom, smart scheduling, automated NPD receipt generation (for self-employed tutors), AI diagnostic tools, and secure escrow payments via Alfa-Bank.
 
 ## Stack
 
@@ -106,7 +106,7 @@ CI runs this suite on every push/PR via `.github/workflows/architecture-tests.ym
 ## Legal Pages
 
 - `/offer` - public offer (SaaS terms & 0% lesson commission)
-- `/payment-security` - payment security & WebPAY rules
+- `/payment-security` - payment security & bank rules
 - `/refund-policy` - refund policy & SaaS guarantee
 - `/privacy-policy` - privacy policy
 
