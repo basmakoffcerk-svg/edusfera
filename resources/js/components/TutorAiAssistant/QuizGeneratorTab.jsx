@@ -414,7 +414,7 @@ export default function QuizGeneratorTab({ csrfToken, endpoints, initialSubject 
                     {isLoading ? (
                         <>
                             <Sparkles className="w-5 h-5 animate-spin" />
-                            <span>Генерация банка заданий в Gemini...</span>
+                            <span>Генерация банка заданий в Edusfera AI...</span>
                         </>
                     ) : (
                         <>
@@ -459,7 +459,7 @@ export default function QuizGeneratorTab({ csrfToken, endpoints, initialSubject 
                                 Банк тестовых заданий РИКЗ
                             </h3>
                             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                Укажите предмет и тему раздела слева. Gemini составит авторские задачи с готовыми числовыми ключами, логикой решения и анализом ловушек.
+                                Укажите предмет и тему раздела слева. Edusfera AI составит авторские задачи с готовыми числовыми ключами, логикой решения и анализом ловушек.
                             </p>
                         </div>
 

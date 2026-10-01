@@ -2341,7 +2341,7 @@
                                 <td>ИИ-помощник: планы уроков, конспекты, генерация тестов и ДЗ</td>
                                 <td class="tutor-matrix-col-plan"><span class="tutor-matrix-cross">✕</span></td>
                                 <td class="tutor-matrix-col-plan"><span class="tutor-matrix-check">✓</span></td>
-                                <td class="tutor-matrix-col-plan tutor-matrix-highlight"><span class="tutor-matrix-check-prem">✓ (GPT-4o / Claude)</span></td>
+                                <td class="tutor-matrix-col-plan tutor-matrix-highlight"><span class="tutor-matrix-check-prem">✓ (Edusfera AI Pro)</span></td>
                             </tr>
                             <tr>
                                 <td>Авто-генерация фискальных чеков НПД для МНС РБ</td>

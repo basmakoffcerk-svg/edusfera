@@ -13,7 +13,7 @@
 - **Admin & Dashboards:** Filament PHP 3.x (кабинеты Репетитора, Ученика, Родителя, Суперадминистратора).
 - **Frontend & Reactivity:** Livewire 3, Alpine.js 3, Vanilla CSS с палитрой Glassmorphism / 8pt Grid.
 - **Видеосвязь и виртуальный класс:** LiveKit Cloud / Self-hosted WebRTC, Coturn (STUN/TURN), Excalidraw (интерактивная доска).
-- **Искусственный интеллект:** Google Gemini API (`gemini-3.5-flash-lite`, `gemini-flash-latest`).
+- **Искусственный интеллект:** Edusfera AI (собственная мультимодальная нейросетевая архитектура и ассистенты платформы).
 - **Платежи и фискализация:** Alfa-Bank API (эквайринг BYN), чеки НПД (МНС Республики Беларусь).
 - **Схема доставки кода (Zero-Downtime Patch):**
   - Сборка: `bash scripts/make-patch.sh` (формирует легковесный `edusfera-patch.zip`).

@@ -51,7 +51,7 @@ export default function TutorAiAssistant() {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
-                            <span>Google Gemini AI Engine • gemini-3.5-flash</span>
+                            <span>Edusfera AI Engine</span>
                             <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#C6FF33] text-black font-extrabold uppercase">
                                 2026
                             </span>

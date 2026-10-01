@@ -191,7 +191,7 @@ export default function AiFormattedOutput({
                     </div>
                     <div>
                         <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                            <span>Генерация ответа через Google Gemini</span>
+                            <span>Генерация ответа через Edusfera AI</span>
                             <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                         </h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -340,7 +340,7 @@ export default function AiFormattedOutput({
                 <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-violet-500"></span>
-                        Сгенерировано Gemini 3.5 Flash
+                        Сгенерировано Edusfera AI
                     </span>
                     <span>•</span>
                     <span>Формулы KaTeX активированы</span>

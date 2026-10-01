@@ -7,6 +7,19 @@
 @endphp
 
 <div id="ed-ai-copilot-root" x-data="edusferaAiCopilot()" x-cloak>
+    {{-- ═══ 0. МОБИЛЬНЫЙ BACKDROP OVERLAY ═══ --}}
+    <div
+        class="ed-copilot-backdrop"
+        x-show="isOpen"
+        x-transition:enter="ed-backdrop-fade-enter"
+        x-transition:enter-start="ed-opacity-0"
+        x-transition:enter-end="ed-opacity-100"
+        x-transition:leave="ed-backdrop-fade-leave"
+        x-transition:leave-start="ed-opacity-100"
+        x-transition:leave-end="ed-opacity-0"
+        @click="close()"
+    ></div>
+
     {{-- ═══ 1. ПЛАВАЮЩАЯ КНОПКА (FAB) ═══ --}}
     <button
         type="button"
@@ -14,8 +27,8 @@
         class="ed-copilot-fab"
         :class="{ 'ed-copilot-fab--active': isOpen }"
         @click="toggle()"
-        title="Открыть ИИ-Ассистента Edusfera (Google Gemini)"
-        aria-label="ИИ-Ассистент"
+        title="Открыть ИИ-Ассистент Edusfera AI"
+        aria-label="Edusfera AI"
     >
         <span class="ed-copilot-fab-glow"></span>
         <div class="ed-copilot-fab-icon">
@@ -33,7 +46,7 @@
         </div>
         <div class="ed-copilot-fab-label">
             <span class="ed-copilot-fab-pulse"></span>
-            <span class="ed-copilot-fab-text">{{ $roleTitle }}</span>
+            <span class="ed-copilot-fab-text">Edusfera AI</span>
         </div>
     </button>
 
@@ -50,6 +63,11 @@
         x-transition:leave-end="ed-trans-start"
         @click.outside="if (isDesktop()) close()"
     >
+        {{-- ДРАГ-ХЭНДЛ ДЛЯ ВЕРТИКАЛЬНЫХ МОБИЛЬНЫХ УСТРОЙСТВ --}}
+        <div class="ed-copilot-drag-handle-wrap" @click="close()" title="Закрыть">
+            <span class="ed-copilot-drag-handle"></span>
+        </div>
+
         {{-- ШАПКА АССИСТЕНТА --}}
         <div class="ed-copilot-header">
             <div class="ed-copilot-header-info">
@@ -58,12 +76,12 @@
                 </div>
                 <div>
                     <div class="ed-copilot-title-row">
-                        <h4 class="ed-copilot-title">{{ $roleTitle }}</h4>
-                        <span class="ed-copilot-badge">{{ $roleBadge }}</span>
+                        <h4 class="ed-copilot-title">Edusfera AI</h4>
+                        <span class="ed-copilot-badge">{{ $roleTitle }}</span>
                     </div>
                     <p class="ed-copilot-subtitle">
                         <span class="ed-copilot-status-dot"></span>
-                        Google Gemini AI Engine
+                        Edusfera AI Engine
                     </p>
                 </div>
             </div>
@@ -147,7 +165,7 @@
                 <div class="ed-copilot-msg" :class="msg.role === 'user' ? 'ed-copilot-msg--user' : 'ed-copilot-msg--assistant'">
                     <div class="ed-copilot-msg-bubble">
                         <div class="ed-copilot-msg-header">
-                            <span class="ed-copilot-msg-sender" x-text="msg.role === 'user' ? 'Вы' : '{{ $roleTitle }} (Gemini)'"></span>
+                            <span class="ed-copilot-msg-sender" x-text="msg.role === 'user' ? 'Вы' : 'Edusfera AI'"></span>
                             <template x-if="msg.role === 'assistant'">
                                 <button
                                     type="button"
@@ -169,7 +187,7 @@
                 <span class="ed-copilot-typing-dot"></span>
                 <span class="ed-copilot-typing-dot"></span>
                 <span class="ed-copilot-typing-dot"></span>
-                <span class="ed-copilot-typing-text">Gemini думает...</span>
+                <span class="ed-copilot-typing-text">Edusfera AI думает...</span>
             </div>
         </div>
 
@@ -198,7 +216,7 @@
                 </button>
             </form>
             <div class="ed-copilot-disclaimer">
-                Edusfera AI на базе Google Gemini. Помогает учить и учиться быстрее.
+                Edusfera AI • Персональный интеллектуальный ассистент
             </div>
         </div>
     </div>
@@ -736,18 +754,192 @@
     opacity: 0.8;
 }
 
-/* Mobile full-width override */
-@media (max-width: 640px) {
+/* Drag Handle */
+.ed-copilot-drag-handle-wrap {
+    display: none;
+}
+
+/* Mobile backdrop */
+.ed-copilot-backdrop {
+    display: none;
+}
+.ed-backdrop-fade-enter {
+    transition: opacity 0.25s ease-out;
+}
+.ed-backdrop-fade-leave {
+    transition: opacity 0.2s ease-in;
+}
+.ed-opacity-0 {
+    opacity: 0;
+}
+.ed-opacity-100 {
+    opacity: 1;
+}
+
+/* ═══ VERTICAL MOBILE ADAPTATION (iPhone, Android, Tablets <= 768px) ═══ */
+@media (max-width: 768px) {
+    .ed-copilot-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.72);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 99998;
+    }
+
     #ed-ai-copilot-root {
-        bottom: 16px;
+        bottom: max(16px, env(safe-area-inset-bottom, 16px));
         right: 16px;
     }
+
+    .ed-copilot-fab {
+        height: 48px;
+        padding: 0 16px 0 12px;
+        box-shadow: 0 10px 28px -4px rgba(125, 57, 235, 0.5);
+    }
+
     .ed-copilot-panel {
-        bottom: 56px;
-        right: -8px;
-        width: calc(100vw - 32px);
-        height: 75vh;
-        max-height: 580px;
+        position: fixed !important;
+        inset: auto 0 0 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: min(92dvh, calc(100vh - 24px)) !important;
+        max-height: 92dvh !important;
+        border-radius: 28px 28px 0 0 !important;
+        border-bottom: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: 0 -12px 48px -4px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(125, 57, 235, 0.2) !important;
+        z-index: 99999 !important;
+        transform-origin: bottom center !important;
+    }
+
+    .ed-trans-enter {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+    .ed-trans-end {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .ed-trans-leave {
+        opacity: 0;
+        transform: translateY(100%);
+    }
+
+    .ed-copilot-drag-handle-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px 0 4px 0;
+        width: 100%;
+        cursor: pointer;
+        touch-action: none;
+    }
+
+    .ed-copilot-drag-handle {
+        width: 44px;
+        height: 5px;
+        border-radius: 9999px;
+        background: rgba(148, 163, 184, 0.45);
+        transition: background 0.2s ease;
+    }
+
+    .ed-copilot-drag-handle-wrap:active .ed-copilot-drag-handle {
+        background: var(--copilot-accent);
+    }
+
+    .ed-copilot-header {
+        padding: 8px 16px 12px 16px;
+    }
+
+    .ed-copilot-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 16px;
+    }
+
+    .ed-copilot-title {
+        font-size: 15px;
+    }
+
+    .ed-copilot-badge {
+        font-size: 9.5px;
+        padding: 2px 6px;
+    }
+
+    .ed-copilot-header-actions .ed-copilot-tool-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+    }
+
+    .ed-copilot-chips-wrap {
+        padding: 8px 14px 6px 14px;
+        background: rgba(125, 57, 235, 0.03);
+    }
+
+    .ed-copilot-chips {
+        gap: 6px;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+    }
+
+    .ed-copilot-chip {
+        scroll-snap-align: start;
+        padding: 8px 14px;
+        font-size: 12.5px;
+        min-height: 36px;
+        border-radius: 12px;
+        flex-shrink: 0;
+    }
+
+    .ed-copilot-chip:active {
+        transform: scale(0.96);
+    }
+
+    .ed-copilot-messages {
+        padding: 12px 14px;
+        gap: 12px;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .ed-copilot-msg-bubble {
+        max-width: 90%;
+        padding: 12px 14px;
+        border-radius: 18px;
+        font-size: 14px;
+        line-height: 1.55;
+    }
+
+    .ed-copilot-footer {
+        padding: 8px 12px max(12px, env(safe-area-inset-bottom, 12px)) 12px;
+        background: var(--copilot-card-bg);
+    }
+
+    .ed-copilot-form {
+        padding: 4px 6px 4px 12px;
+        border-radius: 20px;
+    }
+
+    .ed-copilot-textarea {
+        font-size: 16px !important; /* Critical to prevent iOS Safari auto-zoom */
+        padding: 7px 0;
+        max-height: 90px;
+        line-height: 1.35;
+    }
+
+    .ed-copilot-send-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 14px;
     }
 }
 </style>
@@ -835,7 +1027,7 @@ function edusferaAiCopilot() {
                     const err = await res.json().catch(() => ({}));
                     this.messages.push({
                         role: 'assistant',
-                        content: err.error || 'Произошла ошибка при обращении к Gemini API. Попробуйте еще раз.'
+                        content: err.error || 'Произошла ошибка при обращении к Edusfera AI. Попробуйте еще раз.'
                     });
                 }
             } catch (e) {

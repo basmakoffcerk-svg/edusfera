@@ -185,7 +185,7 @@
 
         </div>
 
-        {{-- 1.5. ПЕРСОНАЛЬНЫЙ ВЕРДИКТ ИИ-МЕТОДИСТА (GOOGLE GEMINI) --}}
+        {{-- 1.5. ПЕРСОНАЛЬНЫЙ ВЕРДИКТ ИИ-МЕТОДИСТА (EDUSFERA AI) --}}
         @php
             $insights = $aiResult['ai_insights'] ?? null;
         @endphp
@@ -206,7 +206,7 @@
                                 <h3 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
                                     Вердикт ИИ-методиста Edusfera
                                     <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-violet-500/30 text-violet-200 border border-violet-400/30">
-                                        Google Gemini
+                                        Edusfera AI
                                     </span>
                                 </h3>
                                 <p class="text-xs text-violet-300/80">Индивидуальный анализ спецификации РИКЗ под ваш результат</p>

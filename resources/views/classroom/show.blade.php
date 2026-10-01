@@ -1091,7 +1091,7 @@
                     <div class="cr-chat-message" :class="{ 'mine': msg.role === 'user' }">
                         <div class="cr-chat-avatar" :style="msg.role === 'assistant' ? 'background: #7D39EB; color: #fff;' : ''" x-text="msg.role === 'user' ? 'Вы' : '✨'"></div>
                         <div class="cr-chat-body">
-                            <div class="cr-chat-sender" x-text="msg.role === 'user' ? 'Вы' : 'ИИ-Ассистент (Gemini)'"></div>
+                            <div class="cr-chat-sender" x-text="msg.role === 'user' ? 'Вы' : 'Edusfera AI'"></div>
                             <div class="cr-chat-bubble" style="white-space:pre-wrap;" x-text="msg.text"></div>
 
                             {{-- Entity execution badges --}}
@@ -1120,7 +1120,7 @@
                 <div x-show="isAiLoading" class="cr-chat-message">
                     <div class="cr-chat-avatar" style="background: #7D39EB; color: #fff;">✨</div>
                     <div class="cr-chat-body">
-                        <div class="cr-chat-sender">ИИ-Ассистент (Gemini)</div>
+                        <div class="cr-chat-sender">Edusfera AI</div>
                         <div class="cr-chat-bubble" style="color:var(--cr-text-muted); font-size:12px;">Печатает ответ...</div>
                     </div>
                 </div>
@@ -1129,7 +1129,7 @@
                 </div>
             </div>
             <div class="cr-chat-input-bar">
-                <input type="text" x-model="newAiMessage" @keydown.enter.prevent="askAi()" placeholder="Спросить у Gemini..." :disabled="isAiLoading">
+                <input type="text" x-model="newAiMessage" @keydown.enter.prevent="askAi()" placeholder="Спросить у Edusfera AI..." :disabled="isAiLoading">
                 <button class="cr-chat-send-btn" @click="askAi()" title="Отправить" :disabled="isAiLoading || !newAiMessage.trim()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="22" y1="2" x2="11" y2="13"></line>

@@ -1261,7 +1261,7 @@
                                 <td class="py-3 px-4">ИИ-ассистент (планы, тесты, конспекты)</td>
                                 <td class="py-3 px-4 text-center text-slate-600">✕</td>
                                 <td class="py-3 px-4 text-center text-[#C6FF33]">✓</td>
-                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓ GPT-4o / Claude</td>
+                                <td class="py-3 px-4 text-center text-[#C6FF33] font-bold bg-white/5">✓ Edusfera AI Pro</td>
                             </tr>
                             <tr>
                                 <td class="py-3 px-4">Авто-чеки НПД для МНС Беларуси</td>

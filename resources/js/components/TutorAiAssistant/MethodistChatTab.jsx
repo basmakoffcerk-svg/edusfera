@@ -394,7 +394,7 @@ export default function MethodistChatTab({ csrfToken, endpoints, user, onOpenLib
                                     {/* Author & Timestamp */}
                                     <div className="flex items-center justify-between gap-4 mb-2 pb-1.5 border-b border-black/5 dark:border-white/10">
                                         <span className={`font-bold text-[10.5px] ${isUser ? 'text-violet-100' : 'text-violet-600 dark:text-violet-400'}`}>
-                                            {isUser ? (user?.name || 'Вы') : 'ИИ-Методист (Gemini)'}
+                                            {isUser ? (user?.name || 'Вы') : 'Edusfera AI'}
                                         </span>
                                         <span className={`text-[10px] ${isUser ? 'text-violet-200' : 'text-slate-400'}`}>
                                             {msg.timestamp}

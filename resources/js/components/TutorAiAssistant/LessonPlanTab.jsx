@@ -394,7 +394,7 @@ export default function LessonPlanTab({ csrfToken, endpoints, initialSubject = '
                     {isLoading ? (
                         <>
                             <Sparkles className="w-5 h-5 animate-spin" />
-                            <span>Составление конспекта в Gemini...</span>
+                            <span>Составление конспекта в Edusfera AI...</span>
                         </>
                     ) : (
                         <>
@@ -445,7 +445,7 @@ export default function LessonPlanTab({ csrfToken, endpoints, initialSubject = '
                                 Полотно готового конспекта
                             </h3>
                             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                                Выберите учебный предмет и тему слева, затем нажмите «Сгенерировать». Gemini Flash составит поминутный конспект с формулами LaTeX, примерами заданий и ДЗ.
+                                Выберите учебный предмет и тему слева, затем нажмите «Сгенерировать». Edusfera AI составит поминутный конспект с формулами LaTeX, примерами заданий и ДЗ.
                             </p>
                         </div>
 
