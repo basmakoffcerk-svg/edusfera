@@ -3,14 +3,26 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\AccountSwitcherController;
+use App\Http\Controllers\AiCopilotController;
+use App\Http\Controllers\AlfaBankWebhookController;
+use App\Http\Controllers\Auth\AuroraAuthController;
+use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DiagnosticController;
 use App\Http\Controllers\LessonBookingController;
+use App\Http\Controllers\NewsController;
+use App\Http\Controllers\Payment\AlfaBankHostedCheckoutController;
 use App\Http\Controllers\PaymentWebhookController;
+use App\Http\Controllers\PwaController;
+use App\Http\Controllers\SitemapController;
+use App\Services\MultiAccountService;
+use Filament\Facades\Filament;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,19 +48,6 @@ Route::redirect('/contacts.html', '/contacts', 301);
 Route::redirect('/payment-security.html', '/payment-security', 301);
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
-
-use App\Http\Controllers\AiCopilotController;
-use App\Http\Controllers\AlfaBankWebhookController;
-use App\Http\Controllers\Auth\AuroraAuthController;
-use App\Http\Controllers\Auth\SocialAuthController;
-use App\Http\Controllers\NewsController;
-use App\Http\Controllers\Payment\AlfaBankHostedCheckoutController;
-use App\Http\Controllers\PwaController;
-use App\Http\Controllers\SitemapController;
-use App\Services\MultiAccountService;
-use Filament\Facades\Filament;
-use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 
 Route::get('/login', [AuroraAuthController::class, 'showAuthPage'])->name('login');
 Route::get('/register', [AuroraAuthController::class, 'showAuthPage'])->name('register');
