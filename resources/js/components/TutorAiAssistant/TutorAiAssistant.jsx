@@ -114,57 +114,63 @@ export default function TutorAiAssistant() {
             </div>
 
             {/* ═══ 2. TABS NAVIGATION & PROMPTS CATALOG ═══ */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                {/* Segmented Pill Tabs in Platform Style */}
-                <div className="flex items-center p-1.5 rounded-2xl bg-white dark:bg-slate-800 border border-[#ECEEF1] dark:border-slate-700 shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 pb-1">
+                {/* Segmented Tabs Bar */}
+                <div className="ed-main-tab-bar">
                     <button
                         type="button"
                         onClick={() => setActiveTab('lesson_plan')}
-                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            activeTab === 'lesson_plan'
-                                ? 'bg-[#7D39EB] text-white shadow-sm shadow-violet-500/25'
-                                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                        }`}
+                        className={`ed-main-tab-btn ${activeTab === 'lesson_plan' ? 'active' : ''}`}
                     >
-                        <BookOpen className="w-4 h-4" />
+                        <BookOpen className="w-4 h-4 shrink-0" />
                         <span>Конспект и план урока</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-bold tracking-tight uppercase ${
+                            activeTab === 'lesson_plan'
+                                ? 'bg-[#C6FF33] text-black font-black'
+                                : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                        }`}>
+                            AI
+                        </span>
                     </button>
 
                     <button
                         type="button"
                         onClick={() => setActiveTab('quiz_gen')}
-                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            activeTab === 'quiz_gen'
-                                ? 'bg-[#7D39EB] text-white shadow-sm shadow-violet-500/25'
-                                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                        }`}
+                        className={`ed-main-tab-btn ${activeTab === 'quiz_gen' ? 'active' : ''}`}
                     >
-                        <CheckSquare className="w-4 h-4" />
-                        <span>Тесты и ДЗ (РИКЗ 2026)</span>
+                        <CheckSquare className="w-4 h-4 shrink-0" />
+                        <span>Тесты и ДЗ</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-md font-bold tracking-tight uppercase ${
+                            activeTab === 'quiz_gen'
+                                ? 'bg-[#C6FF33] text-black font-black'
+                                : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                        }`}>
+                            РИКЗ 2026
+                        </span>
                     </button>
 
                     <button
                         type="button"
                         onClick={() => setActiveTab('methodist')}
-                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            activeTab === 'methodist'
-                                ? 'bg-[#7D39EB] text-white shadow-sm shadow-violet-500/25'
-                                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700/50'
-                        }`}
+                        className={`ed-main-tab-btn ${activeTab === 'methodist' ? 'active' : ''}`}
                     >
-                        <MessageSquare className="w-4 h-4" />
-                        <span>ИИ-Методист (Чат)</span>
+                        <MessageSquare className="w-4 h-4 shrink-0" />
+                        <span>ИИ-Методист</span>
+                        <span className="relative flex h-2 w-2 ml-0.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
                     </button>
                 </div>
 
-                {/* Catalog Button */}
+                {/* Prompt Catalog Button */}
                 <button
                     type="button"
                     onClick={() => setIsPromptLibraryOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-violet-200 dark:border-violet-800 text-xs font-bold text-violet-700 dark:text-violet-300 hover:bg-[#FAF8FF] dark:hover:bg-violet-950/40 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
+                    className="ed-catalog-btn"
                 >
-                    <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                    <span>Каталог готовых промптов ЦТ/ЦЭ</span>
+                    <Sparkles className="w-4 h-4 text-[#7D39EB] shrink-0" />
+                    <span>Каталог промптов ЦТ/ЦЭ</span>
                 </button>
             </div>
 
